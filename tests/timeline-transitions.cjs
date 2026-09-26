@@ -217,11 +217,18 @@ const SETUP = `(() => {
   });
 
   // 7. Persistencia de la configuración y de las duraciones editadas
+  // Nota: cada escenario de esta suite abre una página en un contexto NUEVO
+  // (browser.newPage()), así que el localStorage NO viaja entre escenarios.
+  // Este escenario debe ser autosuficiente: edita, persiste y recarga.
   await scenario('persistencia', async page => {
-    // Sin SETUP: los pasos quedan como los dejó el escenario de unidades
-    // (el primero editado a 2 min = 120 s), que es justo lo que debe sobrevivir.
+    await page.evaluate(SETUP);
     await page.evaluate(() => {
       const C = window.__CORTEX__;
+      // editar el primer paso a 2 min = 120 s, como haría una persona
+      C.setDurationUnit('step', 'min');
+      const input = document.querySelector('.timeline-duration');
+      input.value = '2';
+      input.dispatchEvent(new Event('change', { bubbles: true }));
       C.timelineState.transition.seconds = 5;
       C.persistTimeline();
     });
@@ -234,10 +241,12 @@ const SETUP = `(() => {
         enabled: C.timelineState.transition.enabled,
         steps: C.timelineState.steps.length,
         firstDuration: C.timelineState.steps[0] && C.timelineState.steps[0].durationSeconds,
+        unit: C.timelineState.durationUnits.step,
       };
     });
     check(r.seconds === 5 && r.enabled === true, 'la configuración de transición sobrevive la recarga', JSON.stringify(r));
     check(r.firstDuration === 120, 'la duración editada en minutos sobrevive', 'primera=' + r.firstDuration);
+    check(r.unit === 'min', 'la unidad elegida también sobrevive', 'unidad=' + r.unit);
   });
 
   // 8. Datos previos sin campos de transición cargan con defaults
