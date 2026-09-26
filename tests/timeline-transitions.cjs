@@ -218,7 +218,8 @@ const SETUP = `(() => {
 
   // 7. Persistencia de la configuración y de las duraciones editadas
   await scenario('persistencia', async page => {
-    await page.evaluate(SETUP);
+    // Sin SETUP: los pasos quedan como los dejó el escenario de unidades
+    // (el primero editado a 2 min = 120 s), que es justo lo que debe sobrevivir.
     await page.evaluate(() => {
       const C = window.__CORTEX__;
       C.timelineState.transition.seconds = 5;
