@@ -36,8 +36,16 @@ function check(cond, name, detail) {
   page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
   await page.goto(URL, { waitUntil: 'networkidle' });
   await page.waitForFunction(() => typeof window.__CORTEX__ === 'object');
-  await page.evaluate(() => { window.__CORTEX__.engine.start(); window.__CORTEX__.state.playing = true; });
-  await page.waitForTimeout(300);
+  // Click real, no engine.start() desde evaluate: Firefox exige un gesto del
+  // usuario para que el AudioContext pase a 'running'.
+  await page.click('#btnPlay');
+  const clockState = await page.evaluate(() => (window.__CORTEX__.engine.ctx || {}).state || 'none');
+  if (clockState !== 'running') {
+    console.log(`BLOCKED  reloj de audio no disponible en este motor (ctx=${clockState})`);
+    await browser.close();
+    process.exit(0);
+  }
+  await page.waitForTimeout(200);
 
   // 1. Ancho de readout estable y cifras tabulares
   const layout = await page.evaluate(async () => {

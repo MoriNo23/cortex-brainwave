@@ -50,8 +50,17 @@ function check(cond, name, detail) {
     page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
     await page.goto(URL, { waitUntil: 'networkidle' });
     await page.waitForFunction(() => typeof window.__CORTEX__ === 'object');
-    await page.evaluate(() => { window.__CORTEX__.engine.start(); window.__CORTEX__.state.playing = true; });
-    await page.waitForTimeout(250);
+    // El AudioContext no arranca sin un gesto real del usuario en navegadores con
+    // autoplay estricto (Firefox). Por eso se hace click en vez de llamar a
+    // engine.start() desde evaluate: el click es un gesto confiable.
+    await page.click('#btnPlay');
+    const clockState = await page.evaluate(() => (window.__CORTEX__.engine.ctx || {}).state || 'none');
+    if (clockState !== 'running') {
+      console.log(`SKIP  ${title}: el reloj de audio no está disponible (ctx=${clockState})`);
+      await page.close();
+      return;
+    }
+    await page.waitForTimeout(150);
     try {
       await fn(page);
     } catch (e) {

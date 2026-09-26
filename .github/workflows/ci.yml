@@ -36,33 +36,43 @@ jobs:
           echo "el servidor no respondió"; cat /tmp/cortex-server.log; exit 1
 
       - name: Suite in-page (spec de OpenSpec)
+        if: always()
         run: node tests/run-cortex-tests.cjs
 
       - name: Estabilidad de UI
+        if: always()
         run: node tests/ui-stability.cjs
 
       - name: Programación temporal del timeline
+        if: always()
         run: node tests/timeline-scheduling.cjs
 
       - name: Timeline y presets personalizados
+        if: always()
         run: node tests/timeline-custom-presets.cjs
 
       - name: Portadora de ruido
+        if: always()
         run: node tests/noise-carrier.cjs
 
       - name: Exportación WAV
+        if: always()
         run: node tests/wav-e2e.cjs
 
       - name: Smoke visual
+        if: always()
         run: node tests/visual-smoke.cjs
 
       - name: Responsive
+        if: always()
         run: node tests/responsive-smoke.cjs
 
       - name: Audio real (smoke)
+        if: always()
         run: node tests/real-smoke.cjs
 
       - name: Snapshots deterministas
+        if: always()
         run: node tests/snapshots.cjs
 
       - name: Subir reportes
@@ -103,16 +113,19 @@ jobs:
           echo "el servidor no respondió"; cat /tmp/cortex-server.log; exit 1
 
       - name: Programación temporal del timeline
+        if: always()
         run: node tests/timeline-scheduling.cjs
         env:
           ENGINE: ${{ matrix.engine }}
 
       - name: Estabilidad de UI
+        if: always()
         run: node tests/ui-stability.cjs
         env:
           ENGINE: ${{ matrix.engine }}
 
       - name: Timeline y presets personalizados
+        if: always()
         run: node tests/timeline-custom-presets.cjs
         env:
           ENGINE: ${{ matrix.engine }}

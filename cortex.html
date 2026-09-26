@@ -831,8 +831,7 @@ function closeDialog(dialog) {
 }
 
 function setTimelineStatus(text) {
-  const el = document.getElementById('timelineStatus');
-  if (el) el.textContent = text;
+  setText('timelineStatus', text);
 }
 
 /* Intervalo del tick de catch-up. Corto para que el retraso sea imperceptible
@@ -849,6 +848,7 @@ class TimelinePlayer {
     this.boundaryAt = 0;      // reloj de audio: instante en que termina el paso
     this.pausedRemainingMs = 0;
     this.frozenRemainingMs = 0;  // último restante conocido, si el reloj se detiene
+    this.stalled = false;        // el reloj de audio no está corriendo
     this.running = false;
     this.paused = false;
     this.tick = null;
@@ -880,6 +880,7 @@ class TimelinePlayer {
      segundo mostrado, así que el costo por tick es despreciable. */
   refreshStatus() {
     if (!this.running) return;
+    if (this.stalled) return;   // el aviso de audio suspendido tiene prioridad
     const step = timelineState.steps[this.index];
     if (!step) return;
     this.frozenRemainingMs = this.remainingMs;
@@ -917,6 +918,7 @@ class TimelinePlayer {
     this.running = true;
     this.paused = false;
     this.pausedRemainingMs = 0;
+    this.stalled = false;
     this.stepStartedAt = startedAt != null ? startedAt : this.clockNow();
     this.boundaryAt = this.stepStartedAt + durationMs / 1000;
     this.frozenRemainingMs = durationMs;
@@ -943,13 +945,27 @@ class TimelinePlayer {
   }
 
   /* Idempotente: se puede llamar desde el tick, desde el timeout de respaldo
-     y al volver a la pestaña. Si el reloj no está corriendo no hace nada y
-     espera al siguiente tick. */
+     y al volver a la pestaña. */
   catchUp() {
     if (!this.running) return;
-    if (!this.clockRunning()) return;
+    if (!this.clockRunning()) { this.noteClockStall(); return; }
+    this.stalled = false;
     if (this.clockNow() < this.boundaryAt) return;
     this.advance();
+  }
+
+  /* Sin un AudioContext corriendo no hay reloj: `currentTime` no avanza y la
+     secuencia quedaría congelada sin explicación (así se ve en Firefox, que
+     exige un gesto del usuario para arrancar el audio). Se intenta reanudar y,
+     si no se puede, se dice qué hacer en vez de aparentar que está sonando. */
+  noteClockStall() {
+    if (this.stalled) return;
+    this.stalled = true;
+    if (engine.ctx && engine.ctx.state === 'suspended') {
+      try { engine.ctx.resume(); } catch (e) { /* requiere gesto del usuario */ }
+    }
+    if (this.clockRunning()) { this.stalled = false; return; }
+    setTimelineStatus('Audio en pausa: el navegador no habilitó el contexto de audio. Hacé click en Iniciar para que la línea de tiempo avance.');
   }
 
   /* Avanza al paso siguiente usando el límite anterior como nuevo inicio: el
@@ -980,6 +996,7 @@ class TimelinePlayer {
     this.paused = false;
     this.pausedRemainingMs = 0;
     this.frozenRemainingMs = 0;
+    this.stalled = false;
     this.stepStartedAt = 0;
     this.boundaryAt = 0;
     setTimelineStatus('Timeline completado.');
@@ -1030,6 +1047,7 @@ class TimelinePlayer {
     this.paused = false;
     this.pausedRemainingMs = 0;
     this.frozenRemainingMs = 0;
+    this.stalled = false;
     this.index = 0;
     this.stepStartedAt = 0;
     this.boundaryAt = 0;
