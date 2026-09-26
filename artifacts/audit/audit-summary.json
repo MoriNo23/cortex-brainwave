@@ -1,0 +1,65 @@
+{
+  "difftastic": {
+    "version": "0.70.0",
+    "language": "HTML",
+    "status": "changed",
+    "chunks": 7,
+    "alignedLines": 1371
+  },
+  "baseline": "artifacts/audit/cortex-transcript-baseline.html",
+  "target": "cortex.html",
+  "astGrep": {
+    "version": "0.45.3",
+    "queries": [
+      {
+        "file": "artifacts/audit/ast-grep-animation.json",
+        "matches": 2,
+        "texts": [
+          "requestAnimationFrame(renderLoop)",
+          "requestAnimationFrame(renderLoop)"
+        ]
+      },
+      {
+        "file": "artifacts/audit/ast-grep-connect.json",
+        "matches": 42,
+        "texts": [
+          "this.masterGain.connect(ctx.destination)",
+          "this.carrierOsc.connect(this.carrierGain)",
+          "this.carrierGain.connect(this.amModGain)",
+          "this.amLfo.connect(this.amLfoGain)",
+          "this.amLfoGain.connect(this.amModGain.gain)",
+          "this.binOscL.connect(this.binGainL).connect(this.binPanL)",
+          "this.binOscL.connect(this.binGainL)",
+          "this.binOscR.connect(this.binGainR).connect(this.binPanR)"
+        ]
+      },
+      {
+        "file": "artifacts/audit/ast-grep-radar-function.json",
+        "matches": 1,
+        "texts": [
+          "function drawRadarFrame(now = performance.now()) {"
+        ]
+      },
+      {
+        "file": "artifacts/audit/ast-grep-stereo-panner.json",
+        "matches": 6,
+        "texts": [
+          "ctx.createStereoPanner()",
+          "ctx.createStereoPanner()",
+          "ctx.createStereoPanner()",
+          "offCtx.createStereoPanner()",
+          "offCtx.createStereoPanner()",
+          "offCtx.createStereoPanner()"
+        ]
+      },
+      {
+        "file": "artifacts/audit/ast-grep-stereo.json",
+        "matches": 1,
+        "texts": [
+          "state.stereo = d.stereo"
+        ]
+      }
+    ]
+  },
+  "interpretation": "Structural changes are expected because cortex.html is the reconstructed runnable app; this is an audit artifact, not a claim that the transcript and implementation are byte-identical."
+}

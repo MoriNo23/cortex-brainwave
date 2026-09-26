@@ -1,0 +1,49 @@
+[
+{
+  "text": "state.stereo = d.stereo",
+  "range": {
+    "byteOffset": {
+      "start": 17853,
+      "end": 17876
+    },
+    "start": {
+      "line": 471,
+      "column": 2
+    },
+    "end": {
+      "line": 471,
+      "column": 25
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  state.stereo = d.stereo; state.fmod = d.fmod; state.noise = d.noise;",
+  "charCount": {
+    "leading": 2,
+    "trailing": 45
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "VALUE": {
+        "text": "d.stereo",
+        "range": {
+          "byteOffset": {
+            "start": 17868,
+            "end": 17876
+          },
+          "start": {
+            "line": 471,
+            "column": 17
+          },
+          "end": {
+            "line": 471,
+            "column": 25
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+}
+]

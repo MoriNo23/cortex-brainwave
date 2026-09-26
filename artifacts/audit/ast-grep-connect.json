@@ -1,0 +1,2690 @@
+[
+{
+  "text": "this.masterGain.connect(ctx.destination)",
+  "range": {
+    "byteOffset": {
+      "start": 2406,
+      "end": 2446
+    },
+    "start": {
+      "line": 58,
+      "column": 4
+    },
+    "end": {
+      "line": 58,
+      "column": 44
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "    this.masterGain.connect(ctx.destination);",
+  "charCount": {
+    "leading": 4,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "ctx.destination",
+        "range": {
+          "byteOffset": {
+            "start": 2430,
+            "end": 2445
+          },
+          "start": {
+            "line": 58,
+            "column": 28
+          },
+          "end": {
+            "line": 58,
+            "column": 43
+          }
+        }
+      },
+      "OBJ": {
+        "text": "this.masterGain",
+        "range": {
+          "byteOffset": {
+            "start": 2406,
+            "end": 2421
+          },
+          "start": {
+            "line": 58,
+            "column": 4
+          },
+          "end": {
+            "line": 58,
+            "column": 19
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "this.carrierOsc.connect(this.carrierGain)",
+  "range": {
+    "byteOffset": {
+      "start": 2668,
+      "end": 2709
+    },
+    "start": {
+      "line": 65,
+      "column": 4
+    },
+    "end": {
+      "line": 65,
+      "column": 45
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "    this.carrierOsc.connect(this.carrierGain);",
+  "charCount": {
+    "leading": 4,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "OBJ": {
+        "text": "this.carrierOsc",
+        "range": {
+          "byteOffset": {
+            "start": 2668,
+            "end": 2683
+          },
+          "start": {
+            "line": 65,
+            "column": 4
+          },
+          "end": {
+            "line": 65,
+            "column": 19
+          }
+        }
+      },
+      "TARGET": {
+        "text": "this.carrierGain",
+        "range": {
+          "byteOffset": {
+            "start": 2692,
+            "end": 2708
+          },
+          "start": {
+            "line": 65,
+            "column": 28
+          },
+          "end": {
+            "line": 65,
+            "column": 44
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "this.carrierGain.connect(this.amModGain)",
+  "range": {
+    "byteOffset": {
+      "start": 2790,
+      "end": 2830
+    },
+    "start": {
+      "line": 69,
+      "column": 4
+    },
+    "end": {
+      "line": 69,
+      "column": 44
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "    this.carrierGain.connect(this.amModGain);",
+  "charCount": {
+    "leading": 4,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "this.amModGain",
+        "range": {
+          "byteOffset": {
+            "start": 2815,
+            "end": 2829
+          },
+          "start": {
+            "line": 69,
+            "column": 29
+          },
+          "end": {
+            "line": 69,
+            "column": 43
+          }
+        }
+      },
+      "OBJ": {
+        "text": "this.carrierGain",
+        "range": {
+          "byteOffset": {
+            "start": 2790,
+            "end": 2806
+          },
+          "start": {
+            "line": 69,
+            "column": 4
+          },
+          "end": {
+            "line": 69,
+            "column": 20
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "this.amLfo.connect(this.amLfoGain)",
+  "range": {
+    "byteOffset": {
+      "start": 3032,
+      "end": 3066
+    },
+    "start": {
+      "line": 76,
+      "column": 4
+    },
+    "end": {
+      "line": 76,
+      "column": 38
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "    this.amLfo.connect(this.amLfoGain);",
+  "charCount": {
+    "leading": 4,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "OBJ": {
+        "text": "this.amLfo",
+        "range": {
+          "byteOffset": {
+            "start": 3032,
+            "end": 3042
+          },
+          "start": {
+            "line": 76,
+            "column": 4
+          },
+          "end": {
+            "line": 76,
+            "column": 14
+          }
+        }
+      },
+      "TARGET": {
+        "text": "this.amLfoGain",
+        "range": {
+          "byteOffset": {
+            "start": 3051,
+            "end": 3065
+          },
+          "start": {
+            "line": 76,
+            "column": 23
+          },
+          "end": {
+            "line": 76,
+            "column": 37
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "this.amLfoGain.connect(this.amModGain.gain)",
+  "range": {
+    "byteOffset": {
+      "start": 3072,
+      "end": 3115
+    },
+    "start": {
+      "line": 77,
+      "column": 4
+    },
+    "end": {
+      "line": 77,
+      "column": 47
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "    this.amLfoGain.connect(this.amModGain.gain);",
+  "charCount": {
+    "leading": 4,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "this.amModGain.gain",
+        "range": {
+          "byteOffset": {
+            "start": 3095,
+            "end": 3114
+          },
+          "start": {
+            "line": 77,
+            "column": 27
+          },
+          "end": {
+            "line": 77,
+            "column": 46
+          }
+        }
+      },
+      "OBJ": {
+        "text": "this.amLfoGain",
+        "range": {
+          "byteOffset": {
+            "start": 3072,
+            "end": 3086
+          },
+          "start": {
+            "line": 77,
+            "column": 4
+          },
+          "end": {
+            "line": 77,
+            "column": 18
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "this.binOscL.connect(this.binGainL).connect(this.binPanL)",
+  "range": {
+    "byteOffset": {
+      "start": 3665,
+      "end": 3722
+    },
+    "start": {
+      "line": 87,
+      "column": 4
+    },
+    "end": {
+      "line": 87,
+      "column": 61
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "    this.binOscL.connect(this.binGainL).connect(this.binPanL);",
+  "charCount": {
+    "leading": 4,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "this.binPanL",
+        "range": {
+          "byteOffset": {
+            "start": 3709,
+            "end": 3721
+          },
+          "start": {
+            "line": 87,
+            "column": 48
+          },
+          "end": {
+            "line": 87,
+            "column": 60
+          }
+        }
+      },
+      "OBJ": {
+        "text": "this.binOscL.connect(this.binGainL)",
+        "range": {
+          "byteOffset": {
+            "start": 3665,
+            "end": 3700
+          },
+          "start": {
+            "line": 87,
+            "column": 4
+          },
+          "end": {
+            "line": 87,
+            "column": 39
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "this.binOscL.connect(this.binGainL)",
+  "range": {
+    "byteOffset": {
+      "start": 3665,
+      "end": 3700
+    },
+    "start": {
+      "line": 87,
+      "column": 4
+    },
+    "end": {
+      "line": 87,
+      "column": 39
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "    this.binOscL.connect(this.binGainL).connect(this.binPanL);",
+  "charCount": {
+    "leading": 4,
+    "trailing": 23
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "this.binGainL",
+        "range": {
+          "byteOffset": {
+            "start": 3686,
+            "end": 3699
+          },
+          "start": {
+            "line": 87,
+            "column": 25
+          },
+          "end": {
+            "line": 87,
+            "column": 38
+          }
+        }
+      },
+      "OBJ": {
+        "text": "this.binOscL",
+        "range": {
+          "byteOffset": {
+            "start": 3665,
+            "end": 3677
+          },
+          "start": {
+            "line": 87,
+            "column": 4
+          },
+          "end": {
+            "line": 87,
+            "column": 16
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "this.binOscR.connect(this.binGainR).connect(this.binPanR)",
+  "range": {
+    "byteOffset": {
+      "start": 3728,
+      "end": 3785
+    },
+    "start": {
+      "line": 88,
+      "column": 4
+    },
+    "end": {
+      "line": 88,
+      "column": 61
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "    this.binOscR.connect(this.binGainR).connect(this.binPanR);",
+  "charCount": {
+    "leading": 4,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "OBJ": {
+        "text": "this.binOscR.connect(this.binGainR)",
+        "range": {
+          "byteOffset": {
+            "start": 3728,
+            "end": 3763
+          },
+          "start": {
+            "line": 88,
+            "column": 4
+          },
+          "end": {
+            "line": 88,
+            "column": 39
+          }
+        }
+      },
+      "TARGET": {
+        "text": "this.binPanR",
+        "range": {
+          "byteOffset": {
+            "start": 3772,
+            "end": 3784
+          },
+          "start": {
+            "line": 88,
+            "column": 48
+          },
+          "end": {
+            "line": 88,
+            "column": 60
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "this.binOscR.connect(this.binGainR)",
+  "range": {
+    "byteOffset": {
+      "start": 3728,
+      "end": 3763
+    },
+    "start": {
+      "line": 88,
+      "column": 4
+    },
+    "end": {
+      "line": 88,
+      "column": 39
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "    this.binOscR.connect(this.binGainR).connect(this.binPanR);",
+  "charCount": {
+    "leading": 4,
+    "trailing": 23
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "this.binGainR",
+        "range": {
+          "byteOffset": {
+            "start": 3749,
+            "end": 3762
+          },
+          "start": {
+            "line": 88,
+            "column": 25
+          },
+          "end": {
+            "line": 88,
+            "column": 38
+          }
+        }
+      },
+      "OBJ": {
+        "text": "this.binOscR",
+        "range": {
+          "byteOffset": {
+            "start": 3728,
+            "end": 3740
+          },
+          "start": {
+            "line": 88,
+            "column": 4
+          },
+          "end": {
+            "line": 88,
+            "column": 16
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "this.stereoOsc.connect(this.stereoGain).connect(this.stereoPanner)",
+  "range": {
+    "byteOffset": {
+      "start": 4074,
+      "end": 4140
+    },
+    "start": {
+      "line": 94,
+      "column": 4
+    },
+    "end": {
+      "line": 94,
+      "column": 70
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "    this.stereoOsc.connect(this.stereoGain).connect(this.stereoPanner);",
+  "charCount": {
+    "leading": 4,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "this.stereoPanner",
+        "range": {
+          "byteOffset": {
+            "start": 4122,
+            "end": 4139
+          },
+          "start": {
+            "line": 94,
+            "column": 52
+          },
+          "end": {
+            "line": 94,
+            "column": 69
+          }
+        }
+      },
+      "OBJ": {
+        "text": "this.stereoOsc.connect(this.stereoGain)",
+        "range": {
+          "byteOffset": {
+            "start": 4074,
+            "end": 4113
+          },
+          "start": {
+            "line": 94,
+            "column": 4
+          },
+          "end": {
+            "line": 94,
+            "column": 43
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "this.stereoOsc.connect(this.stereoGain)",
+  "range": {
+    "byteOffset": {
+      "start": 4074,
+      "end": 4113
+    },
+    "start": {
+      "line": 94,
+      "column": 4
+    },
+    "end": {
+      "line": 94,
+      "column": 43
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "    this.stereoOsc.connect(this.stereoGain).connect(this.stereoPanner);",
+  "charCount": {
+    "leading": 4,
+    "trailing": 28
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "OBJ": {
+        "text": "this.stereoOsc",
+        "range": {
+          "byteOffset": {
+            "start": 4074,
+            "end": 4088
+          },
+          "start": {
+            "line": 94,
+            "column": 4
+          },
+          "end": {
+            "line": 94,
+            "column": 18
+          }
+        }
+      },
+      "TARGET": {
+        "text": "this.stereoGain",
+        "range": {
+          "byteOffset": {
+            "start": 4097,
+            "end": 4112
+          },
+          "start": {
+            "line": 94,
+            "column": 27
+          },
+          "end": {
+            "line": 94,
+            "column": 42
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "this.stereoLfo.connect(this.stereoLfoGain)",
+  "range": {
+    "byteOffset": {
+      "start": 4353,
+      "end": 4395
+    },
+    "start": {
+      "line": 98,
+      "column": 4
+    },
+    "end": {
+      "line": 98,
+      "column": 46
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "    this.stereoLfo.connect(this.stereoLfoGain);",
+  "charCount": {
+    "leading": 4,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "OBJ": {
+        "text": "this.stereoLfo",
+        "range": {
+          "byteOffset": {
+            "start": 4353,
+            "end": 4367
+          },
+          "start": {
+            "line": 98,
+            "column": 4
+          },
+          "end": {
+            "line": 98,
+            "column": 18
+          }
+        }
+      },
+      "TARGET": {
+        "text": "this.stereoLfoGain",
+        "range": {
+          "byteOffset": {
+            "start": 4376,
+            "end": 4394
+          },
+          "start": {
+            "line": 98,
+            "column": 27
+          },
+          "end": {
+            "line": 98,
+            "column": 45
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "this.stereoLfoGain.connect(this.stereoPanner.pan)",
+  "range": {
+    "byteOffset": {
+      "start": 4401,
+      "end": 4450
+    },
+    "start": {
+      "line": 99,
+      "column": 4
+    },
+    "end": {
+      "line": 99,
+      "column": 53
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "    this.stereoLfoGain.connect(this.stereoPanner.pan);",
+  "charCount": {
+    "leading": 4,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "this.stereoPanner.pan",
+        "range": {
+          "byteOffset": {
+            "start": 4428,
+            "end": 4449
+          },
+          "start": {
+            "line": 99,
+            "column": 31
+          },
+          "end": {
+            "line": 99,
+            "column": 52
+          }
+        }
+      },
+      "OBJ": {
+        "text": "this.stereoLfoGain",
+        "range": {
+          "byteOffset": {
+            "start": 4401,
+            "end": 4419
+          },
+          "start": {
+            "line": 99,
+            "column": 4
+          },
+          "end": {
+            "line": 99,
+            "column": 22
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "this.fmLfo.connect(this.fmLfoDepth)",
+  "range": {
+    "byteOffset": {
+      "start": 4646,
+      "end": 4681
+    },
+    "start": {
+      "line": 104,
+      "column": 4
+    },
+    "end": {
+      "line": 104,
+      "column": 39
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "    this.fmLfo.connect(this.fmLfoDepth);",
+  "charCount": {
+    "leading": 4,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "OBJ": {
+        "text": "this.fmLfo",
+        "range": {
+          "byteOffset": {
+            "start": 4646,
+            "end": 4656
+          },
+          "start": {
+            "line": 104,
+            "column": 4
+          },
+          "end": {
+            "line": 104,
+            "column": 14
+          }
+        }
+      },
+      "TARGET": {
+        "text": "this.fmLfoDepth",
+        "range": {
+          "byteOffset": {
+            "start": 4665,
+            "end": 4680
+          },
+          "start": {
+            "line": 104,
+            "column": 23
+          },
+          "end": {
+            "line": 104,
+            "column": 38
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "this.fmLfoDepth.connect(this.carrierOsc.frequency)",
+  "range": {
+    "byteOffset": {
+      "start": 4687,
+      "end": 4737
+    },
+    "start": {
+      "line": 105,
+      "column": 4
+    },
+    "end": {
+      "line": 105,
+      "column": 54
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "    this.fmLfoDepth.connect(this.carrierOsc.frequency);",
+  "charCount": {
+    "leading": 4,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "this.carrierOsc.frequency",
+        "range": {
+          "byteOffset": {
+            "start": 4711,
+            "end": 4736
+          },
+          "start": {
+            "line": 105,
+            "column": 28
+          },
+          "end": {
+            "line": 105,
+            "column": 53
+          }
+        }
+      },
+      "OBJ": {
+        "text": "this.fmLfoDepth",
+        "range": {
+          "byteOffset": {
+            "start": 4687,
+            "end": 4702
+          },
+          "start": {
+            "line": 105,
+            "column": 4
+          },
+          "end": {
+            "line": 105,
+            "column": 19
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "this.noiseSource.connect(this.noiseGain)",
+  "range": {
+    "byteOffset": {
+      "start": 5174,
+      "end": 5214
+    },
+    "start": {
+      "line": 114,
+      "column": 4
+    },
+    "end": {
+      "line": 114,
+      "column": 44
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "    this.noiseSource.connect(this.noiseGain);",
+  "charCount": {
+    "leading": 4,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "this.noiseGain",
+        "range": {
+          "byteOffset": {
+            "start": 5199,
+            "end": 5213
+          },
+          "start": {
+            "line": 114,
+            "column": 29
+          },
+          "end": {
+            "line": 114,
+            "column": 43
+          }
+        }
+      },
+      "OBJ": {
+        "text": "this.noiseSource",
+        "range": {
+          "byteOffset": {
+            "start": 5174,
+            "end": 5190
+          },
+          "start": {
+            "line": 114,
+            "column": 4
+          },
+          "end": {
+            "line": 114,
+            "column": 20
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "this.amModGain.connect(this.masterGain)",
+  "range": {
+    "byteOffset": {
+      "start": 5221,
+      "end": 5260
+    },
+    "start": {
+      "line": 116,
+      "column": 4
+    },
+    "end": {
+      "line": 116,
+      "column": 43
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "    this.amModGain.connect(this.masterGain);",
+  "charCount": {
+    "leading": 4,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "OBJ": {
+        "text": "this.amModGain",
+        "range": {
+          "byteOffset": {
+            "start": 5221,
+            "end": 5235
+          },
+          "start": {
+            "line": 116,
+            "column": 4
+          },
+          "end": {
+            "line": 116,
+            "column": 18
+          }
+        }
+      },
+      "TARGET": {
+        "text": "this.masterGain",
+        "range": {
+          "byteOffset": {
+            "start": 5244,
+            "end": 5259
+          },
+          "start": {
+            "line": 116,
+            "column": 27
+          },
+          "end": {
+            "line": 116,
+            "column": 42
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "this.binPanL.connect(this.masterGain)",
+  "range": {
+    "byteOffset": {
+      "start": 5266,
+      "end": 5303
+    },
+    "start": {
+      "line": 117,
+      "column": 4
+    },
+    "end": {
+      "line": 117,
+      "column": 41
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "    this.binPanL.connect(this.masterGain);",
+  "charCount": {
+    "leading": 4,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "this.masterGain",
+        "range": {
+          "byteOffset": {
+            "start": 5287,
+            "end": 5302
+          },
+          "start": {
+            "line": 117,
+            "column": 25
+          },
+          "end": {
+            "line": 117,
+            "column": 40
+          }
+        }
+      },
+      "OBJ": {
+        "text": "this.binPanL",
+        "range": {
+          "byteOffset": {
+            "start": 5266,
+            "end": 5278
+          },
+          "start": {
+            "line": 117,
+            "column": 4
+          },
+          "end": {
+            "line": 117,
+            "column": 16
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "this.binPanR.connect(this.masterGain)",
+  "range": {
+    "byteOffset": {
+      "start": 5309,
+      "end": 5346
+    },
+    "start": {
+      "line": 118,
+      "column": 4
+    },
+    "end": {
+      "line": 118,
+      "column": 41
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "    this.binPanR.connect(this.masterGain);",
+  "charCount": {
+    "leading": 4,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "OBJ": {
+        "text": "this.binPanR",
+        "range": {
+          "byteOffset": {
+            "start": 5309,
+            "end": 5321
+          },
+          "start": {
+            "line": 118,
+            "column": 4
+          },
+          "end": {
+            "line": 118,
+            "column": 16
+          }
+        }
+      },
+      "TARGET": {
+        "text": "this.masterGain",
+        "range": {
+          "byteOffset": {
+            "start": 5330,
+            "end": 5345
+          },
+          "start": {
+            "line": 118,
+            "column": 25
+          },
+          "end": {
+            "line": 118,
+            "column": 40
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "this.stereoPanner.connect(this.masterGain)",
+  "range": {
+    "byteOffset": {
+      "start": 5352,
+      "end": 5394
+    },
+    "start": {
+      "line": 119,
+      "column": 4
+    },
+    "end": {
+      "line": 119,
+      "column": 46
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "    this.stereoPanner.connect(this.masterGain);",
+  "charCount": {
+    "leading": 4,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "this.masterGain",
+        "range": {
+          "byteOffset": {
+            "start": 5378,
+            "end": 5393
+          },
+          "start": {
+            "line": 119,
+            "column": 30
+          },
+          "end": {
+            "line": 119,
+            "column": 45
+          }
+        }
+      },
+      "OBJ": {
+        "text": "this.stereoPanner",
+        "range": {
+          "byteOffset": {
+            "start": 5352,
+            "end": 5369
+          },
+          "start": {
+            "line": 119,
+            "column": 4
+          },
+          "end": {
+            "line": 119,
+            "column": 21
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "this.noiseGain.connect(this.masterGain)",
+  "range": {
+    "byteOffset": {
+      "start": 5400,
+      "end": 5439
+    },
+    "start": {
+      "line": 120,
+      "column": 4
+    },
+    "end": {
+      "line": 120,
+      "column": 43
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "    this.noiseGain.connect(this.masterGain);",
+  "charCount": {
+    "leading": 4,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "OBJ": {
+        "text": "this.noiseGain",
+        "range": {
+          "byteOffset": {
+            "start": 5400,
+            "end": 5414
+          },
+          "start": {
+            "line": 120,
+            "column": 4
+          },
+          "end": {
+            "line": 120,
+            "column": 18
+          }
+        }
+      },
+      "TARGET": {
+        "text": "this.masterGain",
+        "range": {
+          "byteOffset": {
+            "start": 5423,
+            "end": 5438
+          },
+          "start": {
+            "line": 120,
+            "column": 27
+          },
+          "end": {
+            "line": 120,
+            "column": 42
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "master.connect(offCtx.destination)",
+  "range": {
+    "byteOffset": {
+      "start": 23662,
+      "end": 23696
+    },
+    "start": {
+      "line": 581,
+      "column": 2
+    },
+    "end": {
+      "line": 581,
+      "column": 36
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  master.connect(offCtx.destination);",
+  "charCount": {
+    "leading": 2,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "offCtx.destination",
+        "range": {
+          "byteOffset": {
+            "start": 23677,
+            "end": 23695
+          },
+          "start": {
+            "line": 581,
+            "column": 17
+          },
+          "end": {
+            "line": 581,
+            "column": 35
+          }
+        }
+      },
+      "OBJ": {
+        "text": "master",
+        "range": {
+          "byteOffset": {
+            "start": 23662,
+            "end": 23668
+          },
+          "start": {
+            "line": 581,
+            "column": 2
+          },
+          "end": {
+            "line": 581,
+            "column": 8
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "carrier.connect(cGain)",
+  "range": {
+    "byteOffset": {
+      "start": 23874,
+      "end": 23896
+    },
+    "start": {
+      "line": 586,
+      "column": 2
+    },
+    "end": {
+      "line": 586,
+      "column": 24
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  carrier.connect(cGain);",
+  "charCount": {
+    "leading": 2,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "cGain",
+        "range": {
+          "byteOffset": {
+            "start": 23890,
+            "end": 23895
+          },
+          "start": {
+            "line": 586,
+            "column": 18
+          },
+          "end": {
+            "line": 586,
+            "column": 23
+          }
+        }
+      },
+      "OBJ": {
+        "text": "carrier",
+        "range": {
+          "byteOffset": {
+            "start": 23874,
+            "end": 23881
+          },
+          "start": {
+            "line": 586,
+            "column": 2
+          },
+          "end": {
+            "line": 586,
+            "column": 9
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "cGain.connect(amMod)",
+  "range": {
+    "byteOffset": {
+      "start": 23959,
+      "end": 23979
+    },
+    "start": {
+      "line": 588,
+      "column": 2
+    },
+    "end": {
+      "line": 588,
+      "column": 22
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  cGain.connect(amMod);",
+  "charCount": {
+    "leading": 2,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "amMod",
+        "range": {
+          "byteOffset": {
+            "start": 23973,
+            "end": 23978
+          },
+          "start": {
+            "line": 588,
+            "column": 16
+          },
+          "end": {
+            "line": 588,
+            "column": 21
+          }
+        }
+      },
+      "OBJ": {
+        "text": "cGain",
+        "range": {
+          "byteOffset": {
+            "start": 23959,
+            "end": 23964
+          },
+          "start": {
+            "line": 588,
+            "column": 2
+          },
+          "end": {
+            "line": 588,
+            "column": 7
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "amLfo.connect(amDepth).connect(amMod.gain)",
+  "range": {
+    "byteOffset": {
+      "start": 24145,
+      "end": 24187
+    },
+    "start": {
+      "line": 591,
+      "column": 2
+    },
+    "end": {
+      "line": 591,
+      "column": 44
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  amLfo.connect(amDepth).connect(amMod.gain);",
+  "charCount": {
+    "leading": 2,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "amMod.gain",
+        "range": {
+          "byteOffset": {
+            "start": 24176,
+            "end": 24186
+          },
+          "start": {
+            "line": 591,
+            "column": 33
+          },
+          "end": {
+            "line": 591,
+            "column": 43
+          }
+        }
+      },
+      "OBJ": {
+        "text": "amLfo.connect(amDepth)",
+        "range": {
+          "byteOffset": {
+            "start": 24145,
+            "end": 24167
+          },
+          "start": {
+            "line": 591,
+            "column": 2
+          },
+          "end": {
+            "line": 591,
+            "column": 24
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "amLfo.connect(amDepth)",
+  "range": {
+    "byteOffset": {
+      "start": 24145,
+      "end": 24167
+    },
+    "start": {
+      "line": 591,
+      "column": 2
+    },
+    "end": {
+      "line": 591,
+      "column": 24
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  amLfo.connect(amDepth).connect(amMod.gain);",
+  "charCount": {
+    "leading": 2,
+    "trailing": 21
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "OBJ": {
+        "text": "amLfo",
+        "range": {
+          "byteOffset": {
+            "start": 24145,
+            "end": 24150
+          },
+          "start": {
+            "line": 591,
+            "column": 2
+          },
+          "end": {
+            "line": 591,
+            "column": 7
+          }
+        }
+      },
+      "TARGET": {
+        "text": "amDepth",
+        "range": {
+          "byteOffset": {
+            "start": 24159,
+            "end": 24166
+          },
+          "start": {
+            "line": 591,
+            "column": 16
+          },
+          "end": {
+            "line": 591,
+            "column": 23
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "binL.connect(bGL).connect(pL).connect(master)",
+  "range": {
+    "byteOffset": {
+      "start": 24653,
+      "end": 24698
+    },
+    "start": {
+      "line": 600,
+      "column": 2
+    },
+    "end": {
+      "line": 600,
+      "column": 47
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  binL.connect(bGL).connect(pL).connect(master);",
+  "charCount": {
+    "leading": 2,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "master",
+        "range": {
+          "byteOffset": {
+            "start": 24691,
+            "end": 24697
+          },
+          "start": {
+            "line": 600,
+            "column": 40
+          },
+          "end": {
+            "line": 600,
+            "column": 46
+          }
+        }
+      },
+      "OBJ": {
+        "text": "binL.connect(bGL).connect(pL)",
+        "range": {
+          "byteOffset": {
+            "start": 24653,
+            "end": 24682
+          },
+          "start": {
+            "line": 600,
+            "column": 2
+          },
+          "end": {
+            "line": 600,
+            "column": 31
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "binL.connect(bGL).connect(pL)",
+  "range": {
+    "byteOffset": {
+      "start": 24653,
+      "end": 24682
+    },
+    "start": {
+      "line": 600,
+      "column": 2
+    },
+    "end": {
+      "line": 600,
+      "column": 31
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  binL.connect(bGL).connect(pL).connect(master);",
+  "charCount": {
+    "leading": 2,
+    "trailing": 17
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "pL",
+        "range": {
+          "byteOffset": {
+            "start": 24679,
+            "end": 24681
+          },
+          "start": {
+            "line": 600,
+            "column": 28
+          },
+          "end": {
+            "line": 600,
+            "column": 30
+          }
+        }
+      },
+      "OBJ": {
+        "text": "binL.connect(bGL)",
+        "range": {
+          "byteOffset": {
+            "start": 24653,
+            "end": 24670
+          },
+          "start": {
+            "line": 600,
+            "column": 2
+          },
+          "end": {
+            "line": 600,
+            "column": 19
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "binL.connect(bGL)",
+  "range": {
+    "byteOffset": {
+      "start": 24653,
+      "end": 24670
+    },
+    "start": {
+      "line": 600,
+      "column": 2
+    },
+    "end": {
+      "line": 600,
+      "column": 19
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  binL.connect(bGL).connect(pL).connect(master);",
+  "charCount": {
+    "leading": 2,
+    "trailing": 29
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "bGL",
+        "range": {
+          "byteOffset": {
+            "start": 24666,
+            "end": 24669
+          },
+          "start": {
+            "line": 600,
+            "column": 15
+          },
+          "end": {
+            "line": 600,
+            "column": 18
+          }
+        }
+      },
+      "OBJ": {
+        "text": "binL",
+        "range": {
+          "byteOffset": {
+            "start": 24653,
+            "end": 24657
+          },
+          "start": {
+            "line": 600,
+            "column": 2
+          },
+          "end": {
+            "line": 600,
+            "column": 6
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "binR.connect(bGR).connect(pR).connect(master)",
+  "range": {
+    "byteOffset": {
+      "start": 24702,
+      "end": 24747
+    },
+    "start": {
+      "line": 601,
+      "column": 2
+    },
+    "end": {
+      "line": 601,
+      "column": 47
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  binR.connect(bGR).connect(pR).connect(master);",
+  "charCount": {
+    "leading": 2,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "OBJ": {
+        "text": "binR.connect(bGR).connect(pR)",
+        "range": {
+          "byteOffset": {
+            "start": 24702,
+            "end": 24731
+          },
+          "start": {
+            "line": 601,
+            "column": 2
+          },
+          "end": {
+            "line": 601,
+            "column": 31
+          }
+        }
+      },
+      "TARGET": {
+        "text": "master",
+        "range": {
+          "byteOffset": {
+            "start": 24740,
+            "end": 24746
+          },
+          "start": {
+            "line": 601,
+            "column": 40
+          },
+          "end": {
+            "line": 601,
+            "column": 46
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "binR.connect(bGR).connect(pR)",
+  "range": {
+    "byteOffset": {
+      "start": 24702,
+      "end": 24731
+    },
+    "start": {
+      "line": 601,
+      "column": 2
+    },
+    "end": {
+      "line": 601,
+      "column": 31
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  binR.connect(bGR).connect(pR).connect(master);",
+  "charCount": {
+    "leading": 2,
+    "trailing": 17
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "pR",
+        "range": {
+          "byteOffset": {
+            "start": 24728,
+            "end": 24730
+          },
+          "start": {
+            "line": 601,
+            "column": 28
+          },
+          "end": {
+            "line": 601,
+            "column": 30
+          }
+        }
+      },
+      "OBJ": {
+        "text": "binR.connect(bGR)",
+        "range": {
+          "byteOffset": {
+            "start": 24702,
+            "end": 24719
+          },
+          "start": {
+            "line": 601,
+            "column": 2
+          },
+          "end": {
+            "line": 601,
+            "column": 19
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "binR.connect(bGR)",
+  "range": {
+    "byteOffset": {
+      "start": 24702,
+      "end": 24719
+    },
+    "start": {
+      "line": 601,
+      "column": 2
+    },
+    "end": {
+      "line": 601,
+      "column": 19
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  binR.connect(bGR).connect(pR).connect(master);",
+  "charCount": {
+    "leading": 2,
+    "trailing": 29
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "OBJ": {
+        "text": "binR",
+        "range": {
+          "byteOffset": {
+            "start": 24702,
+            "end": 24706
+          },
+          "start": {
+            "line": 601,
+            "column": 2
+          },
+          "end": {
+            "line": 601,
+            "column": 6
+          }
+        }
+      },
+      "TARGET": {
+        "text": "bGR",
+        "range": {
+          "byteOffset": {
+            "start": 24715,
+            "end": 24718
+          },
+          "start": {
+            "line": 601,
+            "column": 15
+          },
+          "end": {
+            "line": 601,
+            "column": 18
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "stLfo.connect(stDepth).connect(stP.pan)",
+  "range": {
+    "byteOffset": {
+      "start": 25119,
+      "end": 25158
+    },
+    "start": {
+      "line": 608,
+      "column": 2
+    },
+    "end": {
+      "line": 608,
+      "column": 41
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  stLfo.connect(stDepth).connect(stP.pan);",
+  "charCount": {
+    "leading": 2,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "stP.pan",
+        "range": {
+          "byteOffset": {
+            "start": 25150,
+            "end": 25157
+          },
+          "start": {
+            "line": 608,
+            "column": 33
+          },
+          "end": {
+            "line": 608,
+            "column": 40
+          }
+        }
+      },
+      "OBJ": {
+        "text": "stLfo.connect(stDepth)",
+        "range": {
+          "byteOffset": {
+            "start": 25119,
+            "end": 25141
+          },
+          "start": {
+            "line": 608,
+            "column": 2
+          },
+          "end": {
+            "line": 608,
+            "column": 24
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "stLfo.connect(stDepth)",
+  "range": {
+    "byteOffset": {
+      "start": 25119,
+      "end": 25141
+    },
+    "start": {
+      "line": 608,
+      "column": 2
+    },
+    "end": {
+      "line": 608,
+      "column": 24
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  stLfo.connect(stDepth).connect(stP.pan);",
+  "charCount": {
+    "leading": 2,
+    "trailing": 18
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "stDepth",
+        "range": {
+          "byteOffset": {
+            "start": 25133,
+            "end": 25140
+          },
+          "start": {
+            "line": 608,
+            "column": 16
+          },
+          "end": {
+            "line": 608,
+            "column": 23
+          }
+        }
+      },
+      "OBJ": {
+        "text": "stLfo",
+        "range": {
+          "byteOffset": {
+            "start": 25119,
+            "end": 25124
+          },
+          "start": {
+            "line": 608,
+            "column": 2
+          },
+          "end": {
+            "line": 608,
+            "column": 7
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "stOsc.connect(stG).connect(stP).connect(master)",
+  "range": {
+    "byteOffset": {
+      "start": 25162,
+      "end": 25209
+    },
+    "start": {
+      "line": 609,
+      "column": 2
+    },
+    "end": {
+      "line": 609,
+      "column": 49
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  stOsc.connect(stG).connect(stP).connect(master);",
+  "charCount": {
+    "leading": 2,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "master",
+        "range": {
+          "byteOffset": {
+            "start": 25202,
+            "end": 25208
+          },
+          "start": {
+            "line": 609,
+            "column": 42
+          },
+          "end": {
+            "line": 609,
+            "column": 48
+          }
+        }
+      },
+      "OBJ": {
+        "text": "stOsc.connect(stG).connect(stP)",
+        "range": {
+          "byteOffset": {
+            "start": 25162,
+            "end": 25193
+          },
+          "start": {
+            "line": 609,
+            "column": 2
+          },
+          "end": {
+            "line": 609,
+            "column": 33
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "stOsc.connect(stG).connect(stP)",
+  "range": {
+    "byteOffset": {
+      "start": 25162,
+      "end": 25193
+    },
+    "start": {
+      "line": 609,
+      "column": 2
+    },
+    "end": {
+      "line": 609,
+      "column": 33
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  stOsc.connect(stG).connect(stP).connect(master);",
+  "charCount": {
+    "leading": 2,
+    "trailing": 17
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "OBJ": {
+        "text": "stOsc.connect(stG)",
+        "range": {
+          "byteOffset": {
+            "start": 25162,
+            "end": 25180
+          },
+          "start": {
+            "line": 609,
+            "column": 2
+          },
+          "end": {
+            "line": 609,
+            "column": 20
+          }
+        }
+      },
+      "TARGET": {
+        "text": "stP",
+        "range": {
+          "byteOffset": {
+            "start": 25189,
+            "end": 25192
+          },
+          "start": {
+            "line": 609,
+            "column": 29
+          },
+          "end": {
+            "line": 609,
+            "column": 32
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "stOsc.connect(stG)",
+  "range": {
+    "byteOffset": {
+      "start": 25162,
+      "end": 25180
+    },
+    "start": {
+      "line": 609,
+      "column": 2
+    },
+    "end": {
+      "line": 609,
+      "column": 20
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  stOsc.connect(stG).connect(stP).connect(master);",
+  "charCount": {
+    "leading": 2,
+    "trailing": 30
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "stG",
+        "range": {
+          "byteOffset": {
+            "start": 25176,
+            "end": 25179
+          },
+          "start": {
+            "line": 609,
+            "column": 16
+          },
+          "end": {
+            "line": 609,
+            "column": 19
+          }
+        }
+      },
+      "OBJ": {
+        "text": "stOsc",
+        "range": {
+          "byteOffset": {
+            "start": 25162,
+            "end": 25167
+          },
+          "start": {
+            "line": 609,
+            "column": 2
+          },
+          "end": {
+            "line": 609,
+            "column": 7
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "fmLfo.connect(fmDepth).connect(carrier.frequency)",
+  "range": {
+    "byteOffset": {
+      "start": 25381,
+      "end": 25430
+    },
+    "start": {
+      "line": 613,
+      "column": 2
+    },
+    "end": {
+      "line": 613,
+      "column": 51
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  fmLfo.connect(fmDepth).connect(carrier.frequency);",
+  "charCount": {
+    "leading": 2,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "carrier.frequency",
+        "range": {
+          "byteOffset": {
+            "start": 25412,
+            "end": 25429
+          },
+          "start": {
+            "line": 613,
+            "column": 33
+          },
+          "end": {
+            "line": 613,
+            "column": 50
+          }
+        }
+      },
+      "OBJ": {
+        "text": "fmLfo.connect(fmDepth)",
+        "range": {
+          "byteOffset": {
+            "start": 25381,
+            "end": 25403
+          },
+          "start": {
+            "line": 613,
+            "column": 2
+          },
+          "end": {
+            "line": 613,
+            "column": 24
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "fmLfo.connect(fmDepth)",
+  "range": {
+    "byteOffset": {
+      "start": 25381,
+      "end": 25403
+    },
+    "start": {
+      "line": 613,
+      "column": 2
+    },
+    "end": {
+      "line": 613,
+      "column": 24
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  fmLfo.connect(fmDepth).connect(carrier.frequency);",
+  "charCount": {
+    "leading": 2,
+    "trailing": 28
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "TARGET": {
+        "text": "fmDepth",
+        "range": {
+          "byteOffset": {
+            "start": 25395,
+            "end": 25402
+          },
+          "start": {
+            "line": 613,
+            "column": 16
+          },
+          "end": {
+            "line": 613,
+            "column": 23
+          }
+        }
+      },
+      "OBJ": {
+        "text": "fmLfo",
+        "range": {
+          "byteOffset": {
+            "start": 25381,
+            "end": 25386
+          },
+          "start": {
+            "line": 613,
+            "column": 2
+          },
+          "end": {
+            "line": 613,
+            "column": 7
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "noiseSrc.connect(nGain).connect(master)",
+  "range": {
+    "byteOffset": {
+      "start": 25807,
+      "end": 25846
+    },
+    "start": {
+      "line": 621,
+      "column": 2
+    },
+    "end": {
+      "line": 621,
+      "column": 41
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  noiseSrc.connect(nGain).connect(master);",
+  "charCount": {
+    "leading": 2,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "OBJ": {
+        "text": "noiseSrc.connect(nGain)",
+        "range": {
+          "byteOffset": {
+            "start": 25807,
+            "end": 25830
+          },
+          "start": {
+            "line": 621,
+            "column": 2
+          },
+          "end": {
+            "line": 621,
+            "column": 25
+          }
+        }
+      },
+      "TARGET": {
+        "text": "master",
+        "range": {
+          "byteOffset": {
+            "start": 25839,
+            "end": 25845
+          },
+          "start": {
+            "line": 621,
+            "column": 34
+          },
+          "end": {
+            "line": 621,
+            "column": 40
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "noiseSrc.connect(nGain)",
+  "range": {
+    "byteOffset": {
+      "start": 25807,
+      "end": 25830
+    },
+    "start": {
+      "line": 621,
+      "column": 2
+    },
+    "end": {
+      "line": 621,
+      "column": 25
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  noiseSrc.connect(nGain).connect(master);",
+  "charCount": {
+    "leading": 2,
+    "trailing": 17
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "OBJ": {
+        "text": "noiseSrc",
+        "range": {
+          "byteOffset": {
+            "start": 25807,
+            "end": 25815
+          },
+          "start": {
+            "line": 621,
+            "column": 2
+          },
+          "end": {
+            "line": 621,
+            "column": 10
+          }
+        }
+      },
+      "TARGET": {
+        "text": "nGain",
+        "range": {
+          "byteOffset": {
+            "start": 25824,
+            "end": 25829
+          },
+          "start": {
+            "line": 621,
+            "column": 19
+          },
+          "end": {
+            "line": 621,
+            "column": 24
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+},
+{
+  "text": "amMod.connect(master)",
+  "range": {
+    "byteOffset": {
+      "start": 25850,
+      "end": 25871
+    },
+    "start": {
+      "line": 622,
+      "column": 2
+    },
+    "end": {
+      "line": 622,
+      "column": 23
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  amMod.connect(master);",
+  "charCount": {
+    "leading": 2,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "OBJ": {
+        "text": "amMod",
+        "range": {
+          "byteOffset": {
+            "start": 25850,
+            "end": 25855
+          },
+          "start": {
+            "line": 622,
+            "column": 2
+          },
+          "end": {
+            "line": 622,
+            "column": 7
+          }
+        }
+      },
+      "TARGET": {
+        "text": "master",
+        "range": {
+          "byteOffset": {
+            "start": 25864,
+            "end": 25870
+          },
+          "start": {
+            "line": 622,
+            "column": 16
+          },
+          "end": {
+            "line": 622,
+            "column": 22
+          }
+        }
+      }
+    },
+    "multi": {},
+    "transformed": {}
+  }
+}
+]

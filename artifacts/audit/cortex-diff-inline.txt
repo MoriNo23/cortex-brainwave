@@ -1,0 +1,99 @@
+cortex.html --- 1/7 --- HTML
+ 601    
+ 602    /* ── AUDIO ENGINE (sin cambios en la ruta de audio) ── */
+ 603    class AudioEngine {
+ 604      constructor() { this.ctx = null; this.nodes = {}; this.started = false; }
+ 606      init() {
+ 607        if (this.ctx) return;
+ 608        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    604   constructor() {
+    608     this.needsRebuild = false;
+    609   }
+    611   init() {
+    612     if (!this.ctx) {
+    613       this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    614     }
+    615     if (Object.keys(this.nodes).length > 0) return;
+    616     this.buildGraph();
+    617   }
+    619   buildGraph() {
+    620     const ctx = this.ctx;
+    621 
+    622     this.masterGain = ctx.createGain();
+
+cortex.html --- 2/7 --- HTML
+ 684          noiseSource: this.noiseSource, noiseGain: this.noiseGain,
+ 685          masterGain: this.masterGain
+ 686        };
+ 687      }
+    698   }
+    700   disconnectGraph(graph = this.nodes) {
+    701     Object.values(graph).forEach(node => {
+    702       if (node && typeof node.disconnect === 'function') {
+    703         try { node.disconnect(); } catch (e) { /* already disconnected */ }
+    704       }
+    705     });
+    706   }
+    709     if (this.started) return;
+    711     if (this.needsRebuild) {
+    712       this.disconnectGraph();
+    713       this.nodes = {};
+    714       this.buildGraph();
+    715       this.needsRebuild = false;
+    716     }
+    717     if (this.ctx.state === 'suspended') this.ctx.resume();
+    718     const t = this.ctx.currentTime; const o = this.nodes;
+    719     o.carrierOsc.start(t); o.amLfo.start(t);
+
+cortex.html --- 3/7 --- HTML
+ 707          o.fmLfo.stop(t); o.noiseSource.stop(t);
+ 708        } catch(e) {}
+ 709        this.started = false;
+    736     this.needsRebuild = true;
+    737   }
+    738 
+    739   updateCarrier(freq) {
+
+cortex.html --- 4/7 --- HTML
+ 803    radarCanvas.height = RADAR_SIZE;
+ 804    let radarT0 = performance.now();
+ 805    
+ 806    function drawRadarFrame() {
+    833 function drawRadarFrame(now = performance.now()) {
+    834   const ctx = radarCtx;
+    835   const W = RADAR_SIZE, H = RADAR_SIZE;
+    836   const cx = W/2, cy = H/2;
+
+cortex.html --- 5/7 --- HTML
+ 868      const amodAmt   = state.amod / 100;
+ 869      const noiseAmt  = state.noise / 100;
+ 870    
+ 871      const t = (performance.now() - radarT0) / 1000;
+    898   const t = (now - radarT0) / 1000;
+    901   if (state.playing) {
+    902     /* perception field — stereo: horizontal band */
+    903     if (stereoAmt > 0.03) {
+    904       const ry = headRy * (0.22 + 0.45 * stereoAmt);
+
+cortex.html --- 6/7 --- HTML
+ 917        ctx.ellipse(cx, cy, headRx * pulse, headRy * pulse, 0, 0, Math.PI*2);
+ 918        ctx.stroke();
+ 919      }
+    948   }
+    949 
+    950   /* source dot — oscillates with stereo (X) and f-mod (Y) */
+    951   let srcX = 0, srcY = 0;
+
+cortex.html --- 7/7 --- HTML
+1327    }
+   1359 /* ── TEST EXPORT ── */
+   1360 window.__CORTEX__ = {
+   1361   state, engine, BANDS, bandFromFreq,
+   1362   drawRadarFrame, drawWaveFrame, updateBrain,
+   1363   applyPreset, updateSpatialReadout, saveSettings, loadSettings,
+   1364   syncUIFromState, RADAR_SIZE, getRadarStart: () => radarT0
+   1365 };
+   1366 
+   1367 init();
+   1368 </script>
+

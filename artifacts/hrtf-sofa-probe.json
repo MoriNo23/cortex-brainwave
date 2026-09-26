@@ -1,0 +1,16 @@
+{
+  "status": "NOT_EXECUTED",
+  "productionIntegration": false,
+  "humanListeningRequired": true,
+  "headphonesRequiredForHRTFClaim": true,
+  "cortexContainsStereoPanner": true,
+  "cortexContainsSofaParser": false,
+  "claims": {
+    "validWav": false,
+    "stereoSeparation": false,
+    "stereoPannerNode": false,
+    "visualSnapshot": false,
+    "provesHRTF": false
+  },
+  "reason": "No SOFA parser, HRTF dataset, delay/FIR convolution renderer, or listening session is installed in the isolated spike."
+}

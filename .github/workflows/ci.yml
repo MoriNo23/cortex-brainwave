@@ -1,0 +1,162 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  suite:
+    name: Suite completa (Chromium)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Instalar dependencias
+        run: npm install --no-audit --no-fund
+
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Servir la app en el puerto 4173
+        run: |
+          nohup python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/cortex-server.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:4173/cortex.html > /dev/null; then echo "servidor listo"; exit 0; fi
+            sleep 0.5
+          done
+          echo "el servidor no respondió"; cat /tmp/cortex-server.log; exit 1
+
+      - name: Suite in-page (spec de OpenSpec)
+        run: node tests/run-cortex-tests.cjs
+
+      - name: Estabilidad de UI
+        run: node tests/ui-stability.cjs
+
+      - name: Programación temporal del timeline
+        run: node tests/timeline-scheduling.cjs
+
+      - name: Timeline y presets personalizados
+        run: node tests/timeline-custom-presets.cjs
+
+      - name: Portadora de ruido
+        run: node tests/noise-carrier.cjs
+
+      - name: Exportación WAV
+        run: node tests/wav-e2e.cjs
+
+      - name: Smoke visual
+        run: node tests/visual-smoke.cjs
+
+      - name: Responsive
+        run: node tests/responsive-smoke.cjs
+
+      - name: Audio real (smoke)
+        run: node tests/real-smoke.cjs
+
+      - name: Snapshots deterministas
+        run: node tests/snapshots.cjs
+
+      - name: Subir reportes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportes-chromium
+          path: artifacts/
+          if-no-files-found: warn
+
+  motores:
+    name: Timeline y UI en ${{ matrix.engine }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Instalar dependencias
+        run: npm install --no-audit --no-fund
+
+      - name: Instalar ${{ matrix.engine }}
+        run: npx playwright install --with-deps ${{ matrix.engine }}
+
+      - name: Servir la app en el puerto 4173
+        run: |
+          nohup python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/cortex-server.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:4173/cortex.html > /dev/null; then echo "servidor listo"; exit 0; fi
+            sleep 0.5
+          done
+          echo "el servidor no respondió"; cat /tmp/cortex-server.log; exit 1
+
+      - name: Programación temporal del timeline
+        run: node tests/timeline-scheduling.cjs
+        env:
+          ENGINE: ${{ matrix.engine }}
+
+      - name: Estabilidad de UI
+        run: node tests/ui-stability.cjs
+        env:
+          ENGINE: ${{ matrix.engine }}
+
+      - name: Timeline y presets personalizados
+        run: node tests/timeline-custom-presets.cjs
+        env:
+          ENGINE: ${{ matrix.engine }}
+
+      - name: Subir reportes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportes-${{ matrix.engine }}
+          path: artifacts/
+          if-no-files-found: warn
+
+  matriz:
+    name: Matriz de navegadores (Chromium/Firefox/WebKit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Instalar dependencias
+        run: npm install --no-audit --no-fund
+
+      - name: Instalar los tres motores
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: Servir la app en el puerto 4173
+        run: |
+          nohup python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/cortex-server.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:4173/cortex.html > /dev/null; then echo "servidor listo"; exit 0; fi
+            sleep 0.5
+          done
+          echo "el servidor no respondió"; cat /tmp/cortex-server.log; exit 1
+
+      - name: Matriz de navegadores
+        run: node tests/browser-matrix.cjs
+
+      - name: Subir reporte
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reporte-matriz
+          path: artifacts/browser-matrix.json
+          if-no-files-found: warn

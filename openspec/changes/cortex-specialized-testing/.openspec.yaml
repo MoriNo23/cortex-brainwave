@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-09-18
+goal: Detectar regresiones reales entre controles, grafo Web Audio, radar
+  espacial y animaciones antes de aceptar Cortex.

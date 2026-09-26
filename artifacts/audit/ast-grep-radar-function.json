@@ -1,0 +1,1413 @@
+[
+{
+  "text": "function drawRadarFrame(now = performance.now()) {\n  const ctx = radarCtx;\n  const W = RADAR_SIZE, H = RADAR_SIZE;\n  const cx = W/2, cy = H/2;\n  const R = W/2 - 26;\n\n  ctx.clearRect(0, 0, W, H);\n\n  const headRx = R * 0.74;\n  const headRy = R * 0.92;\n\n  /* distance rings */\n  ctx.strokeStyle = 'rgba(58,54,46,0.45)';\n  ctx.lineWidth = 1;\n  for (let i = 1; i <= 3; i++) {\n    ctx.beginPath();\n    ctx.ellipse(cx, cy, headRx * i/3, headRy * i/3, 0, 0, Math.PI*2);\n    ctx.stroke();\n  }\n\n  /* axes */\n  ctx.beginPath();\n  ctx.moveTo(cx, cy - headRy); ctx.lineTo(cx, cy + headRy);\n  ctx.moveTo(cx - headRx, cy); ctx.lineTo(cx + headRx, cy);\n  ctx.stroke();\n\n  /* head outline */\n  ctx.strokeStyle = '#3A362E';\n  ctx.lineWidth = 1.4;\n  ctx.beginPath();\n  ctx.ellipse(cx, cy, headRx, headRy, 0, 0, Math.PI*2);\n  ctx.stroke();\n\n  /* nose (front) */\n  ctx.fillStyle = '#3A362E';\n  ctx.beginPath();\n  ctx.moveTo(cx, cy - headRy - 10);\n  ctx.lineTo(cx - 7, cy - headRy + 3);\n  ctx.lineTo(cx + 7, cy - headRy + 3);\n  ctx.closePath();\n  ctx.fill();\n\n  /* ears */\n  ctx.beginPath(); ctx.ellipse(cx - headRx - 2, cy, 4, 9, 0, 0, Math.PI*2); ctx.fill();\n  ctx.beginPath(); ctx.ellipse(cx + headRx + 2, cy, 4, 9, 0, 0, Math.PI*2); ctx.fill();\n\n  /* labels */\n  ctx.fillStyle = '#6B6358';\n  ctx.font = '10px \"IBM Plex Mono\", monospace';\n  ctx.textAlign = 'center';\n  ctx.fillText('FRENTE', cx, cy - headRy - 16);\n  ctx.fillText('ATRÁS', cx, cy + headRy + 22);\n  ctx.textAlign = 'left';\n  ctx.fillText('IZQ', cx - headRx - 28, cy + 4);\n  ctx.textAlign = 'right';\n  ctx.fillText('DER', cx + headRx + 28, cy + 4);\n  ctx.textAlign = 'center';\n\n  /* modulation amounts */\n  const stereoAmt = state.stereo / 100;\n  const fmodAmt   = state.fmod / 100;\n  const binAmt    = state.binaural / 100;\n  const amodAmt   = state.amod / 100;\n  const noiseAmt  = state.noise / 100;\n\n  const t = (now - radarT0) / 1000;\n  const phase = t * Math.max(state.brainwave, 0.5) * Math.PI;\n\n  if (state.playing) {\n    /* perception field — stereo: horizontal band */\n    if (stereoAmt > 0.03) {\n      const ry = headRy * (0.22 + 0.45 * stereoAmt);\n      ctx.fillStyle = `rgba(232,168,85,${0.05 + 0.12 * stereoAmt})`;\n      ctx.beginPath();\n      ctx.ellipse(cx, cy, headRx, ry, 0, 0, Math.PI*2);\n      ctx.fill();\n    }\n    /* f-mod: vertical band (front-back) */\n    if (fmodAmt > 0.03) {\n      const rx = headRx * (0.22 + 0.45 * fmodAmt);\n      ctx.fillStyle = `rgba(74,155,142,${0.05 + 0.12 * fmodAmt})`;\n      ctx.beginPath();\n      ctx.ellipse(cx, cy, rx, headRy, 0, 0, Math.PI*2);\n      ctx.fill();\n    }\n    /* binaural: two lobes at the ears */\n    if (binAmt > 0.03) {\n      ctx.fillStyle = `rgba(232,168,85,${0.07 + 0.12 * binAmt})`;\n      const lx = headRx * (0.45 + 0.25 * binAmt);\n      const ly = headRy * (0.35 + 0.2 * binAmt);\n      ctx.beginPath(); ctx.ellipse(cx - lx, cy, headRx*0.28, ly, 0, 0, Math.PI*2); ctx.fill();\n      ctx.beginPath(); ctx.ellipse(cx + lx, cy, headRx*0.28, ly, 0, 0, Math.PI*2); ctx.fill();\n    }\n    /* noise: diffuse cloud */\n    if (noiseAmt > 0.03) {\n      for (let i = 0; i < 14; i++) {\n        const a = (i / 14) * Math.PI*2 + t * 0.6;\n        const rr = 0.3 + 0.55 * ((i * 0.37) % 1);\n        ctx.fillStyle = `rgba(160,150,135,${0.03 + noiseAmt * 0.05})`;\n        ctx.beginPath();\n        ctx.arc(cx + Math.cos(a) * headRx * rr,\n                cy + Math.sin(a) * headRy * rr,\n                10 + noiseAmt * 14, 0, Math.PI*2);\n        ctx.fill();\n      }\n    }\n    /* a-mod: pulsing ring */\n    if (amodAmt > 0.03) {\n      const pulse = 0.55 + 0.4 * (0.5 + 0.5 * Math.sin(phase * 2));\n      ctx.strokeStyle = `rgba(232,168,85,${0.12 + 0.22 * amodAmt})`;\n      ctx.lineWidth = 1.5;\n      ctx.beginPath();\n      ctx.ellipse(cx, cy, headRx * pulse, headRy * pulse, 0, 0, Math.PI*2);\n      ctx.stroke();\n    }\n  }\n\n  /* source dot — oscillates with stereo (X) and f-mod (Y) */\n  let srcX = 0, srcY = 0;\n  if (state.playing) {\n    srcX = Math.sin(phase) * stereoAmt * 0.85;\n    srcY = Math.sin(phase * 0.65 + 1.1) * fmodAmt * 0.75;\n  }\n  const sx = cx + srcX * headRx;\n  const sy = cy + srcY * headRy;\n\n  const grd = ctx.createRadialGradient(sx, sy, 0, sx, sy, 18);\n  grd.addColorStop(0, state.playing ? 'rgba(232,168,85,0.85)' : 'rgba(107,99,88,0.35)');\n  grd.addColorStop(1, 'rgba(232,168,85,0)');\n  ctx.fillStyle = grd;\n  ctx.beginPath(); ctx.arc(sx, sy, 18, 0, Math.PI*2); ctx.fill();\n\n  ctx.fillStyle = state.playing ? '#E8A855' : '#6B6358';\n  ctx.beginPath(); ctx.arc(sx, sy, 4, 0, Math.PI*2); ctx.fill();\n\n  /* center marker */\n  ctx.fillStyle = 'rgba(240,235,224,0.25)';\n  ctx.beginPath(); ctx.arc(cx, cy, 1.5, 0, Math.PI*2); ctx.fill();\n}",
+  "range": {
+    "byteOffset": {
+      "start": 10515,
+      "end": 15168
+    },
+    "start": {
+      "line": 267,
+      "column": 0
+    },
+    "end": {
+      "line": 405,
+      "column": 1
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "function drawRadarFrame(now = performance.now()) {\n  const ctx = radarCtx;\n  const W = RADAR_SIZE, H = RADAR_SIZE;\n  const cx = W/2, cy = H/2;\n  const R = W/2 - 26;\n\n  ctx.clearRect(0, 0, W, H);\n\n  const headRx = R * 0.74;\n  const headRy = R * 0.92;\n\n  /* distance rings */\n  ctx.strokeStyle = 'rgba(58,54,46,0.45)';\n  ctx.lineWidth = 1;\n  for (let i = 1; i <= 3; i++) {\n    ctx.beginPath();\n    ctx.ellipse(cx, cy, headRx * i/3, headRy * i/3, 0, 0, Math.PI*2);\n    ctx.stroke();\n  }\n\n  /* axes */\n  ctx.beginPath();\n  ctx.moveTo(cx, cy - headRy); ctx.lineTo(cx, cy + headRy);\n  ctx.moveTo(cx - headRx, cy); ctx.lineTo(cx + headRx, cy);\n  ctx.stroke();\n\n  /* head outline */\n  ctx.strokeStyle = '#3A362E';\n  ctx.lineWidth = 1.4;\n  ctx.beginPath();\n  ctx.ellipse(cx, cy, headRx, headRy, 0, 0, Math.PI*2);\n  ctx.stroke();\n\n  /* nose (front) */\n  ctx.fillStyle = '#3A362E';\n  ctx.beginPath();\n  ctx.moveTo(cx, cy - headRy - 10);\n  ctx.lineTo(cx - 7, cy - headRy + 3);\n  ctx.lineTo(cx + 7, cy - headRy + 3);\n  ctx.closePath();\n  ctx.fill();\n\n  /* ears */\n  ctx.beginPath(); ctx.ellipse(cx - headRx - 2, cy, 4, 9, 0, 0, Math.PI*2); ctx.fill();\n  ctx.beginPath(); ctx.ellipse(cx + headRx + 2, cy, 4, 9, 0, 0, Math.PI*2); ctx.fill();\n\n  /* labels */\n  ctx.fillStyle = '#6B6358';\n  ctx.font = '10px \"IBM Plex Mono\", monospace';\n  ctx.textAlign = 'center';\n  ctx.fillText('FRENTE', cx, cy - headRy - 16);\n  ctx.fillText('ATRÁS', cx, cy + headRy + 22);\n  ctx.textAlign = 'left';\n  ctx.fillText('IZQ', cx - headRx - 28, cy + 4);\n  ctx.textAlign = 'right';\n  ctx.fillText('DER', cx + headRx + 28, cy + 4);\n  ctx.textAlign = 'center';\n\n  /* modulation amounts */\n  const stereoAmt = state.stereo / 100;\n  const fmodAmt   = state.fmod / 100;\n  const binAmt    = state.binaural / 100;\n  const amodAmt   = state.amod / 100;\n  const noiseAmt  = state.noise / 100;\n\n  const t = (now - radarT0) / 1000;\n  const phase = t * Math.max(state.brainwave, 0.5) * Math.PI;\n\n  if (state.playing) {\n    /* perception field — stereo: horizontal band */\n    if (stereoAmt > 0.03) {\n      const ry = headRy * (0.22 + 0.45 * stereoAmt);\n      ctx.fillStyle = `rgba(232,168,85,${0.05 + 0.12 * stereoAmt})`;\n      ctx.beginPath();\n      ctx.ellipse(cx, cy, headRx, ry, 0, 0, Math.PI*2);\n      ctx.fill();\n    }\n    /* f-mod: vertical band (front-back) */\n    if (fmodAmt > 0.03) {\n      const rx = headRx * (0.22 + 0.45 * fmodAmt);\n      ctx.fillStyle = `rgba(74,155,142,${0.05 + 0.12 * fmodAmt})`;\n      ctx.beginPath();\n      ctx.ellipse(cx, cy, rx, headRy, 0, 0, Math.PI*2);\n      ctx.fill();\n    }\n    /* binaural: two lobes at the ears */\n    if (binAmt > 0.03) {\n      ctx.fillStyle = `rgba(232,168,85,${0.07 + 0.12 * binAmt})`;\n      const lx = headRx * (0.45 + 0.25 * binAmt);\n      const ly = headRy * (0.35 + 0.2 * binAmt);\n      ctx.beginPath(); ctx.ellipse(cx - lx, cy, headRx*0.28, ly, 0, 0, Math.PI*2); ctx.fill();\n      ctx.beginPath(); ctx.ellipse(cx + lx, cy, headRx*0.28, ly, 0, 0, Math.PI*2); ctx.fill();\n    }\n    /* noise: diffuse cloud */\n    if (noiseAmt > 0.03) {\n      for (let i = 0; i < 14; i++) {\n        const a = (i / 14) * Math.PI*2 + t * 0.6;\n        const rr = 0.3 + 0.55 * ((i * 0.37) % 1);\n        ctx.fillStyle = `rgba(160,150,135,${0.03 + noiseAmt * 0.05})`;\n        ctx.beginPath();\n        ctx.arc(cx + Math.cos(a) * headRx * rr,\n                cy + Math.sin(a) * headRy * rr,\n                10 + noiseAmt * 14, 0, Math.PI*2);\n        ctx.fill();\n      }\n    }\n    /* a-mod: pulsing ring */\n    if (amodAmt > 0.03) {\n      const pulse = 0.55 + 0.4 * (0.5 + 0.5 * Math.sin(phase * 2));\n      ctx.strokeStyle = `rgba(232,168,85,${0.12 + 0.22 * amodAmt})`;\n      ctx.lineWidth = 1.5;\n      ctx.beginPath();\n      ctx.ellipse(cx, cy, headRx * pulse, headRy * pulse, 0, 0, Math.PI*2);\n      ctx.stroke();\n    }\n  }\n\n  /* source dot — oscillates with stereo (X) and f-mod (Y) */\n  let srcX = 0, srcY = 0;\n  if (state.playing) {\n    srcX = Math.sin(phase) * stereoAmt * 0.85;\n    srcY = Math.sin(phase * 0.65 + 1.1) * fmodAmt * 0.75;\n  }\n  const sx = cx + srcX * headRx;\n  const sy = cy + srcY * headRy;\n\n  const grd = ctx.createRadialGradient(sx, sy, 0, sx, sy, 18);\n  grd.addColorStop(0, state.playing ? 'rgba(232,168,85,0.85)' : 'rgba(107,99,88,0.35)');\n  grd.addColorStop(1, 'rgba(232,168,85,0)');\n  ctx.fillStyle = grd;\n  ctx.beginPath(); ctx.arc(sx, sy, 18, 0, Math.PI*2); ctx.fill();\n\n  ctx.fillStyle = state.playing ? '#E8A855' : '#6B6358';\n  ctx.beginPath(); ctx.arc(sx, sy, 4, 0, Math.PI*2); ctx.fill();\n\n  /* center marker */\n  ctx.fillStyle = 'rgba(240,235,224,0.25)';\n  ctx.beginPath(); ctx.arc(cx, cy, 1.5, 0, Math.PI*2); ctx.fill();\n}",
+  "charCount": {
+    "leading": 0,
+    "trailing": 0
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {},
+    "multi": {
+      "PARAMS": [
+        {
+          "text": "now = performance.now()",
+          "range": {
+            "byteOffset": {
+              "start": 10539,
+              "end": 10562
+            },
+            "start": {
+              "line": 267,
+              "column": 24
+            },
+            "end": {
+              "line": 267,
+              "column": 47
+            }
+          }
+        }
+      ],
+      "BODY": [
+        {
+          "text": "const ctx = radarCtx;",
+          "range": {
+            "byteOffset": {
+              "start": 10568,
+              "end": 10589
+            },
+            "start": {
+              "line": 268,
+              "column": 2
+            },
+            "end": {
+              "line": 268,
+              "column": 23
+            }
+          }
+        },
+        {
+          "text": "const W = RADAR_SIZE, H = RADAR_SIZE;",
+          "range": {
+            "byteOffset": {
+              "start": 10592,
+              "end": 10629
+            },
+            "start": {
+              "line": 269,
+              "column": 2
+            },
+            "end": {
+              "line": 269,
+              "column": 39
+            }
+          }
+        },
+        {
+          "text": "const cx = W/2, cy = H/2;",
+          "range": {
+            "byteOffset": {
+              "start": 10632,
+              "end": 10657
+            },
+            "start": {
+              "line": 270,
+              "column": 2
+            },
+            "end": {
+              "line": 270,
+              "column": 27
+            }
+          }
+        },
+        {
+          "text": "const R = W/2 - 26;",
+          "range": {
+            "byteOffset": {
+              "start": 10660,
+              "end": 10679
+            },
+            "start": {
+              "line": 271,
+              "column": 2
+            },
+            "end": {
+              "line": 271,
+              "column": 21
+            }
+          }
+        },
+        {
+          "text": "ctx.clearRect(0, 0, W, H);",
+          "range": {
+            "byteOffset": {
+              "start": 10683,
+              "end": 10709
+            },
+            "start": {
+              "line": 273,
+              "column": 2
+            },
+            "end": {
+              "line": 273,
+              "column": 28
+            }
+          }
+        },
+        {
+          "text": "const headRx = R * 0.74;",
+          "range": {
+            "byteOffset": {
+              "start": 10713,
+              "end": 10737
+            },
+            "start": {
+              "line": 275,
+              "column": 2
+            },
+            "end": {
+              "line": 275,
+              "column": 26
+            }
+          }
+        },
+        {
+          "text": "const headRy = R * 0.92;",
+          "range": {
+            "byteOffset": {
+              "start": 10740,
+              "end": 10764
+            },
+            "start": {
+              "line": 276,
+              "column": 2
+            },
+            "end": {
+              "line": 276,
+              "column": 26
+            }
+          }
+        },
+        {
+          "text": "/* distance rings */",
+          "range": {
+            "byteOffset": {
+              "start": 10768,
+              "end": 10788
+            },
+            "start": {
+              "line": 278,
+              "column": 2
+            },
+            "end": {
+              "line": 278,
+              "column": 22
+            }
+          }
+        },
+        {
+          "text": "ctx.strokeStyle = 'rgba(58,54,46,0.45)';",
+          "range": {
+            "byteOffset": {
+              "start": 10791,
+              "end": 10831
+            },
+            "start": {
+              "line": 279,
+              "column": 2
+            },
+            "end": {
+              "line": 279,
+              "column": 42
+            }
+          }
+        },
+        {
+          "text": "ctx.lineWidth = 1;",
+          "range": {
+            "byteOffset": {
+              "start": 10834,
+              "end": 10852
+            },
+            "start": {
+              "line": 280,
+              "column": 2
+            },
+            "end": {
+              "line": 280,
+              "column": 20
+            }
+          }
+        },
+        {
+          "text": "for (let i = 1; i <= 3; i++) {\n    ctx.beginPath();\n    ctx.ellipse(cx, cy, headRx * i/3, headRy * i/3, 0, 0, Math.PI*2);\n    ctx.stroke();\n  }",
+          "range": {
+            "byteOffset": {
+              "start": 10855,
+              "end": 10998
+            },
+            "start": {
+              "line": 281,
+              "column": 2
+            },
+            "end": {
+              "line": 285,
+              "column": 3
+            }
+          }
+        },
+        {
+          "text": "/* axes */",
+          "range": {
+            "byteOffset": {
+              "start": 11002,
+              "end": 11012
+            },
+            "start": {
+              "line": 287,
+              "column": 2
+            },
+            "end": {
+              "line": 287,
+              "column": 12
+            }
+          }
+        },
+        {
+          "text": "ctx.beginPath();",
+          "range": {
+            "byteOffset": {
+              "start": 11015,
+              "end": 11031
+            },
+            "start": {
+              "line": 288,
+              "column": 2
+            },
+            "end": {
+              "line": 288,
+              "column": 18
+            }
+          }
+        },
+        {
+          "text": "ctx.moveTo(cx, cy - headRy);",
+          "range": {
+            "byteOffset": {
+              "start": 11034,
+              "end": 11062
+            },
+            "start": {
+              "line": 289,
+              "column": 2
+            },
+            "end": {
+              "line": 289,
+              "column": 30
+            }
+          }
+        },
+        {
+          "text": "ctx.lineTo(cx, cy + headRy);",
+          "range": {
+            "byteOffset": {
+              "start": 11063,
+              "end": 11091
+            },
+            "start": {
+              "line": 289,
+              "column": 31
+            },
+            "end": {
+              "line": 289,
+              "column": 59
+            }
+          }
+        },
+        {
+          "text": "ctx.moveTo(cx - headRx, cy);",
+          "range": {
+            "byteOffset": {
+              "start": 11094,
+              "end": 11122
+            },
+            "start": {
+              "line": 290,
+              "column": 2
+            },
+            "end": {
+              "line": 290,
+              "column": 30
+            }
+          }
+        },
+        {
+          "text": "ctx.lineTo(cx + headRx, cy);",
+          "range": {
+            "byteOffset": {
+              "start": 11123,
+              "end": 11151
+            },
+            "start": {
+              "line": 290,
+              "column": 31
+            },
+            "end": {
+              "line": 290,
+              "column": 59
+            }
+          }
+        },
+        {
+          "text": "ctx.stroke();",
+          "range": {
+            "byteOffset": {
+              "start": 11154,
+              "end": 11167
+            },
+            "start": {
+              "line": 291,
+              "column": 2
+            },
+            "end": {
+              "line": 291,
+              "column": 15
+            }
+          }
+        },
+        {
+          "text": "/* head outline */",
+          "range": {
+            "byteOffset": {
+              "start": 11171,
+              "end": 11189
+            },
+            "start": {
+              "line": 293,
+              "column": 2
+            },
+            "end": {
+              "line": 293,
+              "column": 20
+            }
+          }
+        },
+        {
+          "text": "ctx.strokeStyle = '#3A362E';",
+          "range": {
+            "byteOffset": {
+              "start": 11192,
+              "end": 11220
+            },
+            "start": {
+              "line": 294,
+              "column": 2
+            },
+            "end": {
+              "line": 294,
+              "column": 30
+            }
+          }
+        },
+        {
+          "text": "ctx.lineWidth = 1.4;",
+          "range": {
+            "byteOffset": {
+              "start": 11223,
+              "end": 11243
+            },
+            "start": {
+              "line": 295,
+              "column": 2
+            },
+            "end": {
+              "line": 295,
+              "column": 22
+            }
+          }
+        },
+        {
+          "text": "ctx.beginPath();",
+          "range": {
+            "byteOffset": {
+              "start": 11246,
+              "end": 11262
+            },
+            "start": {
+              "line": 296,
+              "column": 2
+            },
+            "end": {
+              "line": 296,
+              "column": 18
+            }
+          }
+        },
+        {
+          "text": "ctx.ellipse(cx, cy, headRx, headRy, 0, 0, Math.PI*2);",
+          "range": {
+            "byteOffset": {
+              "start": 11265,
+              "end": 11318
+            },
+            "start": {
+              "line": 297,
+              "column": 2
+            },
+            "end": {
+              "line": 297,
+              "column": 55
+            }
+          }
+        },
+        {
+          "text": "ctx.stroke();",
+          "range": {
+            "byteOffset": {
+              "start": 11321,
+              "end": 11334
+            },
+            "start": {
+              "line": 298,
+              "column": 2
+            },
+            "end": {
+              "line": 298,
+              "column": 15
+            }
+          }
+        },
+        {
+          "text": "/* nose (front) */",
+          "range": {
+            "byteOffset": {
+              "start": 11338,
+              "end": 11356
+            },
+            "start": {
+              "line": 300,
+              "column": 2
+            },
+            "end": {
+              "line": 300,
+              "column": 20
+            }
+          }
+        },
+        {
+          "text": "ctx.fillStyle = '#3A362E';",
+          "range": {
+            "byteOffset": {
+              "start": 11359,
+              "end": 11385
+            },
+            "start": {
+              "line": 301,
+              "column": 2
+            },
+            "end": {
+              "line": 301,
+              "column": 28
+            }
+          }
+        },
+        {
+          "text": "ctx.beginPath();",
+          "range": {
+            "byteOffset": {
+              "start": 11388,
+              "end": 11404
+            },
+            "start": {
+              "line": 302,
+              "column": 2
+            },
+            "end": {
+              "line": 302,
+              "column": 18
+            }
+          }
+        },
+        {
+          "text": "ctx.moveTo(cx, cy - headRy - 10);",
+          "range": {
+            "byteOffset": {
+              "start": 11407,
+              "end": 11440
+            },
+            "start": {
+              "line": 303,
+              "column": 2
+            },
+            "end": {
+              "line": 303,
+              "column": 35
+            }
+          }
+        },
+        {
+          "text": "ctx.lineTo(cx - 7, cy - headRy + 3);",
+          "range": {
+            "byteOffset": {
+              "start": 11443,
+              "end": 11479
+            },
+            "start": {
+              "line": 304,
+              "column": 2
+            },
+            "end": {
+              "line": 304,
+              "column": 38
+            }
+          }
+        },
+        {
+          "text": "ctx.lineTo(cx + 7, cy - headRy + 3);",
+          "range": {
+            "byteOffset": {
+              "start": 11482,
+              "end": 11518
+            },
+            "start": {
+              "line": 305,
+              "column": 2
+            },
+            "end": {
+              "line": 305,
+              "column": 38
+            }
+          }
+        },
+        {
+          "text": "ctx.closePath();",
+          "range": {
+            "byteOffset": {
+              "start": 11521,
+              "end": 11537
+            },
+            "start": {
+              "line": 306,
+              "column": 2
+            },
+            "end": {
+              "line": 306,
+              "column": 18
+            }
+          }
+        },
+        {
+          "text": "ctx.fill();",
+          "range": {
+            "byteOffset": {
+              "start": 11540,
+              "end": 11551
+            },
+            "start": {
+              "line": 307,
+              "column": 2
+            },
+            "end": {
+              "line": 307,
+              "column": 13
+            }
+          }
+        },
+        {
+          "text": "/* ears */",
+          "range": {
+            "byteOffset": {
+              "start": 11555,
+              "end": 11565
+            },
+            "start": {
+              "line": 309,
+              "column": 2
+            },
+            "end": {
+              "line": 309,
+              "column": 12
+            }
+          }
+        },
+        {
+          "text": "ctx.beginPath();",
+          "range": {
+            "byteOffset": {
+              "start": 11568,
+              "end": 11584
+            },
+            "start": {
+              "line": 310,
+              "column": 2
+            },
+            "end": {
+              "line": 310,
+              "column": 18
+            }
+          }
+        },
+        {
+          "text": "ctx.ellipse(cx - headRx - 2, cy, 4, 9, 0, 0, Math.PI*2);",
+          "range": {
+            "byteOffset": {
+              "start": 11585,
+              "end": 11641
+            },
+            "start": {
+              "line": 310,
+              "column": 19
+            },
+            "end": {
+              "line": 310,
+              "column": 75
+            }
+          }
+        },
+        {
+          "text": "ctx.fill();",
+          "range": {
+            "byteOffset": {
+              "start": 11642,
+              "end": 11653
+            },
+            "start": {
+              "line": 310,
+              "column": 76
+            },
+            "end": {
+              "line": 310,
+              "column": 87
+            }
+          }
+        },
+        {
+          "text": "ctx.beginPath();",
+          "range": {
+            "byteOffset": {
+              "start": 11656,
+              "end": 11672
+            },
+            "start": {
+              "line": 311,
+              "column": 2
+            },
+            "end": {
+              "line": 311,
+              "column": 18
+            }
+          }
+        },
+        {
+          "text": "ctx.ellipse(cx + headRx + 2, cy, 4, 9, 0, 0, Math.PI*2);",
+          "range": {
+            "byteOffset": {
+              "start": 11673,
+              "end": 11729
+            },
+            "start": {
+              "line": 311,
+              "column": 19
+            },
+            "end": {
+              "line": 311,
+              "column": 75
+            }
+          }
+        },
+        {
+          "text": "ctx.fill();",
+          "range": {
+            "byteOffset": {
+              "start": 11730,
+              "end": 11741
+            },
+            "start": {
+              "line": 311,
+              "column": 76
+            },
+            "end": {
+              "line": 311,
+              "column": 87
+            }
+          }
+        },
+        {
+          "text": "/* labels */",
+          "range": {
+            "byteOffset": {
+              "start": 11745,
+              "end": 11757
+            },
+            "start": {
+              "line": 313,
+              "column": 2
+            },
+            "end": {
+              "line": 313,
+              "column": 14
+            }
+          }
+        },
+        {
+          "text": "ctx.fillStyle = '#6B6358';",
+          "range": {
+            "byteOffset": {
+              "start": 11760,
+              "end": 11786
+            },
+            "start": {
+              "line": 314,
+              "column": 2
+            },
+            "end": {
+              "line": 314,
+              "column": 28
+            }
+          }
+        },
+        {
+          "text": "ctx.font = '10px \"IBM Plex Mono\", monospace';",
+          "range": {
+            "byteOffset": {
+              "start": 11789,
+              "end": 11834
+            },
+            "start": {
+              "line": 315,
+              "column": 2
+            },
+            "end": {
+              "line": 315,
+              "column": 47
+            }
+          }
+        },
+        {
+          "text": "ctx.textAlign = 'center';",
+          "range": {
+            "byteOffset": {
+              "start": 11837,
+              "end": 11862
+            },
+            "start": {
+              "line": 316,
+              "column": 2
+            },
+            "end": {
+              "line": 316,
+              "column": 27
+            }
+          }
+        },
+        {
+          "text": "ctx.fillText('FRENTE', cx, cy - headRy - 16);",
+          "range": {
+            "byteOffset": {
+              "start": 11865,
+              "end": 11910
+            },
+            "start": {
+              "line": 317,
+              "column": 2
+            },
+            "end": {
+              "line": 317,
+              "column": 47
+            }
+          }
+        },
+        {
+          "text": "ctx.fillText('ATRÁS', cx, cy + headRy + 22);",
+          "range": {
+            "byteOffset": {
+              "start": 11913,
+              "end": 11958
+            },
+            "start": {
+              "line": 318,
+              "column": 2
+            },
+            "end": {
+              "line": 318,
+              "column": 46
+            }
+          }
+        },
+        {
+          "text": "ctx.textAlign = 'left';",
+          "range": {
+            "byteOffset": {
+              "start": 11961,
+              "end": 11984
+            },
+            "start": {
+              "line": 319,
+              "column": 2
+            },
+            "end": {
+              "line": 319,
+              "column": 25
+            }
+          }
+        },
+        {
+          "text": "ctx.fillText('IZQ', cx - headRx - 28, cy + 4);",
+          "range": {
+            "byteOffset": {
+              "start": 11987,
+              "end": 12033
+            },
+            "start": {
+              "line": 320,
+              "column": 2
+            },
+            "end": {
+              "line": 320,
+              "column": 48
+            }
+          }
+        },
+        {
+          "text": "ctx.textAlign = 'right';",
+          "range": {
+            "byteOffset": {
+              "start": 12036,
+              "end": 12060
+            },
+            "start": {
+              "line": 321,
+              "column": 2
+            },
+            "end": {
+              "line": 321,
+              "column": 26
+            }
+          }
+        },
+        {
+          "text": "ctx.fillText('DER', cx + headRx + 28, cy + 4);",
+          "range": {
+            "byteOffset": {
+              "start": 12063,
+              "end": 12109
+            },
+            "start": {
+              "line": 322,
+              "column": 2
+            },
+            "end": {
+              "line": 322,
+              "column": 48
+            }
+          }
+        },
+        {
+          "text": "ctx.textAlign = 'center';",
+          "range": {
+            "byteOffset": {
+              "start": 12112,
+              "end": 12137
+            },
+            "start": {
+              "line": 323,
+              "column": 2
+            },
+            "end": {
+              "line": 323,
+              "column": 27
+            }
+          }
+        },
+        {
+          "text": "/* modulation amounts */",
+          "range": {
+            "byteOffset": {
+              "start": 12141,
+              "end": 12165
+            },
+            "start": {
+              "line": 325,
+              "column": 2
+            },
+            "end": {
+              "line": 325,
+              "column": 26
+            }
+          }
+        },
+        {
+          "text": "const stereoAmt = state.stereo / 100;",
+          "range": {
+            "byteOffset": {
+              "start": 12168,
+              "end": 12205
+            },
+            "start": {
+              "line": 326,
+              "column": 2
+            },
+            "end": {
+              "line": 326,
+              "column": 39
+            }
+          }
+        },
+        {
+          "text": "const fmodAmt   = state.fmod / 100;",
+          "range": {
+            "byteOffset": {
+              "start": 12208,
+              "end": 12243
+            },
+            "start": {
+              "line": 327,
+              "column": 2
+            },
+            "end": {
+              "line": 327,
+              "column": 37
+            }
+          }
+        },
+        {
+          "text": "const binAmt    = state.binaural / 100;",
+          "range": {
+            "byteOffset": {
+              "start": 12246,
+              "end": 12285
+            },
+            "start": {
+              "line": 328,
+              "column": 2
+            },
+            "end": {
+              "line": 328,
+              "column": 41
+            }
+          }
+        },
+        {
+          "text": "const amodAmt   = state.amod / 100;",
+          "range": {
+            "byteOffset": {
+              "start": 12288,
+              "end": 12323
+            },
+            "start": {
+              "line": 329,
+              "column": 2
+            },
+            "end": {
+              "line": 329,
+              "column": 37
+            }
+          }
+        },
+        {
+          "text": "const noiseAmt  = state.noise / 100;",
+          "range": {
+            "byteOffset": {
+              "start": 12326,
+              "end": 12362
+            },
+            "start": {
+              "line": 330,
+              "column": 2
+            },
+            "end": {
+              "line": 330,
+              "column": 38
+            }
+          }
+        },
+        {
+          "text": "const t = (now - radarT0) / 1000;",
+          "range": {
+            "byteOffset": {
+              "start": 12366,
+              "end": 12399
+            },
+            "start": {
+              "line": 332,
+              "column": 2
+            },
+            "end": {
+              "line": 332,
+              "column": 35
+            }
+          }
+        },
+        {
+          "text": "const phase = t * Math.max(state.brainwave, 0.5) * Math.PI;",
+          "range": {
+            "byteOffset": {
+              "start": 12402,
+              "end": 12461
+            },
+            "start": {
+              "line": 333,
+              "column": 2
+            },
+            "end": {
+              "line": 333,
+              "column": 61
+            }
+          }
+        },
+        {
+          "text": "if (state.playing) {\n    /* perception field — stereo: horizontal band */\n    if (stereoAmt > 0.03) {\n      const ry = headRy * (0.22 + 0.45 * stereoAmt);\n      ctx.fillStyle = `rgba(232,168,85,${0.05 + 0.12 * stereoAmt})`;\n      ctx.beginPath();\n      ctx.ellipse(cx, cy, headRx, ry, 0, 0, Math.PI*2);\n      ctx.fill();\n    }\n    /* f-mod: vertical band (front-back) */\n    if (fmodAmt > 0.03) {\n      const rx = headRx * (0.22 + 0.45 * fmodAmt);\n      ctx.fillStyle = `rgba(74,155,142,${0.05 + 0.12 * fmodAmt})`;\n      ctx.beginPath();\n      ctx.ellipse(cx, cy, rx, headRy, 0, 0, Math.PI*2);\n      ctx.fill();\n    }\n    /* binaural: two lobes at the ears */\n    if (binAmt > 0.03) {\n      ctx.fillStyle = `rgba(232,168,85,${0.07 + 0.12 * binAmt})`;\n      const lx = headRx * (0.45 + 0.25 * binAmt);\n      const ly = headRy * (0.35 + 0.2 * binAmt);\n      ctx.beginPath(); ctx.ellipse(cx - lx, cy, headRx*0.28, ly, 0, 0, Math.PI*2); ctx.fill();\n      ctx.beginPath(); ctx.ellipse(cx + lx, cy, headRx*0.28, ly, 0, 0, Math.PI*2); ctx.fill();\n    }\n    /* noise: diffuse cloud */\n    if (noiseAmt > 0.03) {\n      for (let i = 0; i < 14; i++) {\n        const a = (i / 14) * Math.PI*2 + t * 0.6;\n        const rr = 0.3 + 0.55 * ((i * 0.37) % 1);\n        ctx.fillStyle = `rgba(160,150,135,${0.03 + noiseAmt * 0.05})`;\n        ctx.beginPath();\n        ctx.arc(cx + Math.cos(a) * headRx * rr,\n                cy + Math.sin(a) * headRy * rr,\n                10 + noiseAmt * 14, 0, Math.PI*2);\n        ctx.fill();\n      }\n    }\n    /* a-mod: pulsing ring */\n    if (amodAmt > 0.03) {\n      const pulse = 0.55 + 0.4 * (0.5 + 0.5 * Math.sin(phase * 2));\n      ctx.strokeStyle = `rgba(232,168,85,${0.12 + 0.22 * amodAmt})`;\n      ctx.lineWidth = 1.5;\n      ctx.beginPath();\n      ctx.ellipse(cx, cy, headRx * pulse, headRy * pulse, 0, 0, Math.PI*2);\n      ctx.stroke();\n    }\n  }",
+          "range": {
+            "byteOffset": {
+              "start": 12465,
+              "end": 14333
+            },
+            "start": {
+              "line": 335,
+              "column": 2
+            },
+            "end": {
+              "line": 382,
+              "column": 3
+            }
+          }
+        },
+        {
+          "text": "/* source dot — oscillates with stereo (X) and f-mod (Y) */",
+          "range": {
+            "byteOffset": {
+              "start": 14337,
+              "end": 14398
+            },
+            "start": {
+              "line": 384,
+              "column": 2
+            },
+            "end": {
+              "line": 384,
+              "column": 61
+            }
+          }
+        },
+        {
+          "text": "let srcX = 0, srcY = 0;",
+          "range": {
+            "byteOffset": {
+              "start": 14401,
+              "end": 14424
+            },
+            "start": {
+              "line": 385,
+              "column": 2
+            },
+            "end": {
+              "line": 385,
+              "column": 25
+            }
+          }
+        },
+        {
+          "text": "if (state.playing) {\n    srcX = Math.sin(phase) * stereoAmt * 0.85;\n    srcY = Math.sin(phase * 0.65 + 1.1) * fmodAmt * 0.75;\n  }",
+          "range": {
+            "byteOffset": {
+              "start": 14427,
+              "end": 14556
+            },
+            "start": {
+              "line": 386,
+              "column": 2
+            },
+            "end": {
+              "line": 389,
+              "column": 3
+            }
+          }
+        },
+        {
+          "text": "const sx = cx + srcX * headRx;",
+          "range": {
+            "byteOffset": {
+              "start": 14559,
+              "end": 14589
+            },
+            "start": {
+              "line": 390,
+              "column": 2
+            },
+            "end": {
+              "line": 390,
+              "column": 32
+            }
+          }
+        },
+        {
+          "text": "const sy = cy + srcY * headRy;",
+          "range": {
+            "byteOffset": {
+              "start": 14592,
+              "end": 14622
+            },
+            "start": {
+              "line": 391,
+              "column": 2
+            },
+            "end": {
+              "line": 391,
+              "column": 32
+            }
+          }
+        },
+        {
+          "text": "const grd = ctx.createRadialGradient(sx, sy, 0, sx, sy, 18);",
+          "range": {
+            "byteOffset": {
+              "start": 14626,
+              "end": 14686
+            },
+            "start": {
+              "line": 393,
+              "column": 2
+            },
+            "end": {
+              "line": 393,
+              "column": 62
+            }
+          }
+        },
+        {
+          "text": "grd.addColorStop(0, state.playing ? 'rgba(232,168,85,0.85)' : 'rgba(107,99,88,0.35)');",
+          "range": {
+            "byteOffset": {
+              "start": 14689,
+              "end": 14775
+            },
+            "start": {
+              "line": 394,
+              "column": 2
+            },
+            "end": {
+              "line": 394,
+              "column": 88
+            }
+          }
+        },
+        {
+          "text": "grd.addColorStop(1, 'rgba(232,168,85,0)');",
+          "range": {
+            "byteOffset": {
+              "start": 14778,
+              "end": 14820
+            },
+            "start": {
+              "line": 395,
+              "column": 2
+            },
+            "end": {
+              "line": 395,
+              "column": 44
+            }
+          }
+        },
+        {
+          "text": "ctx.fillStyle = grd;",
+          "range": {
+            "byteOffset": {
+              "start": 14823,
+              "end": 14843
+            },
+            "start": {
+              "line": 396,
+              "column": 2
+            },
+            "end": {
+              "line": 396,
+              "column": 22
+            }
+          }
+        },
+        {
+          "text": "ctx.beginPath();",
+          "range": {
+            "byteOffset": {
+              "start": 14846,
+              "end": 14862
+            },
+            "start": {
+              "line": 397,
+              "column": 2
+            },
+            "end": {
+              "line": 397,
+              "column": 18
+            }
+          }
+        },
+        {
+          "text": "ctx.arc(sx, sy, 18, 0, Math.PI*2);",
+          "range": {
+            "byteOffset": {
+              "start": 14863,
+              "end": 14897
+            },
+            "start": {
+              "line": 397,
+              "column": 19
+            },
+            "end": {
+              "line": 397,
+              "column": 53
+            }
+          }
+        },
+        {
+          "text": "ctx.fill();",
+          "range": {
+            "byteOffset": {
+              "start": 14898,
+              "end": 14909
+            },
+            "start": {
+              "line": 397,
+              "column": 54
+            },
+            "end": {
+              "line": 397,
+              "column": 65
+            }
+          }
+        },
+        {
+          "text": "ctx.fillStyle = state.playing ? '#E8A855' : '#6B6358';",
+          "range": {
+            "byteOffset": {
+              "start": 14913,
+              "end": 14967
+            },
+            "start": {
+              "line": 399,
+              "column": 2
+            },
+            "end": {
+              "line": 399,
+              "column": 56
+            }
+          }
+        },
+        {
+          "text": "ctx.beginPath();",
+          "range": {
+            "byteOffset": {
+              "start": 14970,
+              "end": 14986
+            },
+            "start": {
+              "line": 400,
+              "column": 2
+            },
+            "end": {
+              "line": 400,
+              "column": 18
+            }
+          }
+        },
+        {
+          "text": "ctx.arc(sx, sy, 4, 0, Math.PI*2);",
+          "range": {
+            "byteOffset": {
+              "start": 14987,
+              "end": 15020
+            },
+            "start": {
+              "line": 400,
+              "column": 19
+            },
+            "end": {
+              "line": 400,
+              "column": 52
+            }
+          }
+        },
+        {
+          "text": "ctx.fill();",
+          "range": {
+            "byteOffset": {
+              "start": 15021,
+              "end": 15032
+            },
+            "start": {
+              "line": 400,
+              "column": 53
+            },
+            "end": {
+              "line": 400,
+              "column": 64
+            }
+          }
+        },
+        {
+          "text": "/* center marker */",
+          "range": {
+            "byteOffset": {
+              "start": 15036,
+              "end": 15055
+            },
+            "start": {
+              "line": 402,
+              "column": 2
+            },
+            "end": {
+              "line": 402,
+              "column": 21
+            }
+          }
+        },
+        {
+          "text": "ctx.fillStyle = 'rgba(240,235,224,0.25)';",
+          "range": {
+            "byteOffset": {
+              "start": 15058,
+              "end": 15099
+            },
+            "start": {
+              "line": 403,
+              "column": 2
+            },
+            "end": {
+              "line": 403,
+              "column": 43
+            }
+          }
+        },
+        {
+          "text": "ctx.beginPath();",
+          "range": {
+            "byteOffset": {
+              "start": 15102,
+              "end": 15118
+            },
+            "start": {
+              "line": 404,
+              "column": 2
+            },
+            "end": {
+              "line": 404,
+              "column": 18
+            }
+          }
+        },
+        {
+          "text": "ctx.arc(cx, cy, 1.5, 0, Math.PI*2);",
+          "range": {
+            "byteOffset": {
+              "start": 15119,
+              "end": 15154
+            },
+            "start": {
+              "line": 404,
+              "column": 19
+            },
+            "end": {
+              "line": 404,
+              "column": 54
+            }
+          }
+        },
+        {
+          "text": "ctx.fill();",
+          "range": {
+            "byteOffset": {
+              "start": 15155,
+              "end": 15166
+            },
+            "start": {
+              "line": 404,
+              "column": 55
+            },
+            "end": {
+              "line": 404,
+              "column": 66
+            }
+          }
+        }
+      ]
+    },
+    "transformed": {}
+  }
+}
+]

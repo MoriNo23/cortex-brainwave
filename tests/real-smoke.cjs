@@ -1,0 +1,19 @@
+const { chromium } = require('playwright');
+(async()=>{
+ const browser=await chromium.launch({headless:true});
+ const page=await browser.newPage();
+ const errors=[]; const consoleErrors=[];
+ page.on('pageerror', e=>errors.push(e.message));
+ page.on('console', m=>{if(m.type()==='error') consoleErrors.push(m.text())});
+ await page.goto('http://127.0.0.1:4173/cortex.html',{waitUntil:'networkidle'});
+ const initial=await page.locator('#statusText').innerText();
+ await page.click('#btnPlay'); await page.waitForTimeout(100);
+ const first=await page.locator('#statusText').innerText();
+ await page.click('#btnPlay'); await page.waitForTimeout(100);
+ const second=await page.locator('#statusText').innerText();
+ await page.click('#btnPlay'); await page.waitForTimeout(100);
+ const third=await page.locator('#statusText').innerText();
+ console.log(JSON.stringify({initial,first,second,third,errors,consoleErrors},null,2));
+ await browser.close();
+ process.exit(errors.length?1:0);
+})().catch(e=>{console.error(e);process.exit(2)});

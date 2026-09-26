@@ -1,0 +1,51 @@
+{
+  "radarFiles": {
+    "base": "/home/user/artifacts/visual/radar-base.png",
+    "stereo": "/home/user/artifacts/visual/radar-stereo.png",
+    "fmod": "/home/user/artifacts/visual/radar-fmod.png",
+    "binaural": "/home/user/artifacts/visual/radar-binaural.png"
+  },
+  "brainFiles": {
+    "delta": "/home/user/artifacts/visual/brain-delta.png",
+    "alpha": "/home/user/artifacts/visual/brain-alpha.png",
+    "beta": "/home/user/artifacts/visual/brain-beta.png"
+  },
+  "comparisons": {
+    "radarStereo": {
+      "differentDimensions": false,
+      "changedPixels": 22492,
+      "pixels": 102400,
+      "ratio": 0.2196484375,
+      "threshold": 10
+    },
+    "radarFmod": {
+      "differentDimensions": false,
+      "changedPixels": 22510,
+      "pixels": 102400,
+      "ratio": 0.21982421875,
+      "threshold": 10
+    },
+    "radarBinaural": {
+      "differentDimensions": false,
+      "changedPixels": 12225,
+      "pixels": 102400,
+      "ratio": 0.119384765625,
+      "threshold": 10
+    },
+    "brainDeltaAlpha": {
+      "differentDimensions": false,
+      "changedPixels": 19588,
+      "pixels": 86840,
+      "ratio": 0.22556425610317826,
+      "threshold": 10
+    },
+    "brainAlphaBeta": {
+      "differentDimensions": false,
+      "changedPixels": 43606,
+      "pixels": 86840,
+      "ratio": 0.5021418701059419,
+      "threshold": 10
+    }
+  },
+  "failures": []
+}

@@ -1,0 +1,82 @@
+{
+  "engine": "chromium",
+  "corrupted": {
+    "custom": 0,
+    "steps": 0
+  },
+  "beforePlay": {
+    "custom": [
+      {
+        "id": "custom-1789761181085-7joj1o",
+        "name": "Mi Alpha",
+        "emoji": "🌊",
+        "state": {
+          "brainwave": 10,
+          "carrier": 300,
+          "amod": 20,
+          "binaural": 10,
+          "stereo": 5,
+          "fmod": 0,
+          "noise": 15,
+          "mix": 70
+        },
+        "band": "alpha"
+      }
+    ],
+    "steps": [
+      {
+        "id": "step-1789761181188-b50k1i",
+        "presetId": "builtin-delta",
+        "durationSeconds": 1,
+        "snapshot": {
+          "brainwave": 2,
+          "carrier": 300,
+          "amod": 30,
+          "binaural": 20,
+          "stereo": 0,
+          "fmod": 0,
+          "noise": 10,
+          "mix": 70
+        },
+        "name": "Delta",
+        "emoji": "🌙",
+        "band": "delta"
+      },
+      {
+        "id": "step-1789761181233-zl4lbz",
+        "presetId": "custom-1789761181085-7joj1o",
+        "durationSeconds": 1,
+        "snapshot": {
+          "brainwave": 10,
+          "carrier": 300,
+          "amod": 20,
+          "binaural": 10,
+          "stereo": 5,
+          "fmod": 0,
+          "noise": 15,
+          "mix": 70
+        },
+        "name": "Mi Alpha",
+        "emoji": "🌊",
+        "band": "alpha"
+      }
+    ],
+    "loop": true,
+    "durationInputs": [
+      1,
+      1
+    ]
+  },
+  "duringPlay": {
+    "playing": true,
+    "running": true,
+    "index": 1,
+    "stateBand": "alpha"
+  },
+  "afterStop": {
+    "running": false,
+    "paused": false,
+    "index": 0
+  },
+  "failures": []
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Cortex audio tooling spike",
+  "harness": "webMUSHRA",
+  "harnessSource": "https://github.com/audiolabs/webMUSHRA",
+  "status": "external-harness-pending-legal-review",
+  "stimuli": [
+    { "id": "A", "label": "Reference", "file": "stimuli/reference.wav" },
+    { "id": "B", "label": "Centered", "file": "stimuli/cortex-centered.wav" },
+    { "id": "C", "label": "Stereo sweep", "file": "stimuli/cortex-stereo-sweep.wav" },
+    { "id": "D", "label": "Current binaural control", "file": "stimuli/cortex-binaural-control.wav" }
+  ],
+  "randomizeOrder": true,
+  "collect": ["rating", "comments", "fatigueBefore", "fatigueAfter"],
+  "claimsAllowed": ["subjective preference", "audible difference"],
+  "claimsNotAllowed": ["HRTF demonstrated", "medical effect", "front-back localization proved"]
+}

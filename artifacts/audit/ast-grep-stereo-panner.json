@@ -1,0 +1,296 @@
+[
+{
+  "text": "ctx.createStereoPanner()",
+  "range": {
+    "byteOffset": {
+      "start": 3533,
+      "end": 3557
+    },
+    "start": {
+      "line": 85,
+      "column": 19
+    },
+    "end": {
+      "line": 85,
+      "column": 43
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "    this.binPanL = ctx.createStereoPanner(); this.binPanR = ctx.createStereoPanner();",
+  "charCount": {
+    "leading": 19,
+    "trailing": 42
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "CTX": {
+        "text": "ctx",
+        "range": {
+          "byteOffset": {
+            "start": 3533,
+            "end": 3536
+          },
+          "start": {
+            "line": 85,
+            "column": 19
+          },
+          "end": {
+            "line": 85,
+            "column": 22
+          }
+        }
+      }
+    },
+    "multi": {
+      "ARGS": []
+    },
+    "transformed": {}
+  }
+},
+{
+  "text": "ctx.createStereoPanner()",
+  "range": {
+    "byteOffset": {
+      "start": 3574,
+      "end": 3598
+    },
+    "start": {
+      "line": 85,
+      "column": 60
+    },
+    "end": {
+      "line": 85,
+      "column": 84
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "    this.binPanL = ctx.createStereoPanner(); this.binPanR = ctx.createStereoPanner();",
+  "charCount": {
+    "leading": 60,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "CTX": {
+        "text": "ctx",
+        "range": {
+          "byteOffset": {
+            "start": 3574,
+            "end": 3577
+          },
+          "start": {
+            "line": 85,
+            "column": 60
+          },
+          "end": {
+            "line": 85,
+            "column": 63
+          }
+        }
+      }
+    },
+    "multi": {
+      "ARGS": []
+    },
+    "transformed": {}
+  }
+},
+{
+  "text": "ctx.createStereoPanner()",
+  "range": {
+    "byteOffset": {
+      "start": 3884,
+      "end": 3908
+    },
+    "start": {
+      "line": 91,
+      "column": 24
+    },
+    "end": {
+      "line": 91,
+      "column": 48
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "    this.stereoPanner = ctx.createStereoPanner(); this.stereoPanner.pan.value = 0;",
+  "charCount": {
+    "leading": 24,
+    "trailing": 34
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "CTX": {
+        "text": "ctx",
+        "range": {
+          "byteOffset": {
+            "start": 3884,
+            "end": 3887
+          },
+          "start": {
+            "line": 91,
+            "column": 24
+          },
+          "end": {
+            "line": 91,
+            "column": 27
+          }
+        }
+      }
+    },
+    "multi": {
+      "ARGS": []
+    },
+    "transformed": {}
+  }
+},
+{
+  "text": "offCtx.createStereoPanner()",
+  "range": {
+    "byteOffset": {
+      "start": 24543,
+      "end": 24570
+    },
+    "start": {
+      "line": 598,
+      "column": 13
+    },
+    "end": {
+      "line": 598,
+      "column": 40
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  const pL = offCtx.createStereoPanner(); pL.pan.value = -1;",
+  "charCount": {
+    "leading": 13,
+    "trailing": 20
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "CTX": {
+        "text": "offCtx",
+        "range": {
+          "byteOffset": {
+            "start": 24543,
+            "end": 24549
+          },
+          "start": {
+            "line": 598,
+            "column": 13
+          },
+          "end": {
+            "line": 598,
+            "column": 19
+          }
+        }
+      }
+    },
+    "multi": {
+      "ARGS": []
+    },
+    "transformed": {}
+  }
+},
+{
+  "text": "offCtx.createStereoPanner()",
+  "range": {
+    "byteOffset": {
+      "start": 24604,
+      "end": 24631
+    },
+    "start": {
+      "line": 599,
+      "column": 13
+    },
+    "end": {
+      "line": 599,
+      "column": 40
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  const pR = offCtx.createStereoPanner(); pR.pan.value = 1;",
+  "charCount": {
+    "leading": 13,
+    "trailing": 19
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "CTX": {
+        "text": "offCtx",
+        "range": {
+          "byteOffset": {
+            "start": 24604,
+            "end": 24610
+          },
+          "start": {
+            "line": 599,
+            "column": 13
+          },
+          "end": {
+            "line": 599,
+            "column": 19
+          }
+        }
+      }
+    },
+    "multi": {
+      "ARGS": []
+    },
+    "transformed": {}
+  }
+},
+{
+  "text": "offCtx.createStereoPanner()",
+  "range": {
+    "byteOffset": {
+      "start": 24924,
+      "end": 24951
+    },
+    "start": {
+      "line": 605,
+      "column": 14
+    },
+    "end": {
+      "line": 605,
+      "column": 41
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  const stP = offCtx.createStereoPanner();",
+  "charCount": {
+    "leading": 14,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {
+      "CTX": {
+        "text": "offCtx",
+        "range": {
+          "byteOffset": {
+            "start": 24924,
+            "end": 24930
+          },
+          "start": {
+            "line": 605,
+            "column": 14
+          },
+          "end": {
+            "line": 605,
+            "column": 20
+          }
+        }
+      }
+    },
+    "multi": {
+      "ARGS": []
+    },
+    "transformed": {}
+  }
+}
+]

@@ -1,0 +1,131 @@
+[
+  {
+    "engine": "chromium",
+    "status": "PASS",
+    "dom": {
+      "hasTestApi": true,
+      "hasPlay": true,
+      "noHorizontalOverflow": true,
+      "radarDataUrl": true
+    },
+    "lifecycle": {
+      "first": "reproduciendo",
+      "second": "detenido",
+      "third": "reproduciendo"
+    },
+    "downloadOk": true,
+    "wav": {
+      "bytes": 10584044,
+      "audioFormat": 1,
+      "channels": 2,
+      "sampleRate": 44100,
+      "byteRate": 176400,
+      "blockAlign": 4,
+      "bitsPerSample": 16,
+      "dataBytes": 10584000,
+      "frames": 2646000,
+      "durationSeconds": 60,
+      "rms": [
+        0.07069592404286319,
+        0.07069592404286319
+      ],
+      "peaks": [
+        0.0999755859375,
+        0.0999755859375
+      ],
+      "clipRate": [
+        0,
+        0
+      ],
+      "nonFinite": 0
+    },
+    "errors": [],
+    "failures": []
+  },
+  {
+    "engine": "firefox",
+    "status": "PASS",
+    "dom": {
+      "hasTestApi": true,
+      "hasPlay": true,
+      "noHorizontalOverflow": true,
+      "radarDataUrl": true
+    },
+    "lifecycle": {
+      "first": "reproduciendo",
+      "second": "detenido",
+      "third": "reproduciendo"
+    },
+    "downloadOk": true,
+    "wav": {
+      "bytes": 10584044,
+      "audioFormat": 1,
+      "channels": 2,
+      "sampleRate": 44100,
+      "byteRate": 176400,
+      "blockAlign": 4,
+      "bitsPerSample": 16,
+      "dataBytes": 10584000,
+      "frames": 2646000,
+      "durationSeconds": 60,
+      "rms": [
+        0.07069576838912835,
+        0.07069576838912835
+      ],
+      "peaks": [
+        0.0999755859375,
+        0.0999755859375
+      ],
+      "clipRate": [
+        0,
+        0
+      ],
+      "nonFinite": 0
+    },
+    "errors": [],
+    "failures": []
+  },
+  {
+    "engine": "webkit",
+    "status": "PASS",
+    "dom": {
+      "hasTestApi": true,
+      "hasPlay": true,
+      "noHorizontalOverflow": true,
+      "radarDataUrl": true
+    },
+    "lifecycle": {
+      "first": "reproduciendo",
+      "second": "detenido",
+      "third": "reproduciendo"
+    },
+    "downloadOk": true,
+    "wav": {
+      "bytes": 10584044,
+      "audioFormat": 1,
+      "channels": 2,
+      "sampleRate": 44100,
+      "byteRate": 176400,
+      "blockAlign": 4,
+      "bitsPerSample": 16,
+      "dataBytes": 10584000,
+      "frames": 2646000,
+      "durationSeconds": 60,
+      "rms": [
+        0.07069592562470056,
+        0.07069592562470056
+      ],
+      "peaks": [
+        0.0999755859375,
+        0.0999755859375
+      ],
+      "clipRate": [
+        0,
+        0
+      ],
+      "nonFinite": 0
+    },
+    "errors": [],
+    "failures": []
+  }
+]

@@ -1,0 +1,32 @@
+{
+  "zero": {
+    "filterType": "bandpass",
+    "q": 2,
+    "hasStereoNoiseSources": true,
+    "carrierGain": 0.25,
+    "noiseGain": 0,
+    "filterFrequency": 200,
+    "filterDepth": 0
+  },
+  "full": {
+    "filterType": "bandpass",
+    "q": 2,
+    "hasStereoNoiseSources": true,
+    "carrierGain": 0,
+    "noiseGain": 0.25,
+    "filterFrequency": 400,
+    "filterDepth": 133.3333282470703
+  },
+  "wav": {
+    "bytes": 10584044,
+    "riff": "RIFF",
+    "wave": "WAVE",
+    "channels": 2,
+    "sampleRate": 44100,
+    "bitsPerSample": 16,
+    "dataBytes": 10584000,
+    "peak": 0.035430908203125,
+    "clipRate": 0
+  },
+  "failures": []
+}

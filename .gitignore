@@ -1,0 +1,29 @@
+# Local/editor/cache files
+.pki/
+.sudo_as_admin_successful
+node_modules/
+.cache/
+.npm/
+.local/
+.config/
+.arena/
+.agents/
+Downloads/
+uploads/
+*.log
+
+# Generated browser/test output (keep JSON reports selectively if desired)
+artifacts/visual/*.png
+artifacts/visual/native-page-desktop.png
+cortex-test-report.png
+spikes/backstop/bitmaps_reference/
+spikes/backstop/bitmaps_test/
+spikes/backstop/html_report/
+spikes/backstop/ci_report/
+*.wav
+
+# Large locally downloaded audit binary; reproduce from tools/README.md
+tools/difftastic/difft
+
+# Conversaciones exportadas y notas personales: no forman parte del proyecto
+*-gemini-*.txt

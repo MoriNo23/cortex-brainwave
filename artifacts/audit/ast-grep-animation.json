@@ -1,0 +1,100 @@
+[
+{
+  "text": "requestAnimationFrame(renderLoop)",
+  "range": {
+    "byteOffset": {
+      "start": 31634,
+      "end": 31667
+    },
+    "start": {
+      "line": 776,
+      "column": 2
+    },
+    "end": {
+      "line": 776,
+      "column": 35
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  requestAnimationFrame(renderLoop);",
+  "charCount": {
+    "leading": 2,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {},
+    "multi": {
+      "ARGS": [
+        {
+          "text": "renderLoop",
+          "range": {
+            "byteOffset": {
+              "start": 31656,
+              "end": 31666
+            },
+            "start": {
+              "line": 776,
+              "column": 24
+            },
+            "end": {
+              "line": 776,
+              "column": 34
+            }
+          }
+        }
+      ]
+    },
+    "transformed": {}
+  }
+},
+{
+  "text": "requestAnimationFrame(renderLoop)",
+  "range": {
+    "byteOffset": {
+      "start": 31863,
+      "end": 31896
+    },
+    "start": {
+      "line": 788,
+      "column": 2
+    },
+    "end": {
+      "line": 788,
+      "column": 35
+    }
+  },
+  "file": "artifacts/audit/cortex-inline.js",
+  "lines": "  requestAnimationFrame(renderLoop);",
+  "charCount": {
+    "leading": 2,
+    "trailing": 1
+  },
+  "language": "JavaScript",
+  "metaVariables": {
+    "single": {},
+    "multi": {
+      "ARGS": [
+        {
+          "text": "renderLoop",
+          "range": {
+            "byteOffset": {
+              "start": 31885,
+              "end": 31895
+            },
+            "start": {
+              "line": 788,
+              "column": 24
+            },
+            "end": {
+              "line": 788,
+              "column": 34
+            }
+          }
+        }
+      ]
+    },
+    "transformed": {}
+  }
+}
+]
