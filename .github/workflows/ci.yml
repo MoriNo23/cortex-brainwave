@@ -10,6 +10,28 @@ permissions:
   contents: read
 
 jobs:
+  ligero:
+    name: Nivel ligero (sin navegador)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      # Sin `npm install` y sin `playwright install`: el nivel ligero corre solo con Node.
+      - name: Nivel ligero de verificación
+        run: node tests/light/run-light-verify.cjs
+
+      - name: Subir reporte
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: light-verify
+          path: artifacts/light-verify.json
+          if-no-files-found: warn
+
   suite:
     name: Suite completa (Chromium)
     runs-on: ubuntu-latest

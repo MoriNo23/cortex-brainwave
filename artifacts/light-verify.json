@@ -1,0 +1,27 @@
+{
+  "chequeos": [
+    {
+      "detalle": "2 bloques inline parsean (cortex.html, cortex.spec.html)",
+      "id": "inline-syntax",
+      "ok": true
+    },
+    {
+      "detalle": "sin scripts, links ni llamadas remotas en cortex.html, cortex.spec.html",
+      "id": "self-contained",
+      "ok": true
+    },
+    {
+      "detalle": "cortex.html: 46 ids usados, 72 declarados, 0 huérfanos",
+      "id": "dom-references",
+      "ok": true
+    },
+    {
+      "detalle": "cortex.spec.html: 79 entradas con group, name y fn",
+      "id": "scenario-runner-shape",
+      "ok": true
+    }
+  ],
+  "fallos": 0,
+  "nivel": "ligero",
+  "total": 4
+}
