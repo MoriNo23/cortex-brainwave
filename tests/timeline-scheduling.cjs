@@ -59,7 +59,7 @@ function check(cond, name, detail) {
   }
   const failures = [];
 
-  async function scenario(title, fn) {
+  async function scenario(title, fn, { needsClock = true } = {}) {
     console.log(`\n-- ${title} --`);
     const page = await browser.newPage();
     const errors = [];
@@ -67,21 +67,27 @@ function check(cond, name, detail) {
     page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
     await page.goto(URL, { waitUntil: 'networkidle' });
     await page.waitForFunction(() => typeof window.__CORTEX__ === 'object');
-    // El AudioContext no arranca sin un gesto real del usuario en navegadores con
-    // autoplay estricto (Firefox). Por eso se hace click en vez de llamar a
-    // engine.start() desde evaluate: el click es un gesto confiable.
-    await page.click('#btnPlay');
-    // ctx.resume() es asíncrono: leer el estado justo después del click da una
-    // carrera. Se espera a que el contexto quede 'running'.
-    const clockReady = await page.waitForFunction(
-      () => { const c = window.__CORTEX__.engine.ctx; return Boolean(c) && c.state === 'running'; },
-      null, { timeout: 8000 }
-    ).then(() => true).catch(() => false);
-    if (!clockReady) {
-      const st = await page.evaluate(() => (window.__CORTEX__.engine.ctx || {}).state || 'none');
-      console.log(`SKIP  ${title}: el reloj de audio no quedó disponible (ctx=${st})`);
-      await page.close();
-      return;
+    // Casi todos los escenarios de esta suite dependen del reloj de audio
+    // corriendo; el de timeline vacío solo reproduce un mensaje y no lo necesita
+    // (en Firefox headless el contexto queda suspendido por falta de audio).
+    let clockReady = true;
+    if (needsClock) {
+      // El AudioContext no arranca sin un gesto real del usuario en navegadores con
+      // autoplay estricto (Firefox). Por eso se hace click en vez de llamar a
+      // engine.start() desde evaluate: el click es un gesto confiable.
+      await page.click('#btnPlay');
+      // ctx.resume() es asíncrono: leer el estado justo después del click da una
+      // carrera. Se espera a que el contexto quede 'running'.
+      clockReady = await page.waitForFunction(
+        () => { const c = window.__CORTEX__.engine.ctx; return Boolean(c) && c.state === 'running'; },
+        null, { timeout: 8000 }
+      ).then(() => true).catch(() => false);
+      if (!clockReady) {
+        const st = await page.evaluate(() => (window.__CORTEX__.engine.ctx || {}).state || 'none');
+        console.log(`SKIP  ${title}: el reloj de audio no quedó disponible (ctx=${st})`);
+        await page.close();
+        return;
+      }
     }
     try {
       await fn(page);
@@ -297,7 +303,7 @@ function check(cond, name, detail) {
     });
     check(r.started === false && r.running === false, 'play() con timeline vacío no arranca', JSON.stringify(r));
     check(r.status.includes('Agrega al menos un preset'), 'explica por qué no arrancó', r.status);
-  });
+  }, { needsClock: false });
 
   await browser.close();
 

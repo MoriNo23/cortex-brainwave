@@ -50,7 +50,7 @@ const SETUP = `(() => {
     process.exit(0);
   }
 
-  async function scenario(title, fn) {
+  async function scenario(title, fn, { needsClock = true } = {}) {
     console.log(`\n-- ${title} --`);
     const page = await browser.newPage();
     const errors = [];
@@ -58,16 +58,22 @@ const SETUP = `(() => {
     page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
     await page.goto(URL, { waitUntil: 'networkidle' });
     await page.waitForFunction(() => typeof window.__CORTEX__ === 'object');
-    await page.click('#btnPlay');
-    const clockReady = await page.waitForFunction(
-      () => { const c = window.__CORTEX__.engine.ctx; return Boolean(c) && c.state === 'running'; },
-      null, { timeout: 8000 }
-    ).then(() => true).catch(() => false);
-    if (!clockReady) {
-      const st = await page.evaluate(() => (window.__CORTEX__.engine.ctx || {}).state || 'none');
-      console.log(`SKIP  ${title}: el reloj de audio no quedó disponible (ctx=${st})`);
-      await page.close();
-      return;
+    // Los escenarios de rampa necesitan el reloj de audio corriendo; los de
+    // unidades y persistencia solo tocan UI y localStorage, así que corren en
+    // cualquier motor (en Firefox headless el contexto queda suspendido).
+    let clockReady = true;
+    if (needsClock) {
+      await page.click('#btnPlay');
+      clockReady = await page.waitForFunction(
+        () => { const c = window.__CORTEX__.engine.ctx; return Boolean(c) && c.state === 'running'; },
+        null, { timeout: 8000 }
+      ).then(() => true).catch(() => false);
+      if (!clockReady) {
+        const st = await page.evaluate(() => (window.__CORTEX__.engine.ctx || {}).state || 'none');
+        console.log(`SKIP  ${title}: el reloj de audio no quedó disponible (ctx=${st})`);
+        await page.close();
+        return;
+      }
     }
     try {
       await fn(page);
@@ -214,7 +220,7 @@ const SETUP = `(() => {
     check(r.back === '120', 'de vuelta en segundos se ve 120', r.back);
     check(r.transValue === '0.033333', 'la transición también cambia de unidad', r.transValue);
     check(r.transHint.includes('2 s'), 'la pista de transición muestra el equivalente', r.transHint);
-  });
+  }, { needsClock: false });
 
   // 7. Persistencia de la configuración y de las duraciones editadas
   // Nota: cada escenario de esta suite abre una página en un contexto NUEVO
@@ -247,7 +253,7 @@ const SETUP = `(() => {
     check(r.seconds === 5 && r.enabled === true, 'la configuración de transición sobrevive la recarga', JSON.stringify(r));
     check(r.firstDuration === 120, 'la duración editada en minutos sobrevive', 'primera=' + r.firstDuration);
     check(r.unit === 'min', 'la unidad elegida también sobrevive', 'unidad=' + r.unit);
-  });
+  }, { needsClock: false });
 
   // 8. Datos previos sin campos de transición cargan con defaults
   await scenario('datos legacy', async page => {
@@ -260,7 +266,7 @@ const SETUP = `(() => {
     });
     check(r.enabled === true && r.seconds === 2 && r.units === 's', 'datos previos sin transición cargan con defaults', JSON.stringify(r));
     check(r.steps === 1, 'los pasos legacy se conservan', String(r.steps));
-  });
+  }, { needsClock: false });
 
   await browser.close();
   const failures = results.filter(x => !x.pass).map(x => x.name);

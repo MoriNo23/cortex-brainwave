@@ -30,11 +30,11 @@
 - [x] 5.1 Fijar transición desactivada en el `SETUP` de `tests/timeline-scheduling.cjs` para que siga midiendo límites de paso puros, y verificar que la suite existente pasa sin cambios de aserciones.
 - [x] 5.2 Crear `tests/timeline-transitions.cjs` con: rampa completa entre dos presets (estado final exacto y valores intermedios distintos de ambos extremos), corte directo con transición desactivada, edición de duración a mitad de rampa, reanudación a mitad de rampa, unidades (2 min → 120 s) y persistencia de la configuración.
 - [x] 5.3 Añadir al runner in-page (`cortex.spec.html`) los casos de interpolación y de unidades, y verificar que la suite completa pasa.
-- [ ] 5.4 Correr la CI completa (suite Chromium, tres motores, matriz) y registrar los conteos por motor en el reporte; documentar que en Firefox headless los escenarios de rampa se omiten por el reloj de audio suspendido, como ya se hace hoy.
+- [x] 5.4 Correr la CI completa (suite Chromium, tres motores, matriz) y registrar los conteos por motor en el reporte; documentar que en Firefox headless los escenarios de rampa se omiten por el reloj de audio suspendido, como ya se hace hoy.
 
 ## 6. Cierre
 
 - [x] 6.1 Documentar en el glosario la transición suave (qué interpola, límite 0–60 s, qué significa el "· transición" del status) sin convertirla en afirmación médica.
-- [ ] 6.2 Actualizar `cortex-stability-report.md` (o crear el reporte del cambio) con la evidencia de la CI y el trade-off de la rampa bajo estrangulamiento intensivo.
+- [x] 6.2 Actualizar `cortex-stability-report.md` (o crear el reporte del cambio) con la evidencia de la CI y el trade-off de la rampa bajo estrangulamiento intensivo.
 - [x] 6.3 Validar con `openspec validate cortex-timeline-transitions --strict --json` y dejar el resultado anotado.
 - [ ] 6.4 Escucha humana: sesión con una rampa de 10 s entre Theta y Alpha con la ventana minimizada, y anotar si la interpolación del volumen (`mix`) resulta cómoda o conviene excluirla. (Requiere escucha humana.)
