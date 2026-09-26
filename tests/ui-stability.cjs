@@ -21,9 +21,25 @@ function check(cond, name, detail) {
 }
 
 (async () => {
+  // En un runner headless no hay dispositivo de salida de audio: Firefox deja el
+  // AudioContext suspendido y el reloj no avanza, así que la línea de tiempo no
+  // se puede medir. Se autoriza el autoplay para que el reloj quede disponible.
+  // En Chromium el equivalente es --autoplay-policy.
+  const launchOptions = { headless: true };
+  if (engineName === 'firefox') {
+    launchOptions.firefoxUserPrefs = {
+      'media.autoplay.default': 0,
+      'media.autoplay.blocking_policy': 0,
+      'media.navigator.permission.disabled': true,
+    };
+  }
+  if (engineName === 'chromium') {
+    launchOptions.args = ['--autoplay-policy=no-user-gesture-required'];
+  }
+
   let browser;
   try {
-    browser = await browserType.launch({ headless: true });
+    browser = await browserType.launch(launchOptions);
   } catch (e) {
     console.log(`BLOCKED  ${engineName} no disponible: ${e.message.split('\n')[0]}`);
     fs.writeFileSync(path.join(process.cwd(), 'artifacts', `ui-stability-${engineName}.json`),
