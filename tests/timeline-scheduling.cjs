@@ -54,13 +54,18 @@ function check(cond, name, detail) {
     // autoplay estricto (Firefox). Por eso se hace click en vez de llamar a
     // engine.start() desde evaluate: el click es un gesto confiable.
     await page.click('#btnPlay');
-    const clockState = await page.evaluate(() => (window.__CORTEX__.engine.ctx || {}).state || 'none');
-    if (clockState !== 'running') {
-      console.log(`SKIP  ${title}: el reloj de audio no está disponible (ctx=${clockState})`);
+    // ctx.resume() es asíncrono: leer el estado justo después del click da una
+    // carrera. Se espera a que el contexto quede 'running'.
+    const clockReady = await page.waitForFunction(
+      () => { const c = window.__CORTEX__.engine.ctx; return Boolean(c) && c.state === 'running'; },
+      null, { timeout: 8000 }
+    ).then(() => true).catch(() => false);
+    if (!clockReady) {
+      const st = await page.evaluate(() => (window.__CORTEX__.engine.ctx || {}).state || 'none');
+      console.log(`SKIP  ${title}: el reloj de audio no quedó disponible (ctx=${st})`);
       await page.close();
       return;
     }
-    await page.waitForTimeout(150);
     try {
       await fn(page);
     } catch (e) {

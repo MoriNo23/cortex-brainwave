@@ -39,13 +39,18 @@ function check(cond, name, detail) {
   // Click real, no engine.start() desde evaluate: Firefox exige un gesto del
   // usuario para que el AudioContext pase a 'running'.
   await page.click('#btnPlay');
-  const clockState = await page.evaluate(() => (window.__CORTEX__.engine.ctx || {}).state || 'none');
-  if (clockState !== 'running') {
-    console.log(`BLOCKED  reloj de audio no disponible en este motor (ctx=${clockState})`);
+  // ctx.resume() es asíncrono: leer el estado justo después del click da una
+  // carrera. Se espera a que el contexto quede 'running'.
+  const clockReady = await page.waitForFunction(
+    () => { const c = window.__CORTEX__.engine.ctx; return Boolean(c) && c.state === 'running'; },
+    null, { timeout: 8000 }
+  ).then(() => true).catch(() => false);
+  if (!clockReady) {
+    const st = await page.evaluate(() => (window.__CORTEX__.engine.ctx || {}).state || 'none');
+    console.log(`BLOCKED  reloj de audio no disponible en este motor (ctx=${st})`);
     await browser.close();
     process.exit(0);
   }
-  await page.waitForTimeout(200);
 
   // 1. Ancho de readout estable y cifras tabulares
   const layout = await page.evaluate(async () => {
