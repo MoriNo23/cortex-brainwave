@@ -37,4 +37,4 @@
 - [x] 6.1 Documentar en el glosario la transición suave (qué interpola, límite 0–60 s, qué significa el "· transición" del status) sin convertirla en afirmación médica.
 - [x] 6.2 Actualizar `cortex-stability-report.md` (o crear el reporte del cambio) con la evidencia de la CI y el trade-off de la rampa bajo estrangulamiento intensivo.
 - [x] 6.3 Validar con `openspec validate cortex-timeline-transitions --strict --json` y dejar el resultado anotado.
-- [ ] 6.4 Escucha humana: sesión con una rampa de 10 s entre Theta y Alpha con la ventana minimizada, y anotar si la interpolación del volumen (`mix`) resulta cómoda o conviene excluirla. (Requiere escucha humana.)
+- [x] 6.4 Escucha humana: sesión con una rampa de 10 s entre Theta y Alpha con la ventana minimizada, y anotar si la interpolación del volumen (`mix`) resulta cómoda o conviene excluirla. (Confirmado por el usuario: la transición se escucha continua, las unidades en minutos funcionan y la rampa progresa sin foco en la app. `mix` se mantiene interpolado.)

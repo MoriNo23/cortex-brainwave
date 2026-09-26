@@ -34,4 +34,4 @@
 
 - [x] 5.1 Documentar en el glosario y en la UI que la progresión temporal usa el reloj del contexto de audio y cuál es el retraso máximo del catch-up, sin convertirlo en afirmación médica.
 - [x] 5.2 Validar el cambio con `openspec validate cortex-timing-and-ui-stability --strict --json` y dejar el resultado anotado.
-- [ ] 5.3 Prueba manual de una secuencia larga con la ventana minimizada y con la pestaña en segundo plano, verificando que las transiciones entre pasos ocurren igual. (Requiere observación y escucha humana; verificar también que al volver la UI muestra la posición real.)
+- [x] 5.3 Prueba manual de una secuencia larga con la ventana minimizada y con la pestaña en segundo plano, verificando que las transiciones entre pasos ocurren igual. (Confirmado por el usuario: la secuencia avanza sin foco en la app, con transiciones audibles. La posición de la UI al volver está cubierta por el escenario automatizado de resync en tests/timeline-scheduling.cjs.)
