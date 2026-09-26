@@ -284,6 +284,16 @@
   .modal-body { padding:14px 16px 16px; overflow:auto; max-height:calc(100vh - 150px); }
   .timeline-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:7px; margin-bottom:12px; }
   .timeline-toolbar .btn { padding:6px 9px; }
+  .transition-control { display:flex; align-items:center; gap:5px; color:var(--text-dim); font:11px 'IBM Plex Mono', monospace; }
+  .duration-editor { display:inline-flex; align-items:center; gap:4px; }
+  .duration-editor input { width:58px; padding:5px; border:1px solid var(--line-2); border-radius:4px; background:var(--bg); color:var(--text); text-align:center; font:11px 'IBM Plex Mono', monospace; }
+  .duration-editor input:disabled { opacity:.45; }
+  .duration-unit-toggle { display:inline-flex; border:1px solid var(--line-2); border-radius:4px; overflow:hidden; }
+  .duration-unit-option { border:0; border-right:1px solid var(--line-2); border-radius:0; padding:4px 5px; background:var(--bg); color:var(--text-mute); font:10px 'IBM Plex Mono', monospace; cursor:pointer; }
+  .duration-unit-option:last-child { border-right:0; }
+  .duration-unit-option[aria-pressed="true"] { background:rgba(232,168,85,.18); color:var(--amber); }
+  .duration-unit-option:disabled { opacity:.45; cursor:not-allowed; }
+  .duration-hint { display:block; min-height:11px; color:var(--text-mute); font:8px 'IBM Plex Mono', monospace; white-space:nowrap; }
   .loop-label { display:flex; align-items:center; gap:6px; margin-left:auto; color:var(--text-dim); font:11px 'IBM Plex Mono', monospace; }
   .timeline-status { min-height:18px; color:var(--text-mute); font:10px 'IBM Plex Mono', monospace; margin-bottom:10px; }
   .timeline-steps { display:flex; gap:8px; overflow-x:auto; padding:3px 1px 10px; min-height:142px; }
@@ -638,6 +648,16 @@
       <button class="btn" id="btnTimelineStop" type="button">■ Detener</button>
       <button class="btn" id="btnTimelineClear" type="button">Limpiar</button>
       <label class="loop-label"><input type="checkbox" id="timelineLoop"> Loop infinito</label>
+      <label class="loop-label"><input type="checkbox" id="timelineTransitionEnabled" checked> Transición suave</label>
+      <div class="transition-control duration-editor" aria-label="Duración de transición">
+        <span>Duración</span>
+        <input id="timelineTransitionSeconds" type="number" min="0" max="60" step="0.1" value="2" aria-label="Duración de transición">
+        <span class="duration-unit-toggle" role="group" aria-label="Unidad de duración de transición">
+          <button class="duration-unit-option" id="timelineTransitionUnitMin" type="button" data-duration-unit-context="transition" data-unit="min" aria-pressed="false">min</button>
+          <button class="duration-unit-option" id="timelineTransitionUnitSeconds" type="button" data-duration-unit-context="transition" data-unit="s" aria-pressed="true">s</button>
+        </span>
+        <span class="duration-hint" id="timelineTransitionHint"></span>
+      </div>
     </div>
     <div class="timeline-status" id="timelineStatus" role="status">Agrega presets para construir una secuencia.</div>
     <div class="timeline-steps" id="timelineSteps" aria-live="polite"></div>
@@ -728,7 +748,7 @@ const PRESET_DEFAULTS = {
 const AVAILABLE_EMOTES = ['🌙','🌀','🌿','⚡','✨','🧘','🎯','🌊','🎵','🧠','☁️','🌌','😴','🚀'];
 const AUDIO_KEYS = ['brainwave','carrier','amod','binaural','stereo','fmod','noise','mix'];
 let customPresets = [];
-const timelineState = { steps: [], loop: false };
+const timelineState = { steps: [], loop: false, transition: { enabled: true, seconds: 2 }, durationUnits: { step: 's', transition: 's' } };
 let timelinePlayer = null;
 let editingCustomPresetId = null;
 let selectedCustomEmoji = AVAILABLE_EMOTES[0];
@@ -743,6 +763,67 @@ function escapeHtml(value) {
 
 function audioSnapshot(source = state) {
   return Object.fromEntries(AUDIO_KEYS.map(key => [key, Number(source[key]) || 0]));
+}
+
+/* ── UNIDADES DE DURACIÓN (s/min) ──
+   Portadas de la evolución paralela del usuario: funciones puras con
+   límites por tipo — paso 1–3600 s, transición 0–60 s. */
+function normalizeDurationUnit(value) {
+  return value === 'min' ? 'min' : 's';
+}
+
+function durationLimits(kind) {
+  return kind === 'transition' ? { min: 0, max: 60 } : { min: 1, max: 3600 };
+}
+
+function clampDurationSeconds(value, kind = 'step') {
+  const limits = durationLimits(kind);
+  const seconds = Number(value);
+  if (!Number.isFinite(seconds)) return null;
+  return Math.max(limits.min, Math.min(limits.max, seconds));
+}
+
+function durationToSeconds(value, unit, kind = 'step') {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return null;
+  return clampDurationSeconds(numeric * (normalizeDurationUnit(unit) === 'min' ? 60 : 1), kind);
+}
+
+function secondsToDuration(seconds, unit) {
+  const canonical = Number(seconds);
+  if (!Number.isFinite(canonical)) return '';
+  const value = canonical / (normalizeDurationUnit(unit) === 'min' ? 60 : 1);
+  return String(Number(value.toFixed(6)));
+}
+
+function durationInputConfig(kind, unit) {
+  const normalized = normalizeDurationUnit(unit);
+  const limits = durationLimits(kind);
+  return {
+    min: secondsToDuration(limits.min, normalized),
+    max: secondsToDuration(limits.max, normalized),
+    step: normalized === 'min' ? 'any' : (kind === 'transition' ? '0.1' : '1'),
+  };
+}
+
+function durationHint(seconds, unit) {
+  const normalized = normalizeDurationUnit(unit);
+  const other = normalized === 'min' ? 's' : 'min';
+  return `≈ ${secondsToDuration(seconds, other)} ${other}`;
+}
+
+function clampTransitionSeconds(value) {
+  return clampDurationSeconds(value, 'transition') ?? 2;
+}
+
+/* ── TRANSICIÓN SUAVE ──
+   Interpolación lineal de los ocho parámetros de audio entre el estado
+   vivo y el preset del paso entrante. */
+function interpolateAudioState(from, to, progress) {
+  const t = Math.max(0, Math.min(1, Number(progress) || 0));
+  const source = audioSnapshot(from);
+  const target = audioSnapshot(to);
+  return Object.fromEntries(AUDIO_KEYS.map(key => [key, source[key] + (target[key] - source[key]) * t]));
 }
 
 function snapshotForBuiltin(preset) {
@@ -765,15 +846,20 @@ function presetBand(preset) {
   return preset.state ? bandFromFreq(Number(preset.state.brainwave)) : preset.band;
 }
 
-function applyAudioSnapshot(snapshot, label = 'preset aplicado') {
+function applyAudioState(snapshot, { label = null, toast = false } = {}) {
   Object.assign(state, audioSnapshot(snapshot));
-  syncUIFromState();
   engine.updateBrainwave(state.brainwave);
   engine.updateCarrier(state.carrier);
   engine.updateModLevels();
   updateBrain();
-  updateSpatialReadout();
-  showToast(label);
+  // Sin syncUIFromState por llamada: durante una rampa esto se invoca por tick
+  // y la UI va coalescida a una pasada por frame.
+  markUiDirty('controls', 'spatial');
+  if (toast && label) showToast(label);
+}
+
+function applyAudioSnapshot(snapshot, label = 'preset aplicado') {
+  applyAudioState(snapshot, { label, toast: true });
 }
 
 function persistCustomPresets() {
@@ -798,9 +884,19 @@ function loadTimelineData() {
       band: step.band || bandFromFreq(step.snapshot.brainwave),
     }));
     timelineState.loop = Boolean(raw.loop);
+    // Campos nuevos con valores por omisión: datos previos (sin transición ni
+    // unidades) cargan como si se hubieran guardado con los defaults.
+    const transition = raw.transition || {};
+    timelineState.transition.enabled = transition.enabled !== false;
+    timelineState.transition.seconds = clampTransitionSeconds(transition.seconds ?? 2);
+    const durationUnits = raw.durationUnits || {};
+    timelineState.durationUnits.step = normalizeDurationUnit(durationUnits.step);
+    timelineState.durationUnits.transition = normalizeDurationUnit(durationUnits.transition);
   } catch (error) {
     timelineState.steps = [];
     timelineState.loop = false;
+    timelineState.transition = { enabled: true, seconds: 2 };
+    timelineState.durationUnits = { step: 's', transition: 's' };
   }
 }
 
@@ -847,10 +943,16 @@ class TimelinePlayer {
     this.stepStartedAt = 0;   // reloj de audio: inicio del paso actual
     this.boundaryAt = 0;      // reloj de audio: instante en que termina el paso
     this.pausedRemainingMs = 0;
+    this.pausedTransitionMs = 0;  // rampa que quedaba al pausar
     this.frozenRemainingMs = 0;  // último restante conocido, si el reloj se detiene
     this.stalled = false;        // el reloj de audio no está corriendo
     this.running = false;
     this.paused = false;
+    this.sourceState = null;   // estado de audio al empezar la rampa
+    this.targetState = null;   // preset al que converge la rampa
+    this.transitionMs = 0;     // duración de la rampa del segmento en curso
+    this.transitionStartedAt = 0; // reloj de audio: inicio del segmento de rampa
+    this.transitionDone = true;  // true = sin rampa pendiente
     this.tick = null;
     this.timer = null;
     this.onStep = null;       // punto de extensión para el futuro dock
@@ -884,7 +986,31 @@ class TimelinePlayer {
     const step = timelineState.steps[this.index];
     if (!step) return;
     this.frozenRemainingMs = this.remainingMs;
-    setTimelineStatus(`Paso ${this.index + 1}/${timelineState.steps.length}: ${step.emoji} ${step.name} · ${formatDuration(this.remainingMs)}`);
+    const suffix = this.transitionInProgress() ? ' · transición' : '';
+    setTimelineStatus(`Paso ${this.index + 1}/${timelineState.steps.length}: ${step.emoji} ${step.name} · ${formatDuration(this.remainingMs)}${suffix}`);
+  }
+
+  transitionInProgress() {
+    return this.running && !this.transitionDone;
+  }
+
+  /* Tiempo de rampa consumido del segmento en curso. */
+  transitionElapsedMs() {
+    if (this.transitionMs === 0) return 0;
+    return Math.max(0, (this.clockNow() - this.transitionStartedAt) * 1000);
+  }
+
+  /* Aplica un punto de la rampa: interpola de source a target con el progreso
+     del reloj de audio. Al terminar, fija exactamente el preset del paso. */
+  applyTransitionProgress() {
+    if (!this.running || this.transitionDone) return;
+    const elapsedMs = this.transitionElapsedMs();
+    if (elapsedMs >= this.transitionMs) {
+      this.transitionDone = true;
+      applyAudioState(this.targetState);
+      return;
+    }
+    applyAudioState(interpolateAudioState(this.sourceState, this.targetState, elapsedMs / this.transitionMs));
   }
 
   clearTimer() {
@@ -904,8 +1030,9 @@ class TimelinePlayer {
 
   /* Reancla el paso actual al reloj de audio. `startedAt` permite mantener el
      inicio ya consumido (reanudación, cambio de duración) en vez de reiniciar
-     el paso desde cero. */
-  startStep(remainingOverride, startedAt) {
+     el paso desde cero. `transitionOverrideMs` fija la rampa del segmento
+     (lo que quedaba al reanudar o reprogramar) en vez del valor configurado. */
+  startStep(remainingOverride, startedAt, transitionOverrideMs) {
     this.stopTimers();
     const step = timelineState.steps[this.index];
     if (!step) return this.finish();
@@ -914,23 +1041,43 @@ class TimelinePlayer {
       ? Math.max(0, remainingOverride)
       : step.durationSeconds * 1000;
 
-    applyAudioSnapshot(step.snapshot, `${step.emoji} ${step.name}`);
+    // Transición: capturar el estado vivo ANTES de tocar nada, y el preset al
+    // que la rampa converge. Con transición desactivada o en 0 s, corte directo.
+    this.sourceState = audioSnapshot(state);
+    this.targetState = audioSnapshot(step.snapshot);
+    this.transitionMs = transitionOverrideMs != null
+      ? Math.max(0, Math.min(transitionOverrideMs, durationMs))
+      : (timelineState.transition.enabled
+          ? Math.min(durationMs, clampTransitionSeconds(timelineState.transition.seconds) * 1000)
+          : 0);
+    this.transitionDone = this.transitionMs === 0;
+    this.transitionStartedAt = this.clockNow();
+
+    if (this.transitionMs === 0) {
+      applyAudioSnapshot(step.snapshot, `${step.emoji} ${step.name}`);
+    } else {
+      showToast(`${step.emoji} ${step.name}`);
+    }
+
     this.running = true;
     this.paused = false;
     this.pausedRemainingMs = 0;
+    this.pausedTransitionMs = 0;
     this.stalled = false;
     this.stepStartedAt = startedAt != null ? startedAt : this.clockNow();
     this.boundaryAt = this.stepStartedAt + durationMs / 1000;
     this.frozenRemainingMs = durationMs;
 
     // Tick periódico: sobrevive a la estrangulación porque recalcula desde el
-    // reloj de audio, no desde un deadline acumulado. Además refresca el
-    // contador visible para que la UI muestre la posición real.
-    this.tick = setInterval(() => { this.catchUp(); this.refreshStatus(); }, TIMELINE_TICK_MS);
+    // reloj de audio, no desde un deadline acumulado. Además avanza la rampa y
+    // refresca el contador visible para que la UI muestre la posición real.
+    this.tick = setInterval(() => { this.catchUp(); this.applyTransitionProgress(); this.refreshStatus(); }, TIMELINE_TICK_MS);
     // Respaldo con timeout para cuando setInterval no vuelve a disparar.
     this.armTimeout();
 
-    if (this.onStep) this.onStep(this.index, step, durationMs);
+    if (this.onStep) this.onStep(this.index, step, durationMs, {
+      source: this.sourceState, target: this.targetState, transitionMs: this.transitionMs,
+    });
     this.refreshStatus();
     renderTimeline();
   }
@@ -1021,8 +1168,9 @@ class TimelinePlayer {
     }
     if (!state.playing) document.getElementById('btnPlay').click();
     if (this.paused) {
-      // Reanuda el mismo paso por el tiempo exacto que quedaba.
-      this.startStep(this.pausedRemainingMs);
+      // Reanuda el mismo paso por el tiempo exacto que quedaba, y la rampa por
+      // lo que le faltaba: converge al preset sin recomenzar desde el origen.
+      this.startStep(this.pausedRemainingMs, undefined, this.pausedTransitionMs);
     } else {
       this.index = 0;
       this.startStep();
@@ -1034,6 +1182,13 @@ class TimelinePlayer {
     if (!this.running) return;
     // El restante sale del reloj de audio, no de restar tiempo de pared.
     this.pausedRemainingMs = Math.max(0, (this.boundaryAt - this.clockNow()) * 1000);
+    // Lo que le falta a la rampa: 0 si ya terminó o si no había.
+    this.pausedTransitionMs = this.transitionDone
+      ? 0
+      : Math.min(
+          this.pausedRemainingMs,
+          Math.max(0, this.transitionMs - this.transitionElapsedMs())
+        );
     this.stopTimers();
     this.running = false;
     this.paused = true;
@@ -1046,11 +1201,16 @@ class TimelinePlayer {
     this.running = false;
     this.paused = false;
     this.pausedRemainingMs = 0;
+    this.pausedTransitionMs = 0;
     this.frozenRemainingMs = 0;
     this.stalled = false;
     this.index = 0;
     this.stepStartedAt = 0;
     this.boundaryAt = 0;
+    this.transitionMs = 0;
+    this.transitionDone = true;
+    this.sourceState = null;
+    this.targetState = null;
     setTimelineStatus(timelineState.steps.length ? 'Timeline detenido.' : 'Agrega presets para construir una secuencia.');
     renderTimeline();
   }
@@ -1063,7 +1223,43 @@ class TimelinePlayer {
     const step = timelineState.steps[this.index];
     if (!step) return this.stop();
     const elapsed = Math.max(0, (this.clockNow() - this.stepStartedAt) * 1000);
-    this.startStep(Math.max(0, step.durationSeconds * 1000 - elapsed), this.stepStartedAt);
+    const remainingTransition = this.transitionDone
+      ? 0
+      : Math.max(0, this.transitionMs - this.transitionElapsedMs());
+    this.startStep(Math.max(0, step.durationSeconds * 1000 - elapsed), this.stepStartedAt, remainingTransition);
+  }
+
+  /* Edición en vivo del interruptor o de la duración de transición: la rampa
+     se recalcula sin reiniciar el paso. El progreso actual se conserva: el
+     inicio del segmento se ancla para que el punto interpolado de ahora siga
+     siendo el mismo y la rampa se estire o encoja hacia adelante. */
+  refreshTransition() {
+    if (!this.running && !this.paused) return;
+    const configMs = timelineState.transition.enabled
+      ? clampTransitionSeconds(timelineState.transition.seconds) * 1000
+      : 0;
+
+    if (configMs === 0) {
+      // Desactivada: aplicar el destino directo y cerrar la rampa.
+      if (!this.transitionDone) applyAudioState(this.targetState);
+      this.transitionMs = 0;
+      this.transitionDone = true;
+      this.pausedTransitionMs = 0;
+    } else {
+      const remainingStep = this.paused ? this.pausedRemainingMs : this.remainingMs;
+      const oldProgress = this.transitionDone
+        ? 1
+        : Math.min(1, this.transitionElapsedMs() / this.transitionMs);
+      const nextMs = Math.max(0, Math.min(configMs, remainingStep));
+      this.transitionMs = nextMs;
+      this.transitionDone = nextMs === 0;
+      // Anclar el inicio para continuar exactamente desde el punto actual.
+      this.transitionStartedAt = this.clockNow() - oldProgress * (nextMs / 1000);
+      if (this.paused) this.pausedTransitionMs = nextMs;
+      if (this.transitionDone && this.targetState) applyAudioState(this.targetState);
+    }
+    if (this.paused) return;
+    this.refreshStatus();
   }
 }
 
@@ -1098,6 +1294,42 @@ function renderTimelinePicker() {
   });
 }
 
+function renderDurationUnitButtons(context) {
+  document.querySelectorAll(`[data-duration-unit-context="${context}"]`).forEach(button => {
+    button.setAttribute('aria-pressed', String(timelineState.durationUnits[context] === button.dataset.unit));
+  });
+}
+
+/* Sincroniza el editor de duración de transición del toolbar con el estado:
+ * valor en la unidad vigente, límites del input y pista del equivalente.
+ */
+function renderTransitionControls() {
+  const input = document.getElementById('timelineTransitionSeconds');
+  if (!input) return;
+  const unit = timelineState.durationUnits.transition;
+  const config = durationInputConfig('transition', unit);
+  input.min = config.min; input.max = config.max; input.step = config.step;
+  input.disabled = !timelineState.transition.enabled;
+  input.value = secondsToDuration(timelineState.transition.seconds, unit);
+  const hint = document.getElementById('timelineTransitionHint');
+  if (hint) hint.textContent = timelineState.transition.enabled ? durationHint(timelineState.transition.seconds, unit) : '';
+  const toggle = document.getElementById('timelineTransitionEnabled');
+  if (toggle) toggle.checked = timelineState.transition.enabled;
+  renderDurationUnitButtons('transition');
+}
+
+/* Cambiar la unidad de un contexto (pasos o transición) convierte el valor
+ * mostrado sin tocar los segundos guardados. */
+function setDurationUnit(context, unit) {
+  const normalized = normalizeDurationUnit(unit);
+  if (timelineState.durationUnits[context] === normalized) return;
+  timelineState.durationUnits[context] = normalized;
+  persistTimeline();
+  renderDurationUnitButtons(context);
+  if (context === 'step') renderTimeline();
+  else renderTransitionControls();
+}
+
 function renderTimeline() {
   const container = document.getElementById('timelineSteps');
   if (!container) return;
@@ -1106,13 +1338,23 @@ function renderTimeline() {
   if (!steps.length) {
     container.innerHTML = '<div class="timeline-empty">Selecciona un cuadrado abajo para agregar el primer paso.</div>';
   } else {
+    const unit = timelineState.durationUnits.step;
+    const stepConfig = durationInputConfig('step', unit);
+    const unitLabel = unit === 'min' ? 'minutos' : 'segundos';
     container.innerHTML = steps.map((step, index) => `<div class="timeline-step${timelinePlayer && timelinePlayer.running && timelinePlayer.index === index ? ' current' : ''}" data-step-index="${index}">
       <button class="timeline-card" type="button" data-apply-step="${index}" aria-label="Aplicar ${escapeHtml(step.name)}">
         <span class="preset-icon">${step.emoji}</span><span class="preset-name">${escapeHtml(step.name)}</span>
         <span class="timeline-band">${escapeHtml(step.band)}</span>
       </button>
       <label class="timeline-band" for="duration-${index}">duración</label>
-      <input class="timeline-duration" id="duration-${index}" type="number" min="1" max="3600" step="1" value="${step.durationSeconds}" aria-label="Duración de ${escapeHtml(step.name)} en segundos">
+      <div class="duration-editor timeline-duration-editor">
+        <input class="timeline-duration" id="duration-${index}" type="number" min="${stepConfig.min}" max="${stepConfig.max}" step="${stepConfig.step}" value="${secondsToDuration(step.durationSeconds, unit)}" aria-label="Duración de ${escapeHtml(step.name)} en ${unitLabel}">
+        <span class="duration-unit-toggle" role="group" aria-label="Unidad de duración del paso ${index + 1}">
+          <button class="duration-unit-option" type="button" data-duration-unit-context="step" data-unit="min" aria-pressed="${unit === 'min'}">min</button>
+          <button class="duration-unit-option" type="button" data-duration-unit-context="step" data-unit="s" aria-pressed="${unit === 's'}">s</button>
+        </span>
+      </div>
+      <span class="duration-hint">${durationHint(step.durationSeconds, unit)}</span>
       <div class="timeline-step-actions">
         <button class="btn btn-mini" type="button" data-move-step="up" data-index="${index}" aria-label="Mover arriba">↑</button>
         <button class="btn btn-mini" type="button" data-move-step="down" data-index="${index}" aria-label="Mover abajo">↓</button>
@@ -1126,11 +1368,16 @@ function renderTimeline() {
     }));
     container.querySelectorAll('.timeline-duration').forEach(input => input.addEventListener('change', () => {
       const index = Number(input.closest('[data-step-index]').dataset.stepIndex);
-      timelineState.steps[index].durationSeconds = Math.max(1, Math.min(3600, Number(input.value) || 1));
-      input.value = timelineState.steps[index].durationSeconds;
+      const current = timelineState.steps[index].durationSeconds;
+      const seconds = durationToSeconds(input.value, timelineState.durationUnits.step, 'step');
+      timelineState.steps[index].durationSeconds = seconds === null ? current : seconds;
       persistTimeline();
       if (timelinePlayer) timelinePlayer.reschedule();
+      renderTimeline();
     }));
+    container.querySelectorAll('[data-duration-unit-context="step"]').forEach(button => {
+      button.addEventListener('click', () => setDurationUnit('step', button.dataset.unit));
+    });
     container.querySelectorAll('[data-move-step]').forEach(button => button.addEventListener('click', () => {
       const index = Number(button.dataset.index);
       const target = button.dataset.moveStep === 'up' ? index - 1 : index + 1;
@@ -1154,6 +1401,7 @@ function renderTimeline() {
 
 function openTimeline() {
   renderTimeline();
+  renderTransitionControls();
   openDialog(document.getElementById('timelineDialog'));
 }
 
@@ -1705,8 +1953,20 @@ function writeReadouts() {
   setText('statusBeatValue', state.brainwave.toFixed(1) + ' Hz');
 }
 
+function writeSliders() {
+  document.getElementById('sliderBrainwave').value = state.brainwave;
+  document.getElementById('sliderCarrier').value = state.carrier;
+  document.getElementById('sliderAmod').value = state.amod;
+  document.getElementById('sliderBinaural').value = state.binaural;
+  document.getElementById('sliderStereo').value = state.stereo;
+  document.getElementById('sliderFmod').value = state.fmod;
+  document.getElementById('sliderNoise').value = state.noise;
+  document.getElementById('sliderMix').value = state.mix;
+}
+
 const UI_JOBS = {
   readouts() { writeReadouts(); },
+  controls() { writeSliders(); writeReadouts(); },
   spatial() { updateSpatialReadout(); },
   band() { applyBandInfo(state.band || bandFromFreq(state.brainwave)); }
 };
@@ -1796,6 +2056,7 @@ const GLOSSARY = [
   { term: 'f-mod (frecuencia)', body: 'Mueve el pitch del carrier alrededor de su frecuencia central. El más audible de los cuatro, pero también el más fatigante. En el radar se muestra como desplazamiento frente↔atrás.' },
   { term: 'Noise (portadora de ruido)', body: 'Ruido filtrado alrededor de la frecuencia carrier. Se mezcla con la senoide: a 0% predomina el tono y a 100% predomina la textura filtrada. f-mod también mueve el centro del filtro. En el radar se ve como una nube difusa alrededor de la cabeza.' },
   { term: 'Mix', body: 'Nivel general de salida. Controla el volumen final de todo lo que suena.' },
+  { term: 'Transición suave', body: 'En la línea de tiempo, mueve gradualmente los ocho parámetros de audio del paso saliente al entrante durante los segundos que elijas (0 a 60), en lugar de cortar en seco. Mientras dura, el estado lo indica con "· transición". Es comodidad de escucha: no representa un protocolo clínico ni un efecto médico.' },
   { term: 'Reloj de la línea de tiempo', body: 'La secuencia avanza con el reloj del contexto de audio, no con temporizadores de la página. Por eso los pasos cambian igual con la ventana minimizada o la pestaña en segundo plano, aunque la interfaz se repinte al volver. El retraso de una transición está acotado por el intervalo de actualización (unos 60 ms) y no se acumula de un paso al siguiente. Al volver de segundo plano solo se aplica el paso que corresponde al momento actual, no los que quedaron atrás.' },
   { term: 'Bandas cerebrales', body: 'Delta (sueño profundo), Theta (duermevela), Alpha (relajación despierta), Beta (foco), Gamma (procesamiento rápido).' },
   { term: 'Reentrenamiento auditivo', body: 'Técnica que usa un carrier ultrasónico (~14 kHz) con f-mod alto, barriendo frecuencias. Se usa para tinnitus. No está implementado en esta versión.' }
@@ -1851,14 +2112,7 @@ function loadSettings() {
   } catch(e) { showToast('error al cargar'); }
 }
 function syncUIFromState() {
-  document.getElementById('sliderBrainwave').value = state.brainwave;
-  document.getElementById('sliderCarrier').value = state.carrier;
-  document.getElementById('sliderAmod').value = state.amod;
-  document.getElementById('sliderBinaural').value = state.binaural;
-  document.getElementById('sliderStereo').value = state.stereo;
-  document.getElementById('sliderFmod').value = state.fmod;
-  document.getElementById('sliderNoise').value = state.noise;
-  document.getElementById('sliderMix').value = state.mix;
+  writeSliders();
   writeReadouts();
 }
 
@@ -2035,6 +2289,23 @@ function bindEvents() {
     persistTimeline();
     setTimelineStatus(timelineState.loop ? 'Loop infinito activado.' : 'Loop infinito desactivado.');
   });
+  document.getElementById('timelineTransitionEnabled').addEventListener('change', event => {
+    timelineState.transition.enabled = event.target.checked;
+    persistTimeline();
+    renderTransitionControls();
+    if (timelinePlayer) timelinePlayer.refreshTransition();
+  });
+  document.getElementById('timelineTransitionSeconds').addEventListener('change', () => {
+    const input = document.getElementById('timelineTransitionSeconds');
+    const seconds = durationToSeconds(input.value, timelineState.durationUnits.transition, 'transition');
+    timelineState.transition.seconds = seconds === null ? timelineState.transition.seconds : seconds;
+    persistTimeline();
+    renderTransitionControls();
+    if (timelinePlayer) timelinePlayer.refreshTransition();
+  });
+  document.querySelectorAll('#timelineDialog [data-duration-unit-context="transition"]').forEach(button => {
+    button.addEventListener('click', () => setDurationUnit('transition', button.dataset.unit));
+  });
   document.getElementById('btnTimelinePlay').addEventListener('click', () => timelinePlayer.play());
   document.getElementById('btnTimelinePause').addEventListener('click', () => timelinePlayer.pause());
   document.getElementById('btnTimelineStop').addEventListener('click', () => timelinePlayer.stop());
@@ -2124,6 +2395,7 @@ function init() {
   bindEvents();
   renderCustomPresets();
   renderTimeline();
+  renderTransitionControls();
   resizeWave();
   updateBrain();
   syncUIFromState();
@@ -2154,7 +2426,11 @@ window.__CORTEX__ = {
   setText, writeReadouts, markUiDirty, applyBandInfo, uiPulse,
   getUiPasses: () => uiPasses,
   getRenderedBand: () => renderedBand,
-  getWavePhaseState: () => ({ elapsedMs: waveElapsedMs, lastTs: waveLastTs })
+  getWavePhaseState: () => ({ elapsedMs: waveElapsedMs, lastTs: waveLastTs }),
+  // Superficie de transiciones y unidades de duración.
+  applyAudioState, interpolateAudioState, persistTimeline, loadTimelineData,
+  durationToSeconds, secondsToDuration, durationHint, durationInputConfig, clampTransitionSeconds,
+  setDurationUnit, renderTransitionControls, renderDurationUnitButtons
 };
 
 init();

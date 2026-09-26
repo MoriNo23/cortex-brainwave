@@ -47,6 +47,10 @@ jobs:
         if: always()
         run: node tests/timeline-scheduling.cjs
 
+      - name: Transiciones del timeline
+        if: always()
+        run: node tests/timeline-transitions.cjs
+
       - name: Timeline y presets personalizados
         if: always()
         run: node tests/timeline-custom-presets.cjs
@@ -115,6 +119,12 @@ jobs:
       - name: Programación temporal del timeline
         if: always()
         run: node tests/timeline-scheduling.cjs
+        env:
+          ENGINE: ${{ matrix.engine }}
+
+      - name: Transiciones del timeline
+        if: always()
+        run: node tests/timeline-transitions.cjs
         env:
           ENGINE: ${{ matrix.engine }}
 

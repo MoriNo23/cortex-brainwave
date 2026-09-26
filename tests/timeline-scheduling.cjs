@@ -18,6 +18,10 @@ const STEPS = `(() => {
     { id:'s3', presetId:'builtin-alpha', durationSeconds:1, snapshot:{ brainwave:10, carrier:220, amod:0, binaural:0, stereo:0, fmod:0, noise:0, mix:80 }, name:'Alpha', emoji:'A', band:'alpha' }
   ];
   C.timelineState.loop = false;
+  // Transición desactivada: esta suite mide límites de paso puros (saltos a
+  // valores conocidos). Las rampas las cubre tests/timeline-transitions.cjs.
+  C.timelineState.transition.enabled = false;
+  C.timelineState.transition.seconds = 0;
   C.renderTimeline();
 })()`;
 

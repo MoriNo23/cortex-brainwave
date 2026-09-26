@@ -824,6 +824,91 @@ const TESTS = [
     throw new Error('falta el texto esperado');
 }},
 
+/* ── TRANSICIONES DEL TIMELINE (spec timeline-transitions) ── */
+{ group: 'Timeline · transiciones', name: 'interpolateAudioState: 0 = origen, 1 = destino, 0.5 = media', fn: () => {
+  const C = frameWin.__CORTEX__;
+  const a = { brainwave:2, carrier:200, amod:0, binaural:0, stereo:0, fmod:0, noise:0, mix:80 };
+  const z = { brainwave:40, carrier:400, amod:50, binaural:50, stereo:0, fmod:0, noise:0, mix:40 };
+  const p0 = C.interpolateAudioState(a, z, 0);
+  const p1 = C.interpolateAudioState(a, z, 1);
+  const ph = C.interpolateAudioState(a, z, 0.5);
+  if (p0.brainwave !== 2 || p0.carrier !== 200 || p0.mix !== 80) throw new Error('progreso 0 ≠ origen');
+  if (p1.brainwave !== 40 || p1.carrier !== 400 || p1.mix !== 40) throw new Error('progreso 1 ≠ destino');
+  if (Math.abs(ph.brainwave - 21) > 1e-9 || Math.abs(ph.carrier - 300) > 1e-9 || Math.abs(ph.mix - 60) > 1e-9)
+    throw new Error('progreso 0.5 ≠ media');
+}},
+{ group: 'Timeline · transiciones', name: 'interpolateAudioState recorta el progreso fuera de rango', fn: () => {
+  const C = frameWin.__CORTEX__;
+  const a = { brainwave:2, carrier:200, amod:0, binaural:0, stereo:0, fmod:0, noise:0, mix:80 };
+  const z = { brainwave:40, carrier:400, amod:0, binaural:0, stereo:0, fmod:0, noise:0, mix:40 };
+  if (C.interpolateAudioState(a, z, 7).brainwave !== 40) throw new Error('progreso 7 no recorta a 1');
+  if (C.interpolateAudioState(a, z, -3).brainwave !== 2) throw new Error('progreso -3 no recorta a 0');
+}},
+{ group: 'Timeline · transiciones', name: 'unidades: 2 min → 120 s y 90 s → 1.5 min', fn: () => {
+  const C = frameWin.__CORTEX__;
+  if (C.durationToSeconds('2', 'min', 'step') !== 120) throw new Error('2 min ≠ 120 s');
+  if (C.secondsToDuration(90, 'min') !== '1.5') throw new Error('90 s ≠ 1.5 min');
+  if (C.durationToSeconds('0.001', 'min', 'step') !== 1) throw new Error('paso bajo el mínimo no recorta a 1');
+  if (C.clampTransitionSeconds(500) !== 60) throw new Error('transición sobre 60 no recorta');
+  if (C.clampTransitionSeconds(0.5) !== 0.5) throw new Error('transición 0.5 válida');
+}},
+{ group: 'Timeline · transiciones', name: 'hint de duración muestra el equivalente en la otra unidad', fn: () => {
+  const C = frameWin.__CORTEX__;
+  const hintMin = C.durationHint(4, 'min');
+  const hintS = C.durationHint(120, 's');
+  if (!hintMin.includes('4 s')) throw new Error('hint en min: ' + hintMin);
+  if (!hintS.includes('2 min')) throw new Error('hint en s: ' + hintS);
+}},
+{ group: 'Timeline · transiciones', name: 'transición por omisión: 2 s activada; legacy sin campos', fn: () => {
+  const C = frameWin.__CORTEX__;
+  frameWin.localStorage.setItem('cortex-timeline-v1', JSON.stringify({
+    steps: [{ id:'x', presetId:'b', durationSeconds: 30, snapshot:{ brainwave:10, carrier:200, amod:0, binaural:0, stereo:0, fmod:0, noise:0, mix:80 }, name:'A', emoji:'a', band:'alpha' }]
+  }));
+  C.loadTimelineData();
+  if (C.timelineState.transition.enabled !== true) throw new Error('legacy no activa la transición');
+  if (C.timelineState.transition.seconds !== 2) throw new Error('legacy no usa 2 s');
+  if (C.timelineState.durationUnits.step !== 's') throw new Error('legacy no usa segundos');
+  if (C.timelineState.steps.length !== 1) throw new Error('legacy perdió el paso');
+}},
+{ group: 'Timeline · transiciones', name: 'transición desactivada aplica el preset directo', fn: async () => {
+  const C = frameWin.__CORTEX__;
+  C.timelineState.steps = [
+    { id:'s1', presetId:'b', durationSeconds:2, snapshot:{ brainwave:2, carrier:200, amod:0, binaural:0, stereo:0, fmod:0, noise:0, mix:80 }, name:'D', emoji:'d', band:'delta' }
+  ];
+  C.timelineState.loop = false;
+  C.timelineState.transition.enabled = false;
+  setMods({ brainwave: 10 });
+  const p = C.getTimelinePlayer();
+  p.play();
+  await wait(150);
+  if (C.state.brainwave !== 2) throw new Error('corte directo no aplicó 2 Hz: ' + C.state.brainwave);
+  p.stop();
+}},
+{ group: 'Timeline · transiciones', name: 'rampa: el progreso sale del reloj de audio (tiempo simulado en mock)', fn: () => {
+  // El mock de esta página congela ctx.currentTime en 0, así que la rampa se
+  // prueba anclando su inicio hacia atrás: 1 s de una rampa de 2 s = progreso
+  // 0.5. El timing real con reloj vivo lo cubre tests/timeline-transitions.cjs.
+  const C = frameWin.__CORTEX__;
+  C.timelineState.steps = [
+    { id:'s1', presetId:'b', durationSeconds:3, snapshot:{ brainwave:2, carrier:200, amod:0, binaural:0, stereo:0, fmod:0, noise:0, mix:80 }, name:'D', emoji:'d', band:'delta' }
+  ];
+  C.timelineState.loop = false;
+  C.timelineState.transition.enabled = true;
+  C.timelineState.transition.seconds = 2;
+  setMods({ brainwave: 10 });
+  const p = C.getTimelinePlayer();
+  p.play();
+  p.transitionStartedAt = p.clockNow() - 1;   // 1 s consumido de 2 s
+  p.applyTransitionProgress();
+  const mid = C.state.brainwave;
+  if (mid <= 2.2 || mid >= 9.8) throw new Error('sin estado intermedio: ' + mid);
+  p.transitionStartedAt = p.clockNow() - 2;   // rampa vencida
+  p.applyTransitionProgress();
+  if (Math.abs(C.state.brainwave - 2) > 0.05) throw new Error('no converge a 2 Hz: ' + C.state.brainwave);
+  if (p.transitionDone !== true) throw new Error('la rampa no quedó marcada como terminada');
+  p.stop();
+}},
+
 ];
 
 /* ═══════════════════════════════════════════════════════════════
