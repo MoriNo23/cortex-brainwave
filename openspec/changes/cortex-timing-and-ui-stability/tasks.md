@@ -27,8 +27,8 @@
 - [x] 4.1 Crear `tests/timeline-scheduling.cjs` con el caso de núcleo que retrasa artificialmente `setTimeout`/`setInterval` y afirma que la progresión sigue alineada al reloj de audio, sin doble aplicación y sin deriva acumulada entre pasos.
 - [x] 4.2 Extender esa prueba con el caso de catch-up de varios límites vencidos y con la resincronización al volver de una pestaña oculta.
 - [x] 4.3 Crear la prueba de layout y dirty check: ancho de readout estable bajo arrastre rápido y ausencia de escrituras cuando el valor no cambia.
-- [ ] 4.4 Ejecutar la suite existente completa (`timeline-custom-presets`, `noise-carrier`, `wav-e2e`, `visual-smoke`, `responsive-smoke`, `snapshots`) y la matriz Chromium/Firefox/WebKit, y registrar el resultado en los reportes de `artifacts/`.
-- [ ] 4.5 Regenerar los PNG de `artifacts/visual/` y dejar por escrito en el reporte qué se considera estable, incluyendo la limitación de que Playwright no reproduce el estrangulamiento real de temporizadores del navegador.
+- [x] 4.4 Ejecutar la suite existente completa (`timeline-custom-presets`, `noise-carrier`, `wav-e2e`, `visual-smoke`, `responsive-smoke`, `snapshots`) y la matriz Chromium/Firefox/WebKit, y registrar el resultado en los reportes de `artifacts/`.
+- [x] 4.5 Regenerar los PNG de `artifacts/visual/` y dejar por escrito en el reporte qué se considera estable, incluyendo la limitación de que Playwright no reproduce el estrangulamiento real de temporizadores del navegador.
 
 ## 5. Cierre
 

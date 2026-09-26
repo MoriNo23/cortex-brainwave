@@ -31,7 +31,21 @@ El cambio migra la progresión del timeline al reloj de `AudioContext` y acota e
 
 ## Evidencia ejecutada
 
-Verificación por DevTools Protocol sobre el Chromium del sistema, con `AudioContext` real. Los escenarios se ejecutan en páginas nuevas para no heredar estado.
+### Verificación en CI (GitHub Actions)
+
+Repositorio: <https://github.com/MoriNo23/cortex-brainwave> · workflow `ci.yml`, corrida `36271750869`.
+
+| Job | Resultado |
+|---|---:|
+| Suite completa (Chromium) | ✓ 72/72 in-page + 48/48 timeline + 28/28 UI |
+| Timeline y UI en chromium | ✓ 48/48 + 28/28 |
+| Timeline y UI en webkit | ✓ 48/48 + 28/28 |
+| Timeline y UI en firefox | ✓ job verde, **9 escenarios OMITIDOS** (ver abajo) |
+| Matriz de navegadores (Chromium/Firefox/WebKit) | ✓ los tres motores |
+
+### Verificación local por DevTools Protocol
+
+Verificación sobre el Chromium del sistema con `AudioContext` real, en páginas nuevas por escenario.
 
 | Capa | Prueba | Resultado |
 |---|---|---:|
@@ -77,10 +91,15 @@ Ambos siguen la convención del repo: `ENGINE=chromium|firefox|webkit`, puerto `
 
 ## Limitaciones de esta verificación
 
-- **Playwright no está instalado en esta máquina**, por lo que los dos archivos de prueba nuevos se escribieron y revisaron contra la convención del repo, pero **no se ejecutaron**. La verificación equivalente se hizo por DevTools Protocol. Las tareas 4.4 y 4.5 quedan abiertas por esto.
-- Playwright no reproduce el estrangulamiento real de temporizadores del navegador. La simulación retrasa los timers de la página; el comportamiento real del navegador puede ser más agresivo (Chrome llega a una ejecución por minuto tras 5 min oculto). El diseño lo cubre con el fast-forward, pero eso no se ha medido en un navegador real.
+- **Firefox no ejecuta los escenarios de timeline en CI.** En un runner headless no hay dispositivo de salida de audio y Firefox deja el `AudioContext` suspendido: `currentTime` no avanza. Se probó autorizar el autoplay con `media.autoplay.default` / `media.autoplay.blocking_policy` y no cambia. El job queda verde pero los 9 escenarios se **omiten con un mensaje explícito**, para que un skip no se confunda con una verificación. `browser-matrix.cjs` sí corre en Firefox, así que el motor no está sin cobertura: lo que no se puede medir ahí es el reloj de audio. En un Firefox de escritorio con dispositivo de audio el contexto arranca con el click en Iniciar y los escenarios correrían.
+- Un runner headless tampoco reproduce el estrangulamiento real de temporizadores del navegador. La simulación retrasa los timers de la página; el comportamiento real puede ser más agresivo (Chrome llega a una ejecución por minuto tras 5 min oculto). El diseño lo cubre con el fast-forward, pero eso no se ha medido en un navegador real.
 - `Page.setWebLifecycleState('frozen')` quedó como prueba opcional de Chromium: no se ejecutó.
-- No se regeneraron los PNG de `artifacts/visual/` con el runner del proyecto. Se capturó una pantalla equivalente para inspección visual.
+- Los PNG de `artifacts/visual/` no se versionan (están en `.gitignore`); la CI los sube como artefacto de cada corrida. La definición de qué se considera estable está en la sección anterior.
+
+## Dos defectos que solo aparecieron en CI
+
+1. **Atasco silencioso con el audio suspendido.** Con `ctx.state === 'suspended'`, `currentTime` no avanza y el player se quedaba congelado en el paso 1 mostrando "Paso 1/3 · 1s", un status que parece normal. No había forma de saber que faltaba un click. Ahora `noteClockStall()` intenta reanudar el contexto y, si no puede, lo dice: *"Audio en pausa: el navegador no habilitó el contexto de audio. Hacé click en Iniciar…"*.
+2. **Un verde hueco en el propio arnés de tests.** `ctx.resume()` es asíncrono: leer `ctx.state` justo después del click devolvía `suspended` y los 9 escenarios se omitían, con el job en verde sin verificar nada. Se cambió a esperar el estado con `waitForFunction` y timeout. Merece quedar registrado: un skip silencioso es peor que un fallo.
 
 ## Pendiente de verificación humana
 

@@ -21,18 +21,15 @@ function check(cond, name, detail) {
 }
 
 (async () => {
-  // En un runner headless no hay dispositivo de salida de audio: Firefox deja el
-  // AudioContext suspendido y el reloj no avanza, así que la línea de tiempo no
-  // se puede medir. Se autoriza el autoplay para que el reloj quede disponible.
-  // En Chromium el equivalente es --autoplay-policy.
+  // Un runner headless no tiene dispositivo de salida de audio.
+  //  · Chromium: con --autoplay-policy el contexto arranca y la suite corre.
+  //  · WebKit: el contexto arranca solo y la suite corre.
+  //  · Firefox: deja el AudioContext suspendido aunque haya gesto y aunque se
+  //    autorice el autoplay (probado con media.autoplay.*), así que el reloj de
+  //    audio no avanza y estos escenarios se OMITEN. No es un defecto de la app:
+  //    browser-matrix.cjs sí corre en Firefox. Se deja explícito para que un
+  //    skip no se confunda con un verde.
   const launchOptions = { headless: true };
-  if (engineName === 'firefox') {
-    launchOptions.firefoxUserPrefs = {
-      'media.autoplay.default': 0,
-      'media.autoplay.blocking_policy': 0,
-      'media.navigator.permission.disabled': true,
-    };
-  }
   if (engineName === 'chromium') {
     launchOptions.args = ['--autoplay-policy=no-user-gesture-required'];
   }
