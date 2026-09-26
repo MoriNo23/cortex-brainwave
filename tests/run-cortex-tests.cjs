@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const { chromium } = require('playwright');
 (async()=>{
   const browser = await chromium.launch({headless:true});
@@ -14,7 +16,10 @@ const { chromium } = require('playwright');
   const passCount=await page.locator('.test.pass').count();
   const failCount=await page.locator('.test.fail').count();
   console.log(JSON.stringify({summary, passCount, failCount, fails, errors},null,2));
-  await page.screenshot({path:'/home/user/cortex-test-report.png', fullPage:true});
+  // Ruta relativa al repo: una absoluta funciona en local y rompe en CI.
+  const outDir = path.join(process.cwd(), 'artifacts', 'visual');
+  fs.mkdirSync(outDir, { recursive: true });
+  await page.screenshot({path: path.join(outDir, 'cortex-test-report.png'), fullPage:true});
   await browser.close();
   process.exit(failCount?1:0);
 })().catch(e=>{ console.error(e); process.exit(2); });
