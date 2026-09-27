@@ -30,5 +30,5 @@
 ## 5. Verificación de cierre
 
 - [x] 5.1 Ejecutar `npm run verify:light` con el repo en su estado final y confirmar que el reporte `artifacts/light-verify.json` lista los cuatro chequeos en verde
-- [x] 5.2 Medir con `/usr/bin/time -v` el consumo de `npm run verify:light` y contrastarlo con el de un script de navegador; verificar que el nivel ligero queda en el orden de milisegundos y sin memoria significativa, y anotar la cifra medida en el informe del cambio
+- [x] 5.2 Revisar que la documentación describe el nivel ligero por lo que comprueba y no por su rendimiento, y que ningún artefacto del cambio reporte cifras de CPU o de memoria como entregable; verificar que `design.md` no tiene sección de coste medido y que `AGENTS.md`, `README.md` y `tests/README.md` no prometen tiempos concretos
 - [x] 5.3 Revisar que ningún archivo de `tests/` existente fue modificado o renombrado y que `cortex.html` y `cortex.spec.html` no tienen cambios; verificar con `git status` y `git diff --stat` que el cambio solo toca `AGENTS.md`, `openspec/config.yaml`, `package.json`, `tests/light/`, `tests/README.md`, `README.md` y `.github/workflows/ci.yml`

@@ -6,7 +6,7 @@ Ver `proposal.md` para la motivación. Lo que condiciona el diseño son estos he
 
 - Los catorce scripts de `tests/` importan Playwright. No hay ningún nivel de verificación sin navegador, de modo que hoy el único camino de verificación es heavyweight.
 - `node_modules` no está instalado y está gitignorado. Cualquier corrida con navegador paga `npm install` más la descarga del motor.
-- `cortex.html` y `cortex.spec.html` tienen cada uno un único `<script>` inline (73.912 y 40.150 bytes). Ninguno tiene `<script src>`, `<link href>` externo ni `fetch`/`XMLHttpRequest`. Ambos bloques pasan `node --check` como ESM; el coste combinado medido es de ~68 ms de CPU.
+- `cortex.html` y `cortex.spec.html` tienen cada uno un único `<script>` inline (73.912 y 40.150 bytes). Ninguno tiene `<script src>`, `<link href>` externo ni `fetch`/`XMLHttpRequest`. Ambos bloques pasan `node --check` como ESM.
 - El script inline de `cortex.html` referencia 46 identificadores del DOM y el markup declara 72 ids; hoy no hay ninguno huérfano. El arreglo `TESTS` de `cortex.spec.html` tiene 79 entradas con la forma `{ group, name, fn }`.
 - `cortex.spec.html` es un runner portable: su lógica de escenarios es JavaScript plano, pero su ejecución requiere un navegador porque lee `AudioContext`, `requestAnimationFrame` y el DOM.
 - `openspec/config.yaml` tiene secciones `rules` y `operations` disponibles y hoy vacías.
@@ -100,9 +100,3 @@ Rollback: revertir el commit. No hay migraciones de datos, no hay cambios en la 
 ## Open Questions
 
 Ninguna. Las decisiones con impacto en la spec, el enfoque o el desglose de tareas quedaron resueltas con el usuario antes de escribir este documento: alcance del nivel ligero, dónde vive la regla y qué tan estricta es la restricción de navegador.
-
-## Coste medido
-
-`verify:light` en la máquina de 4 núcleos, repo sin `node_modules` (Node v26.7.0):
-**0,227 s de CPU y 57 MB de RSS de media por corrida**. Los 57 MB son el runtime de Node, no
-los archivos: el nivel ligero lee 414 líneas de código sobre 105 KB de HTML.

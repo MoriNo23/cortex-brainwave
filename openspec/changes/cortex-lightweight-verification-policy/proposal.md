@@ -10,7 +10,7 @@ La cobertura pesada ya existe y es mejor de lo que se puede replicar localmente:
 
 - Nuevo nivel de verificación por omisión, **ligero**: `npm run verify:light`, Node puro, sin navegador, sin descargas y sin servidor. Este nivel sostiene el trabajo cotidiano y no puede lanzar un motor por accidente.
 - El nivel ligero comprueba, sobre los archivos del repo y sin ejecutarlos en un navegador:
-  - Sintaxis del JavaScript inline de `cortex.html` y `cortex.spec.html` extraído y validado con `node --check` (medido: ambos bloques pasan, ~68 ms de CPU en total).
+  - Sintaxis del JavaScript inline de `cortex.html` y `cortex.spec.html` extraído y validado con `node --check` (medido: ambos bloques pasan).
   - Autocontención de la app: cero `<script src>`, `<link href>` o `fetch(`/`XMLHttpRequest` hacia recursos externos, coherente con el HTML autónomo que el README promete.
   - Integridad de referencias del DOM: todo `getElementById()`/`$('#id')` invocado por el script inline debe corresponder a un `id` presente en el HTML (medido hoy: 46 ids usados, 0 huérfanos).
   - Forma del runner de escenarios: el arreglo `TESTS` de `cortex.spec.html` debe seguir siendo analizable estáticamente y cada entrada debe declarar `group`, `name` y `fn` (medido hoy: 79 entradas).

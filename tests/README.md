@@ -3,7 +3,7 @@
 ## Nivel ligero (sin navegador)
 
 `light/` es el nivel de verificación por omisión del proyecto. Solo Node: sin `npm install`,
-sin servidor, sin red y sin motor de navegador. Corre en el orden de un segundo.
+sin servidor, sin red y sin motor de navegador.
 
 ```bash
 npm run verify:light

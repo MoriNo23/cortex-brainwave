@@ -13,8 +13,8 @@ Este proyecto tiene tres niveles de verificación. **Se empieza siempre por el p
 npm run verify:light
 ```
 
-Node puro. Sin navegador, sin `npm install`, sin servidor en el 4173. Tarda poco más de un
-segundo. Es lo que se ejecuta para cualquier cambio.
+Node puro. Sin navegador, sin `npm install`, sin servidor en el 4173. Es lo que se ejecuta
+para cualquier cambio.
 
 Comprueba cuatro cosas, todas por análisis estático de los archivos del repo:
 
