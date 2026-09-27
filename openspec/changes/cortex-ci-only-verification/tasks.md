@@ -26,8 +26,8 @@
 
 ## 5. Cerrar el cambio superseded
 
-- [ ] 5.1 Cerrar el PR #1 sin mergear con una nota que diga que este cambio lo reemplaza; verificar con `gh pr view 1` que el estado es `CLOSED` y que no se mergeó
-- [ ] 5.2 Eliminar la rama `cortex-lightweight-verification-policy` local y remota; verificar con `git branch -a` que ya no aparece
+- [x] 5.1 Cerrar el PR #1 sin mergear con una nota que diga que este cambio lo reemplaza; verificar con `gh pr view 1` que el estado es `CLOSED` y que no se mergeó
+- [x] 5.2 Eliminar la rama `cortex-lightweight-verification-policy` local y remota; verificar con `git branch -a` que ya no aparece
 - [x] 5.3 Borrar la carpeta `openspec/changes/cortex-lightweight-verification-policy/` completa; verificar con `openspec list` que solo queda `cortex-ci-only-verification` y que el otro cambio ya no aparece
 - [x] 5.4 Repasar el repo buscando instrucciones colgadas que invoquen `verify:light`: `grep -rn` sobre `AGENTS.md`, `README.md`, `tests/README.md`, `package.json`, `openspec/config.yaml` y los cambios **distintos de este**; verificar que no queda ninguna coincidencia. Las menciones dentro de los artefactos de `cortex-ci-only-verification` sí se permiten y son esperadas: son el registro histórico de la eliminación
 - [x] 5.5 Confirmar que `cortex.html`, `cortex.spec.html` y los catorce scripts de navegador de `tests/` no tienen cambios en todo el cambio; verificar con `git diff --stat` contra el commit base que ninguno aparece, y que nada se borró ni renombró
