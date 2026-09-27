@@ -1,13 +1,19 @@
 # Cortex automated smoke scripts
 
-## Nivel ligero (sin navegador)
+## La verificación ocurre en CI
 
-`light/` es el nivel de verificación por omisión del proyecto. Solo Node: sin `npm install`,
-sin servidor, sin red y sin motor de navegador.
+Este repo **no expone comando de verificación local**, y no hay que añadir uno. `light/` existe,
+pero lo invoca el job `ligero` de CI por ruta; no se ofrece como algo que se pueda correr en la
+máquina de trabajo. El resultado se lee en la corrida:
 
-```bash
-npm run verify:light
-```
+[`.github/workflows/ci.yml`](https://github.com/MoriNo23/cortex-brainwave/actions/workflows/ci.yml)
+corre `ligero` (los cuatro chequeos estáticos), `suite` (Chromium), `motores` (timeline y UI en
+los tres motores) y `matriz` (`browser-matrix.cjs`).
+
+### `light/` — lo que invoca el job `ligero`
+
+Node puro, sin navegador y sin dependencias, invocado por el workflow como
+`node tests/light/run-light-verify.cjs`.
 
 | Chequeo | Qué detecta |
 |---|---|
@@ -16,18 +22,19 @@ npm run verify:light
 | `dom-references` | Un id pedido con `getElementById`/`$('#id')` que el markup no declara |
 | `scenario-runner-shape` | Una entrada del arreglo `TESTS` sin `group`, `name` o `fn` |
 
-Reporta una línea por chequeo con `PASS`/`FAIL` y escribe `artifacts/light-verify.json`.
-Con un solo chequeo roto sale con código 1; sin ningún chequeo registrado, con código 2 y
-sin escribir reporte, porque un reporte vacío no es un verde.
+Imprime una línea por chequeo con `PASS`/`FAIL` y escribe `artifacts/light-verify.json`, que el
+job publica como artifact `light-verify`. Con un solo chequeo roto sale con código 1; sin
+ningún chequeo registrado, con código 2 y sin escribir reporte, porque un reporte vacío no es un
+verde.
 
-Un verde aquí **no dice nada sobre el comportamiento de la app**: no simula audio, ni DOM,
-ni reloj de audio. La cobertura real la da la suite con navegador, que corre en CI.
+Un verde de este job **no es** el verde de la suite con navegador: son jobs distintos de la
+misma corrida. Y no simula audio, ni DOM, ni reloj de audio.
 
-## Suite con navegador (Playwright)
+## La suite con navegador
 
 Estos scripts requieren el paquete local de Playwright y un servidor sirviendo el workspace.
-**No son el camino por omisión**: la suite completa se verifica en CI
-(`.github/workflows/ci.yml`).
+Ya no son el camino de verificación y no se invocan por omisión: se listan como referencia de
+cómo se ejecuta la suite en un entorno con dependencias instaladas.
 
 ```bash
 npm install --no-save playwright@1.63.0
@@ -49,5 +56,8 @@ Los tests que aceptan varios motores leen `ENGINE`:
 ```bash
 ENGINE=firefox node tests/timeline-scheduling.cjs
 ```
+
+Levantar un navegador en la máquina de trabajo requiere pedirlo explícitamente; la regla está en
+`AGENTS.md`.
 
 El HTML runner `cortex.spec.html` es la suite de escenarios portátil y no depende de esta carpeta.

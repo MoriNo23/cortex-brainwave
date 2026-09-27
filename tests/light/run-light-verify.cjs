@@ -57,7 +57,8 @@ async function main() {
     (fallos ? 'FAIL' : 'PASS') + '  ' + String(fallos) + ' de ' + String(chequeos.length) +
     ' chequeos fallaron — reporte en artifacts/light-verify.json'
   );
-  console.log('Nota: un verde aquí no dice nada sobre la suite con navegador; esa corre en CI.');
+  console.log('Este job solo cubre los chequeos estáticos. El verde de la suite con navegador');
+  console.log('lo dan los jobs suite, motores y matriz de la misma corrida.');
   process.exit(fallos ? 1 : 0);
 }
 

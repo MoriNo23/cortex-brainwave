@@ -4,12 +4,13 @@
 >
 > Casi todas las verificaciones de este cambio son **de UI renderizada** — el dock a 1366×768,
 > si tapa la barra de estado, si el playhead avanza sin disparar layout, si la selección y el
-> inspector funcionan. `npm run verify:light` **no puede contestarlas**: solo lee archivos
+> inspector funcionan. El job `ligero` de CI **no puede contestarlas**: solo analiza archivos
 > (sintaxis, autocontención, ids del DOM, forma del arreglo `TESTS`).
 >
-> El camino correcto, según `AGENTS.md`:
+> **No hay comando de verificación local** y no debe añadirse uno. El camino, según `AGENTS.md`:
 >
-> 1. `npm run verify:light` antes y después de cada tarea, para lo que sí cubre.
+> 1. Push o PR, y se leen los jobs. El job `ligero` cubre lo estático; `suite`, `motores` y
+>    `matriz` cubren el comportamiento.
 > 2. Escribir el test de Playwright de cada comportamiento y **registrarlo en el workflow de
 >    CI** (tarea 7.5). La corrida ocurre en GitHub Actions, no en la máquina.
 > 3. **No lanzar un navegador en local** por iniciativa propia. Una corrida local levanta

@@ -3,20 +3,32 @@
 Reglas del proyecto para agentes y personas que trabajen en **Cortex Brainwave Audio**.
 La app es un HTML autónomo: `cortex.html` no usa bundler ni dependencias de producción.
 
-## Verificación: orden de escalamiento
+## Verificación: todo va por CI
 
-Este proyecto tiene tres niveles de verificación. **Se empieza siempre por el primero.**
+**No hay ningún comando de verificación local, y no debe añadirse uno.** No existe script en
+`package.json` para correr pruebas, y el proyecto no debe volver a exponerlo.
 
-### 1. Nivel ligero — el camino por omisión
+Cuando un cambio necesite verificación:
 
-```bash
-npm run verify:light
-```
+1. Se hace el push o se abre el PR.
+2. Se lee el resultado en la corrida de CI y sus artifacts.
+3. Eso es todo. No se corre nada en la máquina de trabajo para obtener un veredicto.
 
-Node puro. Sin navegador, sin `npm install`, sin servidor en el 4173. Es lo que se ejecuta
-para cualquier cambio.
+Un fallo se descubre en CI, no antes del push. Es un intercambio consciente: el primer error
+tarda unos minutos más en aparecer, a cambio de que la máquina no se use para verificar nunca.
 
-Comprueba cuatro cosas, todas por análisis estático de los archivos del repo:
+## Los jobs de CI
+
+`.github/workflows/ci.yml` corre en cada push y en cada pull request:
+
+| Job | Qué corre |
+|---|---|
+| `ligero` | Los cuatro chequeos estáticos, por ruta, sin instalar navegador |
+| `suite` | La suite completa en Chromium |
+| `motores` | Timeline y UI en Chromium, Firefox y WebKit |
+| `matriz` | `browser-matrix.cjs` con ciclo de vida de audio y exportación WAV |
+
+El job `ligero` es la señal rápida: análisis estático de archivos, sin ejecutar la app. Cubre:
 
 | Chequeo | Qué detecta |
 |---|---|
@@ -25,38 +37,20 @@ Comprueba cuatro cosas, todas por análisis estático de los archivos del repo:
 | `dom-references` | Un id que el script pide con `getElementById`/`$('#id')` y el markup no declara |
 | `scenario-runner-shape` | Una entrada del arreglo `TESTS` sin `group`, `name` o `fn` |
 
-Deja el reporte en `artifacts/light-verify.json`.
+Un verde de `ligero` **no** es el verde de la suite con navegador: son jobs distintos de la
+misma corrida. El reporte de `ligero` se descarga del artifact `light-verify`.
 
-**Un verde aquí no dice nada sobre el comportamiento de la app.** No simula audio, ni DOM,
-ni reloj de audio. Solo lee archivos. La cobertura real la da la suite con navegador.
+## Navegador local: solo bajo petición explícita
 
-### 2. Suite con navegador — en CI, no en local
+No se levanta un motor por iniciativa propia. Si el usuario **pide explícitamente** una prueba
+de navegador (visual, matriz de motores, capturas), se hace **una sola corrida**, acotada a lo
+pedido, y se informa de su coste en CPU y memoria.
 
-`.github/workflows/ci.yml` corre en cada push:
+Antes de proponer un navegador hay que decir **qué pregunta** quedaría sin responder sin él. Si
+la respuesta es «ninguna», no se propone. No se abre un navegador para reconfirmar lo que CI ya
+reporta, ni aunque el comando exista en `package.json`.
 
-- `suite` — la suite completa en Chromium
-- `motores` — timeline y UI en Chromium, Firefox y WebKit
-- `matriz` — `browser-matrix.cjs` con ciclo de vida de audio y exportación WAV
-- `ligero` — el nivel ligero, sin instalar navegador
-
-El resultado de la suite se lee **en la corrida de CI**, no ejecutándola en local.
-
-### 3. Navegador local — solo bajo petición explícita
-
-No se levanta un motor por iniciativa propia. Si el usuario **pide explícitamente** una
-prueba de navegador (visual, matriz de motores, capturas), se hace **una sola corrida**,
-acotada a lo pedido, y se informa de su coste en CPU y memoria.
-
-Antes de proponer un navegador hay que:
-
-1. Haber corrido `npm run verify:light`.
-2. Haber delegado la suite completa a CI.
-3. Decir **qué pregunta** queda sin responder y por qué el nivel ligero no la puede contestar.
-
-Si la respuesta es «ninguna», no se propone navegador. No se abre un navegador para
-reconfirmar lo que el nivel ligero ya prueba.
-
-## Límites conocidos de cada nivel
+## Límites conocidos
 
 - **`self-contained` no ve las fuentes web.** `cortex.html:8` hace
   `@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Serif…')`. El chequeo
@@ -74,7 +68,14 @@ reconfirmar lo que el nivel ligero ya prueba.
 - **Ningún test automatizado reproduce el estrangulamiento real de temporizadores.** La suite
   simula el retraso de los timers de la página.
 - **La escucha humana sigue siendo necesaria.** Protocolo en
-  `cortex-listening-protocol.md`, con auriculares y volumen bajo.
+  `cortex-listening-protocol.md`, con auriculares y volumen bajo. Ningún job de CI la cubre.
+
+## Los scripts `test:*` de `package.json`
+
+`package.json` sigue declarando `npm test` y los `test:*` de Playwright. Ya no son el camino de
+verificación y no se invocan por omisión: documentan cómo se ejecuta la suite en un entorno con
+dependencias instaladas. No se borran, pero tampoco se ofrecen como opción para verificar un
+cambio.
 
 ## Auditorías estáticas opcionales
 
@@ -85,5 +86,5 @@ Ambas introducen red en cada uso.
 ## OpenSpec
 
 El proyecto se especifica con OpenSpec; la configuración está en `openspec/config.yaml` y los
-cambios en vuelo en `openspec/changes/`. Al implementar un cambio, se verifica con
-`npm run verify:light` y la suite completa se deja a CI, igual que en cualquier otro trabajo.
+cambios en vuelo en `openspec/changes/`. Al implementar un cambio se verifica en CI, igual
+que en cualquier otro trabajo: push, leer los jobs, y no correr pruebas en la máquina.

@@ -25,5 +25,8 @@ spikes/backstop/ci_report/
 # Large locally downloaded audit binary; reproduce from tools/README.md
 tools/difftastic/difft
 
+# Reporte del job `ligero`: lo entrega upload-artifact en cada corrida de CI
+artifacts/light-verify.json
+
 # Conversaciones exportadas y notas personales: no forman parte del proyecto
 *-gemini-*.txt

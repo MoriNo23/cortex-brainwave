@@ -21,10 +21,10 @@ context: |
 operations:
   apply:
     guidance:
-      - Verify with `npm run verify:light` (Node puro, sin navegador) and leave the browser suite to CI, following the escalation order in AGENTS.md. Do not launch a browser engine unless the user explicitly asks for it.
+      - "All verification goes through CI: push or open the PR and read the jobs. There is no local verification command and none should be added. Do not launch a browser engine unless the user explicitly asks for it. See AGENTS.md."
   archive:
     guidance:
-      - Summarize the archive outcome before finishing
+      - "Summarize the archive outcome before finishing"
 
 # Example:
 #   operations:
