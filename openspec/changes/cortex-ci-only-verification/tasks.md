@@ -22,7 +22,7 @@
 
 - [x] 4.1 Leer `.github/workflows/ci.yml` y confirmar que el job `ligero` invoca `node tests/light/run-light-verify.cjs` por ruta y no por `npm run`; verificar con `grep` que el workflow no contiene `verify:light` en ningún punto
 - [x] 4.2 Confirmar que `git diff` no toca `.github/workflows/ci.yml`; verificar que el workflow no aparece entre los archivos modificados del cambio
-- [ ] 4.3 Abrir el PR propio y confirmar en la corrida que los seis jobs pasan y que `ligero` ejecuta los cuatro chequeos invocando el runner por ruta; verificar en el log del job que el reporte se publica como artifact
+- [x] 4.3 Abrir el PR propio y confirmar en la corrida que los seis jobs pasan y que `ligero` ejecuta los cuatro chequeos invocando el runner por ruta; verificar en el log del job que el reporte se publica como artifact
 
 ## 5. Cerrar el cambio superseded
 
