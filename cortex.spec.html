@@ -909,6 +909,75 @@ const TESTS = [
   p.stop();
 }},
 
+/* ── TIMELINE · DOCK ──
+   El timeline ya no es un modal: los casos de popup (Escape, cierre, foco)
+   dejan de aplicar y se reemplazan por el comportamiento del dock fijo. */
+{ group: 'Timeline · dock', name: 'sin modal: el dialog desapareció y la pista vive abajo', fn: () => {
+  if (frameDoc.getElementById('timelineDialog')) throw new Error('el dialog del timeline sigue en el DOM');
+  if (!frameDoc.getElementById('dockClips')) throw new Error('la pista del dock no existe');
+  if (frameDoc.getElementById('timelineDock').dataset.dockState !== 'collapsed' && frameDoc.getElementById('timelineDock').dataset.dockState !== 'expanded') throw new Error('el dock no declara su estado');
+}},
+{ group: 'Timeline · dock', name: 'plegar/desplegar: el botón alterna el estado y persiste la preferencia', fn: async () => {
+  const btn = frameDoc.getElementById('btnOpenTimeline');
+  if (C().state.dockExpanded) btn.click();   // partir plegado
+  await nextFrame();
+  btn.click();
+  await nextFrame();
+  if (C().state.dockExpanded !== true) throw new Error('el click no desplegó');
+  if (frameDoc.getElementById('timelineDock').dataset.dockState !== 'expanded') throw new Error('data-dock-state no cambió');
+  if (btn.getAttribute('aria-expanded') !== 'true') throw new Error('aria-expanded no se actualizó');
+  const saved = JSON.parse(frameWin.localStorage.getItem('cortex-settings') || '{}');
+  if (saved.dockExpanded !== true) throw new Error('la preferencia no quedó en cortex-settings');
+  btn.click();
+  await nextFrame();
+  if (C().state.dockExpanded !== false) throw new Error('el click no plegó');
+  const saved2 = JSON.parse(frameWin.localStorage.getItem('cortex-settings') || '{}');
+  if (saved2.dockExpanded !== false) throw new Error('la preferencia plegada no se guardó');
+}},
+{ group: 'Timeline · dock', name: 'selección por click: un clip resaltado y el inspector con sus datos', fn: async () => {
+  const C = frameWin.__CORTEX__;
+  C.timelineState.steps = [
+    { id:'d1', presetId:'b', durationSeconds:10, snapshot:{ brainwave:2, carrier:200, amod:0, binaural:0, stereo:0, fmod:0, noise:0, mix:80 }, name:'Delta', emoji:'d', band:'delta' },
+    { id:'t1', presetId:'b', durationSeconds:20, snapshot:{ brainwave:6, carrier:200, amod:0, binaural:0, stereo:0, fmod:0, noise:0, mix:80 }, name:'Theta', emoji:'t', band:'theta' },
+    { id:'a1', presetId:'b', durationSeconds:30, snapshot:{ brainwave:10, carrier:200, amod:0, binaural:0, stereo:0, fmod:0, noise:0, mix:80 }, name:'Alpha', emoji:'a', band:'alpha' },
+  ];
+  C.renderTimeline();
+  $$('.dock-clip-btn')[0].click();
+  await nextFrame();
+  if ($$('.dock-clip.selected').length !== 1) throw new Error('no quedó exactamente un clip seleccionado');
+  const inspector = frameDoc.getElementById('dockInspector');
+  if (inspector.hidden) throw new Error('el inspector no se abrió');
+  if (!frameDoc.getElementById('inspectorName').textContent.includes('Delta')) throw new Error('el inspector no muestra el nombre');
+  if (frameDoc.getElementById('inspectorDuration').value !== '10') throw new Error('la duración no se ve en segundos: ' + frameDoc.getElementById('inspectorDuration').value);
+}},
+{ group: 'Timeline · dock', name: 'proporcionalidad: 10/20/30 s se ven como 1:2:3 con piso legible', fn: async () => {
+  if (!C().state.dockExpanded) frameDoc.getElementById('btnOpenTimeline').click();
+  await nextFrame();
+  const widths = $$('.dock-clip').map(el => el.offsetWidth);
+  if (widths.length !== 3) throw new Error('esperaba 3 clips, hay ' + widths.length);
+  if (!(widths[2] > widths[1] && widths[1] > widths[0])) throw new Error('sin orden 10<20<30: ' + widths.join(','));
+  const ratio = widths[2] / widths[0];
+  if (Math.abs(ratio - 3) > 0.6) throw new Error('proporción 30/10 lejana de 3: ' + ratio.toFixed(2));
+  if (widths[0] < 44) throw new Error('clip por debajo del ancho mínimo: ' + widths[0]);
+  const chips = $$('.dock-clip .dock-clip-chip').map(el => el.textContent.trim());
+  if (chips.join('|') !== '10 s|20 s|30 s') throw new Error('chips: ' + chips.join('|'));
+}},
+{ group: 'Timeline · dock', name: 'doble click aplica el preset del clip', fn: () => {
+  $$('.dock-clip-btn')[0].dispatchEvent(new frameWin.MouseEvent('dblclick', { bubbles: true }));
+  if (C().state.brainwave !== 2) throw new Error('el doble click no aplicó el snapshot (delta = 2 Hz): ' + C().state.brainwave);
+}},
+{ group: 'Timeline · dock', name: 'editar la duración en el inspector actualiza y persiste', fn: async () => {
+  $$('.dock-clip-btn')[0].click();
+  await nextFrame();
+  const input = frameDoc.getElementById('inspectorDuration');
+  input.value = '90';
+  input.dispatchEvent(new frameWin.Event('change', { bubbles: true }));
+  await nextFrame();
+  if (C().timelineState.steps[0].durationSeconds !== 90) throw new Error('la duración guardada no es 90 s');
+  const chip = $$('.dock-clip .dock-clip-chip')[0].textContent.trim();
+  if (chip !== '90 s') throw new Error('el chip no se actualizó: ' + chip);
+}},
+
 ];
 
 /* ═══════════════════════════════════════════════════════════════

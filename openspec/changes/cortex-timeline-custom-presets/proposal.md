@@ -1,5 +1,12 @@
 # Propuesta: timeline de presets y presets personalizados
 
+> **Nota de reconciliación (cortex-timeline-dock):** la superficie descrita abajo como
+> “popup accesible” fue reemplazada por el **dock inferior permanente y plegable** del
+> cambio `cortex-timeline-dock` antes de archivarse: mismo comportamiento (secuencia,
+> duraciones, reordenar/duplicar/eliminar, loop, accesibilidad), otra superficie (dock
+> fijo en vez de dialog modal). El delta de especificación de este cambio ya describe el
+> dock; este documento queda como registro histórico de la decisión original.
+
 ## Problema
 
 Cortex permite cambiar presets, pero cada cambio es manual y no existe una sesión compuesta por varias ondas con duración propia. Tampoco se pueden guardar presets personalizados con una identidad visual/emote y una clasificación de banda visible.

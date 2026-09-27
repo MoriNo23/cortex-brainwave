@@ -23,6 +23,13 @@
     --teal: #4A9B8E;
     --teal-dim: #2E5F58;
     --red: #C75B4A;
+    /* Acento por banda: los clips del dock del timeline los usan para
+       comunicar de qué onda se trata sin leer el nombre. */
+    --band-delta: #7C8FD0;
+    --band-theta: #9B7CD0;
+    --band-alpha: #E8A855;
+    --band-beta: #6FBF73;
+    --band-gamma: #4A9B8E;
   }
 
   html, body {
@@ -39,7 +46,8 @@
   /* ── LAYOUT ── */
   .app {
     display: grid;
-    grid-template-rows: 52px 1fr 44px;
+    /* header | app | dock del timeline | barra de estado */
+    grid-template-rows: 52px 1fr auto 44px;
     height: 100vh;
     max-width: 1400px;
     margin: 0 auto;
@@ -282,8 +290,57 @@
   .modal-title { font-family:'IBM Plex Serif', serif; color:var(--amber); font-size:18px; }
   .modal-subtitle { color:var(--text-mute); font-size:11px; margin-top:2px; }
   .modal-body { padding:14px 16px 16px; overflow:auto; max-height:calc(100vh - 150px); }
-  .timeline-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:7px; margin-bottom:12px; }
-  .timeline-toolbar .btn { padding:6px 9px; }
+  /* ── TIMELINE DOCK (secuenciador fijo y plegable) ──
+     El timeline dejó de ser un modal: vive abajo, siempre visible, con dos
+     estados (plegado ~48 px / desplegado ~170 px) que no tapa la app. */
+  .dock { border-top:1px solid var(--line); background:var(--bg-2); overflow:hidden; }
+  .dock-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:7px; padding:7px 12px; min-height:48px; }
+  .dock-toolbar .btn { padding:4px 9px; }
+  .dock-toolbar .loop-label { margin-left:0; white-space:nowrap; }
+  .dock-progress { flex:1 1 80px; height:4px; border-radius:2px; background:var(--line); overflow:hidden; }
+  .dock-progress-fill { height:100%; background:linear-gradient(90deg, var(--amber-dim), var(--amber)); transform:scaleX(0); transform-origin:left; }
+  .dock-status { flex:0 1 auto; max-width:46%; color:var(--text-mute); font:10px 'IBM Plex Mono', monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .dock[data-dock-state="collapsed"] .dock-body { display:none; }
+  .dock[data-dock-state="expanded"] .dock-progress { display:none; }
+  .dock-body { padding:0 12px 8px; }
+  .dock-inspector { display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:2px 0 6px; }
+  .dock-inspector[hidden] { display:none; }
+  .dock-inspector-name { color:var(--text-dim); font:11px 'IBM Plex Mono', monospace; white-space:nowrap; }
+  .dock-inspector .duration-editor input { width:56px; }
+  .dock-ruler { display:flex; gap:4px; height:12px; margin-bottom:2px; }
+  .dock-ruler-segment { flex:var(--seg-grow,1) 1 0; min-width:44px; position:relative; }
+  .dock-ruler-segment::after { content:''; position:absolute; right:0; top:0; bottom:0; border-right:1px solid var(--line-2); }
+  .dock-ruler-label { position:absolute; right:3px; top:0; color:var(--text-mute); font:8px 'IBM Plex Mono', monospace; white-space:nowrap; }
+  .dock-track { overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; scrollbar-color:var(--line-2) transparent; }
+  .dock-clips { display:flex; gap:4px; position:relative; min-width:100%; height:48px; user-select:none; touch-action:pan-y; }
+  .dock-clip { flex:var(--clip-grow,1) 1 0; min-width:44px; position:relative; display:flex; }
+  .dock-clip[data-band="delta"] { --clip-band:var(--band-delta); }
+  .dock-clip[data-band="theta"] { --clip-band:var(--band-theta); }
+  .dock-clip[data-band="alpha"] { --clip-band:var(--band-alpha); }
+  .dock-clip[data-band="beta"]  { --clip-band:var(--band-beta); }
+  .dock-clip[data-band="gamma"] { --clip-band:var(--band-gamma); }
+  .dock-clip-btn { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; min-width:0; padding:3px 8px; border:1px solid var(--line-2); border-left:3px solid var(--clip-band,var(--line-2)); border-radius:5px; background:var(--panel); color:var(--text); cursor:pointer; overflow:hidden; }
+  .dock-clip-btn:hover { border-color:var(--amber-dim); }
+  .dock-clip.current .dock-clip-btn { border-color:var(--amber); box-shadow:0 0 0 1px rgba(232,168,85,.2); }
+  .dock-clip.selected .dock-clip-btn { border-color:var(--amber); background:rgba(232,168,85,.08); }
+  .dock-clip.dragging .dock-clip-btn { opacity:.35; }
+  .dock-clip-emoji { font-size:13px; line-height:1.2; }
+  .dock-clip-name { max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-dim); font:9px 'IBM Plex Mono', monospace; text-transform:uppercase; letter-spacing:.04em; }
+  .dock-clip-chip { color:var(--clip-band,var(--text-mute)); font:9px 'IBM Plex Mono', monospace; font-variant-numeric:tabular-nums; }
+  .dock-clip-resize { position:absolute; top:0; right:0; bottom:0; width:8px; cursor:ew-resize; }
+  .dock-playhead { position:absolute; top:-3px; bottom:-3px; width:2px; background:var(--amber); box-shadow:0 0 6px rgba(232,168,85,.45); transform:translateX(-3px); z-index:2; display:none; }
+  .dock-playhead.visible { display:block; }
+  .dock-drop-line { position:absolute; top:-3px; bottom:-3px; width:2px; background:var(--teal); z-index:3; display:none; }
+  .dock-drop-line.visible { display:block; }
+  .dock-empty { flex:1; display:flex; align-items:center; justify-content:center; border:1px dashed var(--line-2); border-radius:5px; color:var(--text-mute); font-size:11px; padding:0 10px; white-space:nowrap; }
+  .dock-picker { display:flex; align-items:center; gap:8px; margin-top:6px; }
+  .dock-picker .picker-title { margin:0; }
+  .dock-picker-strip { display:flex; gap:6px; overflow-x:auto; scrollbar-width:thin; }
+  .dock-pick { flex:0 0 auto; display:inline-flex; align-items:center; gap:5px; background:var(--panel); border:1px solid var(--line); border-radius:4px; color:var(--text); padding:4px 8px; cursor:pointer; white-space:nowrap; }
+  .dock-pick:hover { border-color:var(--amber-dim); }
+  .dock-pick .preset-name { display:inline; font-size:10px; }
+  .dock-pick .timeline-band { display:inline; margin:0; }
+  .visually-hidden { position:absolute; width:1px; height:1px; margin:-1px; padding:0; border:0; clip:rect(0 0 0 0); clip-path:inset(50%); overflow:hidden; white-space:nowrap; }
   .transition-control { display:flex; align-items:center; gap:5px; color:var(--text-dim); font:11px 'IBM Plex Mono', monospace; }
   .duration-editor { display:inline-flex; align-items:center; gap:4px; }
   .duration-editor input { width:58px; padding:5px; border:1px solid var(--line-2); border-radius:4px; background:var(--bg); color:var(--text); text-align:center; font:11px 'IBM Plex Mono', monospace; }
@@ -295,26 +352,12 @@
   .duration-unit-option:disabled { opacity:.45; cursor:not-allowed; }
   .duration-hint { display:block; min-height:11px; color:var(--text-mute); font:8px 'IBM Plex Mono', monospace; white-space:nowrap; }
   .loop-label { display:flex; align-items:center; gap:6px; margin-left:auto; color:var(--text-dim); font:11px 'IBM Plex Mono', monospace; }
-  .timeline-status { min-height:18px; color:var(--text-mute); font:10px 'IBM Plex Mono', monospace; margin-bottom:10px; }
-  .timeline-steps { display:flex; gap:8px; overflow-x:auto; padding:3px 1px 10px; min-height:142px; }
-  .timeline-empty { width:100%; border:1px dashed var(--line-2); border-radius:6px; padding:28px 14px; text-align:center; color:var(--text-mute); font-size:12px; }
-  .timeline-step { min-width:112px; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:7px; text-align:center; }
-  .timeline-step.current { border-color:var(--amber); box-shadow:0 0 0 1px rgba(232,168,85,.2); }
   .timeline-card { width:100%; border:1px solid var(--line-2); border-radius:5px; padding:8px 4px; background:transparent; color:var(--text); cursor:pointer; }
   .timeline-card:hover { border-color:var(--amber-dim); }
   .timeline-card .preset-icon { font-size:20px; }
   .timeline-card .preset-name { display:block; color:var(--text-dim); }
   .timeline-band { display:block; margin-top:3px; color:var(--teal); font:9px 'IBM Plex Mono', monospace; }
-  .timeline-duration { width:80px; margin:8px auto 5px; padding:5px; border:1px solid var(--line-2); border-radius:4px; background:var(--bg); color:var(--text); text-align:center; font:11px 'IBM Plex Mono', monospace; }
-  .timeline-step-actions { display:flex; justify-content:center; gap:3px; }
-  .timeline-step-actions .btn-mini { padding:2px 5px; }
-  .timeline-picker { border-top:1px solid var(--line); padding-top:12px; }
   .picker-title { color:var(--text-dim); font:10px 'IBM Plex Mono', monospace; text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; }
-  .timeline-picker-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(82px,1fr)); gap:6px; }
-  .timeline-pick { background:var(--panel); border:1px solid var(--line); border-radius:5px; color:var(--text); padding:7px 3px; cursor:pointer; text-align:center; }
-  .timeline-pick:hover { border-color:var(--amber-dim); }
-  .timeline-pick .preset-icon { font-size:18px; }
-  .timeline-pick .preset-name { display:block; color:var(--text-dim); }
   .custom-form-row { margin-bottom:12px; }
   .custom-form-row label { display:block; color:var(--text-dim); font:10px 'IBM Plex Mono', monospace; text-transform:uppercase; margin-bottom:5px; }
   .custom-form-row input[type=text] { width:100%; padding:8px; border:1px solid var(--line-2); border-radius:4px; background:var(--bg); color:var(--text); }
@@ -413,7 +456,7 @@
     .main { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; overflow-y: auto; }
     .panel-left, .panel-right { border: none; border-bottom: 1px solid var(--line); }
     .panel-right { border-top: 1px solid var(--line); }
-    .app { grid-template-rows: 52px 1fr; height: auto; min-height: 100vh; }
+    .app { grid-template-rows: 52px auto auto auto; height: auto; min-height: 100vh; }
     html, body { overflow: auto; }
   }
   @media (max-width: 760px) {
@@ -619,30 +662,9 @@
 
   </div>
 
-  <footer class="status-bar">
-    <div class="status-left">
-      <span><span class="status-dot" id="statusDot"></span><span id="statusText">detenido</span></span>
-      <span id="statusBand">banda: —</span>
-    </div>
-    <div class="status-right">
-      <span id="statusBeat">beat: <span class="readout-num" id="statusBeatValue">—</span></span>
-    </div>
-  </footer>
-
-</div>
-
-<div class="toast" id="toast"></div>
-
-<dialog id="timelineDialog" class="modal-dialog" aria-labelledby="timelineTitle">
-  <div class="modal-head">
-    <div>
-      <div class="modal-title" id="timelineTitle">Timeline de presets</div>
-      <div class="modal-subtitle">encadena ondas y decide cuánto dura cada una</div>
-    </div>
-    <button class="btn btn-mini" id="btnCloseTimeline" type="button" aria-label="Cerrar timeline">✕</button>
-  </div>
-  <div class="modal-body">
-    <div class="timeline-toolbar">
+  <!-- TIMELINE DOCK — secuenciador fijo, plegable, sin modal -->
+  <div class="dock" id="timelineDock" data-dock-state="collapsed">
+    <div class="dock-toolbar">
       <button class="btn" id="btnTimelinePlay" type="button">▶ Reproducir</button>
       <button class="btn" id="btnTimelinePause" type="button">Ⅱ Pausar</button>
       <button class="btn" id="btnTimelineStop" type="button">■ Detener</button>
@@ -658,15 +680,54 @@
         </span>
         <span class="duration-hint" id="timelineTransitionHint"></span>
       </div>
+      <div class="dock-progress" id="dockProgress" aria-hidden="true"><div class="dock-progress-fill" id="dockProgressFill"></div></div>
+      <div class="dock-status" id="timelineStatus" role="status" aria-live="polite">Agrega presets para construir una secuencia.</div>
     </div>
-    <div class="timeline-status" id="timelineStatus" role="status">Agrega presets para construir una secuencia.</div>
-    <div class="timeline-steps" id="timelineSteps" aria-live="polite"></div>
-    <div class="timeline-picker">
-      <div class="picker-title">Selecciona un preset para agregarlo</div>
-      <div class="timeline-picker-grid" id="timelinePicker"></div>
+    <div class="dock-body" id="dockBody">
+      <div class="dock-inspector" id="dockInspector" role="toolbar" aria-label="Inspector del paso seleccionado" hidden>
+        <span class="dock-inspector-name" id="inspectorName"></span>
+        <span class="duration-editor">
+          <input id="inspectorDuration" type="number" aria-label="Duración del paso seleccionado">
+          <span class="duration-unit-toggle" role="group" aria-label="Unidad de duración del paso">
+            <button class="duration-unit-option" id="inspectorUnitMin" type="button" data-duration-unit-context="step" data-unit="min" aria-pressed="false">min</button>
+            <button class="duration-unit-option" id="inspectorUnitSeconds" type="button" data-duration-unit-context="step" data-unit="s" aria-pressed="true">s</button>
+          </span>
+          <span class="duration-hint" id="inspectorDurationHint"></span>
+        </span>
+        <button class="btn btn-mini" id="inspectorApply" type="button">▶ Aplicar</button>
+        <button class="btn btn-mini" id="inspectorMoveUp" type="button" aria-label="Mover el paso hacia atrás">◀</button>
+        <button class="btn btn-mini" id="inspectorMoveDown" type="button" aria-label="Mover el paso hacia adelante">▶</button>
+        <button class="btn btn-mini" id="inspectorDuplicate" type="button" aria-label="Duplicar el paso">＋</button>
+        <button class="btn btn-mini" id="inspectorRemove" type="button" aria-label="Eliminar el paso">×</button>
+      </div>
+      <div class="dock-ruler" id="dockRuler" aria-hidden="true"></div>
+      <div class="dock-track" id="dockTrack">
+        <div class="dock-clips" id="dockClips" role="list" aria-label="Pasos del timeline">
+          <div class="dock-playhead" id="dockPlayhead" aria-hidden="true"></div>
+          <div class="dock-drop-line" id="dockDropLine" aria-hidden="true"></div>
+        </div>
+      </div>
+      <div class="dock-picker">
+        <span class="picker-title">agregar</span>
+        <div class="dock-picker-strip" id="timelinePicker"></div>
+      </div>
+      <span class="visually-hidden" id="dockGestureHint">Arrastrá un clip para reordenar la secuencia y su borde derecho para cambiar la duración. Reemplazo por teclado: seleccioná el clip y usá los botones de mover y el editor de duración del inspector.</span>
     </div>
   </div>
-</dialog>
+
+  <footer class="status-bar">
+    <div class="status-left">
+      <span><span class="status-dot" id="statusDot"></span><span id="statusText">detenido</span></span>
+      <span id="statusBand">banda: —</span>
+    </div>
+    <div class="status-right">
+      <span id="statusBeat">beat: <span class="readout-num" id="statusBeatValue">—</span></span>
+    </div>
+  </footer>
+
+</div>
+
+<div class="toast" id="toast"></div>
 
 <dialog id="presetDialog" class="modal-dialog" aria-labelledby="presetTitle">
   <div class="modal-head">
@@ -709,7 +770,10 @@ const state = {
   noise: 0,
   mix: 80,
   playing: false,
-  band: 'alpha'
+  band: 'alpha',
+  /* Preferencia de UI del dock del timeline (no es parámetro de audio:
+  audioSnapshot solo copia AUDIO_KEYS). Se persiste en cortex-settings. */
+  dockExpanded: false
 };
 
 /* ── BANDS ── */
@@ -1281,12 +1345,14 @@ function addTimelinePreset(presetId) {
   renderTimeline();
 }
 
+/* Tira de presets dentro del dock desplegado: la única entrada v1 para
+   agregar pasos (el arrastre desde el panel izquierdo queda para v2). */
 function renderTimelinePicker() {
   const picker = document.getElementById('timelinePicker');
   if (!picker) return;
   const presets = [...BUILTIN_PRESETS, ...customPresets];
-  picker.innerHTML = presets.map(preset => `<button class="timeline-pick" type="button" data-add-preset="${escapeHtml(preset.id)}">
-    <span class="preset-icon">${preset.emoji}</span><span class="preset-name">${escapeHtml(preset.name)}</span>
+  picker.innerHTML = presets.map(preset => `<button class="dock-pick" type="button" data-add-preset="${escapeHtml(preset.id)}" aria-label="Agregar ${escapeHtml(preset.name)} (${escapeHtml(presetBand(preset))}) a la secuencia">
+    <span>${preset.emoji}</span><span class="preset-name">${escapeHtml(preset.name)}</span>
     <span class="timeline-band">${escapeHtml(presetBand(preset))}</span>
   </button>`).join('');
   picker.querySelectorAll('[data-add-preset]').forEach(button => {
@@ -1330,79 +1396,383 @@ function setDurationUnit(context, unit) {
   else renderTransitionControls();
 }
 
-function renderTimeline() {
-  const container = document.getElementById('timelineSteps');
-  if (!container) return;
-  const steps = timelineState.steps;
-  document.getElementById('timelineLoop').checked = timelineState.loop;
-  if (!steps.length) {
-    container.innerHTML = '<div class="timeline-empty">Selecciona un cuadrado abajo para agregar el primer paso.</div>';
-  } else {
-    const unit = timelineState.durationUnits.step;
-    const stepConfig = durationInputConfig('step', unit);
-    const unitLabel = unit === 'min' ? 'minutos' : 'segundos';
-    container.innerHTML = steps.map((step, index) => `<div class="timeline-step${timelinePlayer && timelinePlayer.running && timelinePlayer.index === index ? ' current' : ''}" data-step-index="${index}">
-      <button class="timeline-card" type="button" data-apply-step="${index}" aria-label="Aplicar ${escapeHtml(step.name)}">
-        <span class="preset-icon">${step.emoji}</span><span class="preset-name">${escapeHtml(step.name)}</span>
-        <span class="timeline-band">${escapeHtml(step.band)}</span>
-      </button>
-      <label class="timeline-band" for="duration-${index}">duración</label>
-      <div class="duration-editor timeline-duration-editor">
-        <input class="timeline-duration" id="duration-${index}" type="number" min="${stepConfig.min}" max="${stepConfig.max}" step="${stepConfig.step}" value="${secondsToDuration(step.durationSeconds, unit)}" aria-label="Duración de ${escapeHtml(step.name)} en ${unitLabel}">
-        <span class="duration-unit-toggle" role="group" aria-label="Unidad de duración del paso ${index + 1}">
-          <button class="duration-unit-option" type="button" data-duration-unit-context="step" data-unit="min" aria-pressed="${unit === 'min'}">min</button>
-          <button class="duration-unit-option" type="button" data-duration-unit-context="step" data-unit="s" aria-pressed="${unit === 's'}">s</button>
-        </span>
-      </div>
-      <span class="duration-hint">${durationHint(step.durationSeconds, unit)}</span>
-      <div class="timeline-step-actions">
-        <button class="btn btn-mini" type="button" data-move-step="up" data-index="${index}" aria-label="Mover arriba">↑</button>
-        <button class="btn btn-mini" type="button" data-move-step="down" data-index="${index}" aria-label="Mover abajo">↓</button>
-        <button class="btn btn-mini" type="button" data-duplicate-step="${index}" aria-label="Duplicar paso">＋</button>
-        <button class="btn btn-mini" type="button" data-remove-step="${index}" aria-label="Eliminar paso">×</button>
-      </div>
-    </div>`).join('');
-    container.querySelectorAll('[data-apply-step]').forEach(button => button.addEventListener('click', () => {
-      const step = timelineState.steps[Number(button.dataset.applyStep)];
-      if (step) applyAudioSnapshot(step.snapshot, `${step.emoji} ${step.name}`);
-    }));
-    container.querySelectorAll('.timeline-duration').forEach(input => input.addEventListener('change', () => {
-      const index = Number(input.closest('[data-step-index]').dataset.stepIndex);
-      const current = timelineState.steps[index].durationSeconds;
-      const seconds = durationToSeconds(input.value, timelineState.durationUnits.step, 'step');
-      timelineState.steps[index].durationSeconds = seconds === null ? current : seconds;
-      persistTimeline();
-      if (timelinePlayer) timelinePlayer.reschedule();
-      renderTimeline();
-    }));
-    container.querySelectorAll('[data-duration-unit-context="step"]').forEach(button => {
-      button.addEventListener('click', () => setDurationUnit('step', button.dataset.unit));
-    });
-    container.querySelectorAll('[data-move-step]').forEach(button => button.addEventListener('click', () => {
-      const index = Number(button.dataset.index);
-      const target = button.dataset.moveStep === 'up' ? index - 1 : index + 1;
-      if (target < 0 || target >= steps.length) return;
-      [steps[index], steps[target]] = [steps[target], steps[index]];
-      persistTimeline(); renderTimeline();
-    }));
-    container.querySelectorAll('[data-duplicate-step]').forEach(button => button.addEventListener('click', () => {
-      const index = Number(button.dataset.duplicateStep);
-      const copy = { ...steps[index], id:createId('step'), snapshot:{ ...steps[index].snapshot } };
-      steps.splice(index + 1, 0, copy);
-      persistTimeline(); renderTimeline();
-    }));
-    container.querySelectorAll('[data-remove-step]').forEach(button => button.addEventListener('click', () => {
-      steps.splice(Number(button.dataset.removeStep), 1);
-      persistTimeline(); renderTimeline();
-    }));
-  }
-  renderTimelinePicker();
+/* ── SELECCIÓN E INSPECTOR ──
+  Un clip de 44–120 px no aloja un input usable: la selección por click abre
+  el inspector de una línea y ahí viven la edición y los reemplazos por
+  teclado de los gestos (design D4). */
+let selectedStepId = null;
+
+function selectedStepIndex() {
+  if (!selectedStepId) return null;
+  const index = timelineState.steps.findIndex(step => step.id === selectedStepId);
+  return index < 0 ? null : index;
 }
 
-function openTimeline() {
+function selectStep(index) {
+  const step = timelineState.steps[index];
+  selectedStepId = step ? step.id : null;
   renderTimeline();
-  renderTransitionControls();
-  openDialog(document.getElementById('timelineDialog'));
+}
+
+function formatStepDuration(seconds) {
+  const unit = timelineState.durationUnits.step;
+  return `${secondsToDuration(seconds, unit)} ${unit}`;
+}
+
+/* Regla de tiempos: segmentos con el mismo grow y min-width que los clips,
+  así las marcas coinciden con los límites por construcción. */
+function renderDockRuler() {
+  const ruler = document.getElementById('dockRuler');
+  if (!ruler) return;
+  const steps = timelineState.steps;
+  if (!steps.length) { ruler.replaceChildren(); return; }
+  const unit = timelineState.durationUnits.step;
+  let cumulative = 0;
+  ruler.replaceChildren(...steps.map(step => {
+    cumulative += step.durationSeconds;
+    const segment = document.createElement('span');
+    segment.className = 'dock-ruler-segment';
+    segment.style.setProperty('--seg-grow', step.durationSeconds);
+    const label = document.createElement('span');
+    label.className = 'dock-ruler-label';
+    label.textContent = `${secondsToDuration(cumulative, unit)} ${unit}`;
+    segment.appendChild(label);
+    return segment;
+  }));
+}
+
+function renderDockInspector() {
+  const inspector = document.getElementById('dockInspector');
+  if (!inspector) return;
+  const index = selectedStepIndex();
+  if (index === null) { inspector.hidden = true; return; }
+  const step = timelineState.steps[index];
+  const unit = timelineState.durationUnits.step;
+  const config = durationInputConfig('step', unit);
+  const input = document.getElementById('inspectorDuration');
+  input.min = config.min; input.max = config.max; input.step = config.step;
+  input.value = secondsToDuration(step.durationSeconds, unit);
+  input.setAttribute('aria-label', `Duración de ${step.name} en ${unit === 'min' ? 'minutos' : 'segundos'}`);
+  document.getElementById('inspectorName').textContent = `${step.emoji} ${step.name} · ${step.band}`;
+  document.getElementById('inspectorDurationHint').textContent = durationHint(step.durationSeconds, unit);
+  inspector.hidden = false;
+  renderDurationUnitButtons('step');
+}
+
+/* ── RENDER DEL DOCK (design D6) ──
+  La estructura (toolbar, inspector, pista, regla, tira) es markup estático;
+  este render solo reescribe los clips por cambio de pasos, selección o
+  duraciones. El playhead es un único nodo que se conserva entre renders y
+  nunca se re-renderiza desde aquí. */
+function renderTimeline() {
+  const container = document.getElementById('dockClips');
+  if (!container) return;
+  if (gestureActive) return;   // el gesto en curso consolida al soltar
+  const steps = timelineState.steps;
+  document.getElementById('timelineLoop').checked = timelineState.loop;
+  const nodes = [];
+  if (!steps.length) {
+    const empty = document.createElement('div');
+    empty.className = 'dock-empty';
+    empty.setAttribute('role', 'presentation');
+    empty.textContent = 'Elegí un preset de la tira para agregar el primer paso.';
+    nodes.push(empty);
+  } else {
+    steps.forEach((step, index) => {
+      const isCurrent = timelinePlayer && timelinePlayer.running && timelinePlayer.index === index;
+      const isSelected = step.id === selectedStepId;
+      const clip = document.createElement('div');
+      clip.className = 'dock-clip' + (isCurrent ? ' current' : '') + (isSelected ? ' selected' : '');
+      clip.dataset.stepIndex = index;
+      clip.dataset.stepId = step.id;
+      clip.dataset.band = step.band;
+      clip.setAttribute('role', 'listitem');
+      // El ancho del clip ES el tiempo: proporcional a la duración, con piso
+      // legible de 44 px. El chip muestra el valor exacto, así que el
+      // redondeo visual nunca miente.
+      clip.style.setProperty('--clip-grow', step.durationSeconds);
+      const label = formatStepDuration(step.durationSeconds);
+      clip.innerHTML = `<button class="dock-clip-btn" type="button" data-clip-index="${index}" aria-describedby="dockGestureHint" aria-label="${escapeHtml(step.name)} · banda ${escapeHtml(step.band)} · ${escapeHtml(label)} — click para seleccionar, doble click para aplicar">
+        <span class="dock-clip-emoji">${step.emoji}</span>
+        <span class="dock-clip-name">${escapeHtml(step.name)}</span>
+        <span class="dock-clip-chip" data-clip-chip>${escapeHtml(label)}</span>
+      </button>
+      <span class="dock-clip-resize" data-clip-resize aria-hidden="true"></span>`;
+      nodes.push(clip);
+    });
+  }
+  container.replaceChildren(...nodes, document.getElementById('dockPlayhead'), document.getElementById('dockDropLine'));
+  renderDockRuler();
+  renderDockInspector();
+  refreshPlayheadGeometry();
+}
+
+/* ── PLEgado/DESPLEGADO ──
+  La preferencia vive en cortex-settings (mezclada, sin borrar el resto de
+  los ajustes guardados) y sobrevive recargas. */
+function loadDockPreference() {
+  try {
+    const raw = JSON.parse(localStorage.getItem('cortex-settings') || '{}');
+    state.dockExpanded = Boolean(raw.dockExpanded);
+  } catch (error) { state.dockExpanded = false; }
+}
+
+function persistDockPreference() {
+  try {
+    let raw = {};
+    try { raw = JSON.parse(localStorage.getItem('cortex-settings')) || {}; } catch (error) { raw = {}; }
+    raw.dockExpanded = Boolean(state.dockExpanded);
+    localStorage.setItem('cortex-settings', JSON.stringify(raw));
+  } catch (error) { /* sin localStorage: la preferencia vive en memoria */ }
+}
+
+function applyDockState() {
+  const dock = document.getElementById('timelineDock');
+  if (!dock) return;
+  dock.dataset.dockState = state.dockExpanded ? 'expanded' : 'collapsed';
+  const toggle = document.getElementById('btnOpenTimeline');
+  toggle.setAttribute('aria-expanded', String(Boolean(state.dockExpanded)));
+  toggle.setAttribute('aria-controls', 'timelineDock');
+  toggle.title = state.dockExpanded ? 'Plegar el timeline' : 'Desplegar el timeline';
+}
+
+function toggleDock() {
+  state.dockExpanded = !state.dockExpanded;
+  applyDockState();
+  persistDockPreference();
+  if (state.dockExpanded) refreshPlayheadGeometry();
+}
+
+/* ── PLAYHEAD (design D3) ──
+  Lee el player, no mantiene reloj propio. La geometría del clip activo se
+  cachea al cambiar de paso (una lectura de layout por paso, no por frame) y
+  el rAF existente escribe SOLO transform. */
+let playheadGeometry = null;
+let playheadLastX = null;
+let playheadLastScale = null;
+
+function refreshPlayheadGeometry() {
+  playheadGeometry = null;
+  playheadLastX = null;
+  if (!state.dockExpanded) return;
+  const container = document.getElementById('dockClips');
+  const player = timelinePlayer;
+  if (!container || !player || (!player.running && !player.paused)) return;
+  if (!timelineState.steps.length) return;
+  const index = Math.min(player.index, timelineState.steps.length - 1);
+  const clip = container.querySelector(`.dock-clip[data-step-index="${index}"]`);
+  if (!clip) return;
+  playheadGeometry = { left: clip.offsetLeft, width: clip.offsetWidth };
+}
+
+/* Fracción dentro del paso y del total de la secuencia, derivada del reloj
+  del player. Puro cálculo: no toca el DOM. */
+function playheadFractions() {
+  const player = timelinePlayer;
+  if (!player || (!player.running && !player.paused)) return null;
+  const steps = timelineState.steps;
+  if (!steps.length) return null;
+  const index = Math.min(player.index, steps.length - 1);
+  const durationMs = steps[index].durationSeconds * 1000;
+  if (durationMs <= 0) return null;
+  const remaining = player.remainingMs;   // en pausa devuelve lo que quedaba
+  const inStep = Math.max(0, Math.min(1, 1 - remaining / durationMs));
+  let before = 0, total = 0;
+  steps.forEach((step, i) => { total += step.durationSeconds; if (i < index) before += step.durationSeconds; });
+  const overall = total > 0 ? (before + (inStep * durationMs) / 1000) / total : 0;
+  return { index, inStep, overall };
+}
+
+/* Pase por frame del rAF existente: solo escrituras de transform, tanto del
+  playhead como de la barra fina plegada. */
+function updateDockPlayhead() {
+  const fractions = playheadFractions();
+  const fill = document.getElementById('dockProgressFill');
+  if (fill) {
+    const scale = fractions ? fractions.overall : 0;
+    if (scale !== playheadLastScale) {
+      playheadLastScale = scale;
+      fill.style.transform = `scaleX(${scale})`;
+    }
+  }
+  const playhead = document.getElementById('dockPlayhead');
+  if (!playhead) return;
+  if (fractions && state.dockExpanded && playheadGeometry) {
+    const x = playheadGeometry.left + fractions.inStep * playheadGeometry.width;
+    if (x !== playheadLastX) {
+      playheadLastX = x;
+      playhead.style.transform = `translateX(${x}px)`;
+    }
+    playhead.classList.add('visible');
+  } else {
+    playhead.classList.remove('visible');
+  }
+}
+
+/* ── GESTOS DEL DOCK (design D5) ──
+  Pointer Events con umbral de 4 px para distinguir click de arrastre,
+  captura del puntero al cruzar el umbral y pointercancel que revierte.
+  Los listeners viven en la pista (delegación), no en cada clip: re-renderizar
+  clips no duplica handlers. Durante el gesto el render de clips queda en
+  pausa (gestureActive) y se consolida al soltar. */
+const clipGesture = {
+  active: false, pointerId: null, kind: null, index: -1, clipEl: null,
+  startX: 0, startY: 0, startWidth: 0, startSeconds: 0, pendingSeconds: null,
+  thresholdPassed: false, targetIndex: -1,
+};
+let gestureActive = false;
+
+function snapStepSeconds(seconds) {
+  const unit = timelineState.durationUnits.step;
+  const stepSeconds = unit === 'min' ? 30 : 1;   // 0.5 min ≈ 30 s
+  return Math.round(seconds / stepSeconds) * stepSeconds;
+}
+
+function clipElements() {
+  return Array.from(document.querySelectorAll('#dockClips .dock-clip'));
+}
+
+/* Índice de destino (posición en el arreglo sin el clip arrastrado) a partir
+  de la posición del puntero sobre los clips restantes. target === index
+  equivale a soltar en su lugar: no-op. */
+function dropIndexFromX(clientX) {
+  const others = clipElements().filter((el, i) => i !== clipGesture.index);
+  let target = others.length;
+  for (let i = 0; i < others.length; i++) {
+    const rect = others[i].getBoundingClientRect();
+    if (clientX < rect.left + rect.width / 2) { target = i; break; }
+  }
+  return target;
+}
+
+function showDropLine(target) {
+  const line = document.getElementById('dockDropLine');
+  if (!line) return;
+  const others = clipElements().filter((el, i) => i !== clipGesture.index);
+  let x;
+  if (target >= others.length) {
+    const last = others[others.length - 1] || clipGesture.clipEl;
+    x = last.offsetLeft + last.offsetWidth + 1;
+  } else {
+    x = others[target].offsetLeft - 3;
+  }
+  line.style.transform = `translateX(${x}px)`;
+  line.classList.add('visible');
+}
+
+function hideDropLine() {
+  const line = document.getElementById('dockDropLine');
+  if (line) line.classList.remove('visible');
+}
+
+function finishClipGesture(cancelled) {
+  const gesture = clipGesture;
+  clipGesture.active = false;
+  gestureActive = false;
+  hideDropLine();
+  if (gesture.clipEl) gesture.clipEl.classList.remove('dragging');
+  if (!gesture.thresholdPassed) return;   // fue un click: lo resuelve el click handler
+  if (cancelled) { renderTimeline(); return; }   // pointercancel: revierte sin tocar estado
+  if (gesture.kind === 'reorder') {
+    if (gesture.targetIndex >= 0 && gesture.targetIndex !== gesture.index) {
+      const steps = timelineState.steps;
+      const [moved] = steps.splice(gesture.index, 1);
+      steps.splice(Math.min(gesture.targetIndex, steps.length), 0, moved);
+      persistTimeline();
+    }
+  } else if (gesture.kind === 'resize' && gesture.pendingSeconds != null && gesture.pendingSeconds !== gesture.startSeconds) {
+    timelineState.steps[gesture.index].durationSeconds = gesture.pendingSeconds;
+    persistTimeline();
+    // El paso en curso se reprograma desde el reloj, sin piso artificial.
+    if (timelinePlayer && timelinePlayer.running && timelinePlayer.index === gesture.index) timelinePlayer.reschedule();
+  }
+  renderTimeline();
+}
+
+function bindDockGestures() {
+  const clips = document.getElementById('dockClips');
+  if (!clips) return;
+
+  clips.addEventListener('pointerdown', event => {
+    if (event.button !== 0) return;
+    const clip = event.target.closest('.dock-clip');
+    if (!clip) return;
+    const index = Number(clip.dataset.stepIndex);
+    if (!timelineState.steps[index]) return;
+    const rect = clip.getBoundingClientRect();
+    clipGesture.active = true;
+    clipGesture.pointerId = event.pointerId;
+    clipGesture.kind = event.clientX > rect.right - 8 ? 'resize' : 'reorder';
+    clipGesture.index = index;
+    clipGesture.clipEl = clip;
+    clipGesture.startX = event.clientX;
+    clipGesture.startY = event.clientY;
+    clipGesture.startWidth = clip.offsetWidth;
+    clipGesture.startSeconds = timelineState.steps[index].durationSeconds;
+    clipGesture.pendingSeconds = null;
+    clipGesture.thresholdPassed = false;
+    clipGesture.targetIndex = -1;
+  });
+
+  clips.addEventListener('pointermove', event => {
+    if (!clipGesture.active || event.pointerId !== clipGesture.pointerId) return;
+    const dx = event.clientX - clipGesture.startX;
+    if (!clipGesture.thresholdPassed) {
+      if (Math.abs(dx) < 4 && Math.abs(event.clientY - clipGesture.startY) < 4) return;
+      clipGesture.thresholdPassed = true;
+      gestureActive = true;
+      try { clipGesture.clipEl.setPointerCapture(event.pointerId); } catch (error) { /* sin captura: los move/up siguen burbujeando a la pista */ }
+      if (clipGesture.kind === 'reorder') clipGesture.clipEl.classList.add('dragging');
+    }
+    if (clipGesture.kind === 'reorder') {
+      clipGesture.targetIndex = dropIndexFromX(event.clientX);
+      showDropLine(clipGesture.targetIndex);
+    } else {
+      // Escala del propio clip: el borde sigue al puntero 1:1 antes del snap.
+      const scale = clipGesture.startSeconds / Math.max(1, clipGesture.startWidth);
+      const snapped = snapStepSeconds(clipGesture.startSeconds + dx * scale);
+      const clamped = Math.max(1, Math.min(3600, snapped));
+      if (clamped !== clipGesture.pendingSeconds) {
+        clipGesture.pendingSeconds = clamped;
+        clipGesture.clipEl.style.setProperty('--clip-grow', clamped);
+        const chip = clipGesture.clipEl.querySelector('[data-clip-chip]');
+        if (chip) chip.textContent = formatStepDuration(clamped);
+      }
+    }
+  });
+
+  const endGesture = event => {
+    if (!clipGesture.active || event.pointerId !== clipGesture.pointerId) return;
+    finishClipGesture(event.type === 'pointercancel');
+  };
+  clips.addEventListener('pointerup', endGesture);
+  clips.addEventListener('pointercancel', endGesture);
+
+  clips.addEventListener('click', event => {
+    const clip = event.target.closest('.dock-clip');
+    const button = clip && clip.querySelector('[data-clip-index]');
+    if (!button) return;
+    selectStep(Number(button.dataset.clipIndex));
+  });
+
+  clips.addEventListener('dblclick', event => {
+    const clip = event.target.closest('.dock-clip');
+    const button = clip && clip.querySelector('[data-clip-index]');
+    if (!button) return;
+    const step = timelineState.steps[Number(button.dataset.clipIndex)];
+    if (step) applyAudioSnapshot(step.snapshot, `${step.emoji} ${step.name}`);
+  });
+}
+
+function moveSelectedStep(delta) {
+  const index = selectedStepIndex();
+  if (index === null) return;
+  const steps = timelineState.steps;
+  const target = index + delta;
+  if (target < 0 || target >= steps.length) return;
+  [steps[index], steps[target]] = [steps[target], steps[index]];
+  persistTimeline();
+  renderTimeline();
 }
 
 function renderEmojiOptions() {
@@ -1474,7 +1844,7 @@ function deleteCustomPreset(id) {
   customPresets = customPresets.filter(item => item.id !== id);
   timelineState.steps = timelineState.steps.filter(step => step.presetId !== id);
   persistCustomPresets(); persistTimeline();
-  renderCustomPresets(); renderTimeline();
+  renderCustomPresets(); renderTimelinePicker(); renderTimeline();
   showToast('preset eliminado');
 }
 
@@ -2058,6 +2428,9 @@ const GLOSSARY = [
   { term: 'Mix', body: 'Nivel general de salida. Controla el volumen final de todo lo que suena.' },
   { term: 'Transición suave', body: 'En la línea de tiempo, mueve gradualmente los ocho parámetros de audio del paso saliente al entrante durante los segundos que elijas (0 a 60), en lugar de cortar en seco. Mientras dura, el estado lo indica con "· transición". Es comodidad de escucha: no representa un protocolo clínico ni un efecto médico.' },
   { term: 'Reloj de la línea de tiempo', body: 'La secuencia avanza con el reloj del contexto de audio, no con temporizadores de la página. Por eso los pasos cambian igual con la ventana minimizada o la pestaña en segundo plano, aunque la interfaz se repinte al volver. El retraso de una transición está acotado por el intervalo de actualización (unos 60 ms) y no se acumula de un paso al siguiente. Al volver de segundo plano solo se aplica el paso que corresponde al momento actual, no los que quedaron atrás.' },
+  { term: 'Dock del timeline', body: 'La línea de tiempo vive en un panel fijo abajo de la app, siempre visible, en lugar de una ventana emergente. Se pliega y despliega con el botón ⌁ Timeline y la app recuerda tu preferencia. Plegado ocupa una franja fina con el transporte y una barra de progreso; desplegado muestra la regla de tiempos, los clips y la tira para agregar pasos. Nada de lo demás queda tapado.' },
+  { term: 'Playhead', body: 'La línea ámbar que recorre los clips mientras suena la secuencia. Su posición sale del reloj de audio de la línea de tiempo, así que avanza igual con la pestaña en segundo plano y, al volver, muestra la posición real. En loop vuelve a arrancar desde el primer clip.' },
+  { term: 'Gestos del dock', body: 'Arrastrás un clip horizontalmente para reordenar la secuencia y su borde derecho para cambiar la duración, con ajuste a valores redondos (1 s, o 30 s si estás en minutos). Si preferís teclado: seleccioná el clip con click y usá los botones de mover y el editor de duración del inspector; producen el mismo resultado.' },
   { term: 'Bandas cerebrales', body: 'Delta (sueño profundo), Theta (duermevela), Alpha (relajación despierta), Beta (foco), Gamma (procesamiento rápido).' },
   { term: 'Reentrenamiento auditivo', body: 'Técnica que usa un carrier ultrasónico (~14 kHz) con f-mod alto, barriendo frecuencias. Se usa para tinnitus. No está implementado en esta versión.' }
 ];
@@ -2102,6 +2475,7 @@ function loadSettings() {
   try {
     const data = JSON.parse(raw);
     Object.assign(state, data);
+    applyDockState();   // los ajustes traen la preferencia del dock
     syncUIFromState();
     engine.updateBrainwave(state.brainwave);
     engine.updateCarrier(state.carrier);
@@ -2278,9 +2652,8 @@ function bindEvents() {
   bindMod('sliderNoise', 'noise', 'valNoise');
   bindMod('sliderMix', 'mix', 'valMix');
 
-  document.getElementById('btnOpenTimeline').addEventListener('click', openTimeline);
+  document.getElementById('btnOpenTimeline').addEventListener('click', toggleDock);
   document.getElementById('btnCreatePreset').addEventListener('click', () => openCustomPresetEditor());
-  document.getElementById('btnCloseTimeline').addEventListener('click', () => closeDialog(document.getElementById('timelineDialog')));
   document.getElementById('btnClosePreset').addEventListener('click', () => closeDialog(document.getElementById('presetDialog')));
   document.getElementById('btnCancelPreset').addEventListener('click', () => closeDialog(document.getElementById('presetDialog')));
   document.getElementById('btnSavePreset').addEventListener('click', saveCustomPresetFromForm);
@@ -2303,14 +2676,57 @@ function bindEvents() {
     renderTransitionControls();
     if (timelinePlayer) timelinePlayer.refreshTransition();
   });
-  document.querySelectorAll('#timelineDialog [data-duration-unit-context="transition"]').forEach(button => {
+  document.querySelectorAll('#timelineDock [data-duration-unit-context="transition"]').forEach(button => {
     button.addEventListener('click', () => setDurationUnit('transition', button.dataset.unit));
+  });
+  document.querySelectorAll('#timelineDock [data-duration-unit-context="step"]').forEach(button => {
+    button.addEventListener('click', () => setDurationUnit('step', button.dataset.unit));
   });
   document.getElementById('btnTimelinePlay').addEventListener('click', () => timelinePlayer.play());
   document.getElementById('btnTimelinePause').addEventListener('click', () => timelinePlayer.pause());
   document.getElementById('btnTimelineStop').addEventListener('click', () => timelinePlayer.stop());
   document.getElementById('btnTimelineClear').addEventListener('click', () => {
-    timelinePlayer.stop(); timelineState.steps = []; persistTimeline(); renderTimeline();
+    timelinePlayer.stop(); timelineState.steps = []; selectedStepId = null; persistTimeline(); renderTimeline();
+  });
+
+  /* Inspector: edición y reemplazos por teclado de los gestos del dock. */
+  document.getElementById('inspectorDuration').addEventListener('change', () => {
+    const index = selectedStepIndex();
+    if (index === null) return;
+    const input = document.getElementById('inspectorDuration');
+    const seconds = durationToSeconds(input.value, timelineState.durationUnits.step, 'step');
+    if (seconds === null) { renderTimeline(); return; }   // valor inválido: restaura
+    timelineState.steps[index].durationSeconds = seconds;
+    persistTimeline();
+    if (timelinePlayer && timelinePlayer.running && timelinePlayer.index === index) timelinePlayer.reschedule();
+    renderTimeline();
+  });
+  document.getElementById('inspectorApply').addEventListener('click', () => {
+    const index = selectedStepIndex();
+    if (index === null) return;
+    const step = timelineState.steps[index];
+    applyAudioSnapshot(step.snapshot, `${step.emoji} ${step.name}`);
+  });
+  document.getElementById('inspectorMoveUp').addEventListener('click', () => moveSelectedStep(-1));
+  document.getElementById('inspectorMoveDown').addEventListener('click', () => moveSelectedStep(1));
+  document.getElementById('inspectorDuplicate').addEventListener('click', () => {
+    const index = selectedStepIndex();
+    if (index === null) return;
+    const steps = timelineState.steps;
+    const source = steps[index];
+    const copy = { ...source, id: createId('step'), snapshot: { ...source.snapshot } };
+    steps.splice(index + 1, 0, copy);
+    selectedStepId = copy.id;
+    persistTimeline();
+    renderTimeline();
+  });
+  document.getElementById('inspectorRemove').addEventListener('click', () => {
+    const index = selectedStepIndex();
+    if (index === null) return;
+    timelineState.steps.splice(index, 1);
+    selectedStepId = null;
+    persistTimeline();
+    renderTimeline();
   });
 
   document.querySelectorAll('.preset').forEach(el => {
@@ -2383,6 +2799,7 @@ function renderLoop(ts) {
   uiPulse(now / 1000);
   drawWaveFrame(now);
   drawRadarFrame(now);
+  updateDockPlayhead();
   requestAnimationFrame(renderLoop);
 }
 
@@ -2390,11 +2807,15 @@ function renderLoop(ts) {
 function init() {
   loadCustomPresetData();
   loadTimelineData();
+  loadDockPreference();
   timelinePlayer = new TimelinePlayer();
   buildGlossary();
   bindEvents();
+  bindDockGestures();
   renderCustomPresets();
+  applyDockState();
   renderTimeline();
+  renderTimelinePicker();
   renderTransitionControls();
   resizeWave();
   updateBrain();
@@ -2404,11 +2825,16 @@ function init() {
   requestAnimationFrame(renderLoop);
   uiPulse(0);
 
+  // El ancho de la pista cambia con la ventana: la geometría cacheada del
+  // playhead se recalcula, nunca se lee por frame.
+  window.addEventListener('resize', refreshPlayheadGeometry);
+
   // Al volver a la pestaña, el player se resincroniza con el reloj de audio
   // y la UI se repinta: rAF y los timers están estrangulados mientras no se ve.
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
     if (timelinePlayer) timelinePlayer.syncOnVisible();
+    refreshPlayheadGeometry();
     markUiDirty('readouts', 'spatial', 'band');
   });
 }
@@ -2421,6 +2847,7 @@ window.__CORTEX__ = {
   applyPreset, applyAudioSnapshot, updateSpatialReadout, saveSettings, loadSettings,
   timelineState, getTimelinePlayer: () => timelinePlayer, getCustomPresets: () => customPresets, BUILTIN_PRESETS, AVAILABLE_EMOTES,
   addTimelinePreset, renderTimeline, openCustomPresetEditor,
+  toggleDock, selectStep, getSelectedStepIndex: () => selectedStepIndex(),
   syncUIFromState, RADAR_SIZE, getRadarStart: () => radarT0,
   // Superficie añadida para verificar la base temporal y la estabilidad de UI.
   setText, writeReadouts, markUiDirty, applyBandInfo, uiPulse,

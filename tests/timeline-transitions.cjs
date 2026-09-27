@@ -194,18 +194,20 @@ const SETUP = `(() => {
     await page.evaluate(SETUP);
     const r = await page.evaluate(async () => {
       const C = window.__CORTEX__;
-      const before = document.querySelector('.timeline-duration').value;
+      // El editor de duración vive en el inspector: se selecciona el primer clip.
+      document.querySelector('.dock-clip-btn').click();
+      const before = document.getElementById('inspectorDuration').value;
       C.setDurationUnit('step', 'min');
       await new Promise(r => requestAnimationFrame(r));
-      const after = document.querySelector('.timeline-duration').value;
-      const hint = document.querySelector('.timeline-step .duration-hint').textContent;
+      const after = document.getElementById('inspectorDuration').value;
+      const hint = document.getElementById('inspectorDurationHint').textContent;
       const stored = C.timelineState.steps[0].durationSeconds;
-      const input = document.querySelector('.timeline-duration');
+      const input = document.getElementById('inspectorDuration');
       input.value = '2';
       input.dispatchEvent(new Event('change', { bubbles: true }));
       const storedAfterEdit = C.timelineState.steps[0].durationSeconds;
       C.setDurationUnit('step', 's');
-      const back = document.querySelector('.timeline-duration').value;
+      const back = document.getElementById('inspectorDuration').value;
       C.setDurationUnit('transition', 'min');
       const transValue = document.getElementById('timelineTransitionSeconds').value;
       const transHint = document.getElementById('timelineTransitionHint').textContent;
@@ -230,9 +232,11 @@ const SETUP = `(() => {
     await page.evaluate(SETUP);
     await page.evaluate(() => {
       const C = window.__CORTEX__;
-      // editar el primer paso a 2 min = 120 s, como haría una persona
+      // editar el primer paso a 2 min = 120 s, como haría una persona:
+      // click en el clip, edición en el inspector del dock.
+      document.querySelector('.dock-clip-btn').click();
       C.setDurationUnit('step', 'min');
-      const input = document.querySelector('.timeline-duration');
+      const input = document.getElementById('inspectorDuration');
       input.value = '2';
       input.dispatchEvent(new Event('change', { bubbles: true }));
       C.timelineState.transition.seconds = 5;

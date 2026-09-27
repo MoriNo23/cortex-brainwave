@@ -36,18 +36,21 @@ const { chromium, firefox, webkit } = require('playwright');
   await page.click('#btnOpenTimeline');
   await page.locator('[data-add-preset="builtin-delta"]').click();
   await page.locator(`[data-add-preset="${customId}"]`).click();
-  const durations = page.locator('.timeline-duration');
-  await durations.nth(0).fill('1');
-  await durations.nth(0).dispatchEvent('change');
-  await durations.nth(1).fill('1');
-  await durations.nth(1).dispatchEvent('change');
+  // El dock ya no tiene un input por paso: se selecciona el clip y la
+  // duración se edita en el inspector.
+  await page.locator('.dock-clip-btn').nth(0).click();
+  await page.fill('#inspectorDuration', '1');
+  await page.dispatchEvent('#inspectorDuration', 'change');
+  await page.locator('.dock-clip-btn').nth(1).click();
+  await page.fill('#inspectorDuration', '1');
+  await page.dispatchEvent('#inspectorDuration', 'change');
   await page.check('#timelineLoop');
 
   const beforePlay = await page.evaluate(() => ({
     custom: window.__CORTEX__.getCustomPresets(),
     steps: window.__CORTEX__.timelineState.steps,
     loop: window.__CORTEX__.timelineState.loop,
-    durationInputs: [...document.querySelectorAll('.timeline-duration')].map(input => Number(input.value)),
+    stepDurations: window.__CORTEX__.timelineState.steps.map(step => step.durationSeconds),
   }));
 
   await page.click('#btnTimelinePlay');
@@ -68,7 +71,7 @@ const { chromium, firefox, webkit } = require('playwright');
   const failures = [];
   if (corrupted.custom !== 0 || corrupted.steps !== 0) failures.push(`corrupt storage: ${JSON.stringify(corrupted)}`);
   if (custom.length !== 1 || custom[0].name !== 'Mi Alpha' || custom[0].emoji !== '🌊' || custom[0].band !== 'alpha') failures.push(`custom preset: ${JSON.stringify(custom)}`);
-  if (beforePlay.steps.length !== 2 || beforePlay.durationInputs.join(',') !== '1,1' || !beforePlay.loop) failures.push(`timeline setup: ${JSON.stringify(beforePlay)}`);
+  if (beforePlay.steps.length !== 2 || beforePlay.stepDurations.join(',') !== '1,1' || !beforePlay.loop) failures.push(`timeline setup: ${JSON.stringify(beforePlay)}`);
   if (!duringPlay.playing || !duringPlay.running) failures.push(`timeline play: ${JSON.stringify(duringPlay)}`);
   if (!afterStop || afterStop.running || afterStop.paused) failures.push(`timeline stop: ${JSON.stringify(afterStop)}`);
   if (errors.length) failures.push(`pageErrors=${errors.join(' | ')}`);

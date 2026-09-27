@@ -280,7 +280,7 @@ function check(cond, name, detail) {
       const fresh = {
         idx: p.index, rem: Math.round(p.remainingMs),
         status: document.getElementById('timelineStatus').textContent,
-        current: document.querySelectorAll('.timeline-step.current').length
+        current: document.querySelectorAll('.dock-clip.current').length
       };
       p.stop();
       return { stale, fresh };

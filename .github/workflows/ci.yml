@@ -77,6 +77,10 @@ jobs:
         if: always()
         run: node tests/timeline-custom-presets.cjs
 
+      - name: Dock del timeline
+        if: always()
+        run: node tests/timeline-dock.cjs
+
       - name: Portadora de ruido
         if: always()
         run: node tests/noise-carrier.cjs
@@ -159,6 +163,12 @@ jobs:
       - name: Timeline y presets personalizados
         if: always()
         run: node tests/timeline-custom-presets.cjs
+        env:
+          ENGINE: ${{ matrix.engine }}
+
+      - name: Dock del timeline
+        if: always()
+        run: node tests/timeline-dock.cjs
         env:
           ENGINE: ${{ matrix.engine }}
 
