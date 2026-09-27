@@ -49,6 +49,15 @@ existan en el markup, y que cada entrada del arreglo `TESTS` de `cortex.spec.htm
 Un verde de `ligero` **no es** el verde de la suite con navegador: son jobs distintos de la
 misma corrida, y un fallo de comportamiento aparece en `suite`, `motores` o `matriz`.
 
+### GitHub Pages
+
+[`.github/workflows/pages.yml`](https://github.com/MoriNo23/cortex-brainwave/actions/workflows/pages.yml)
+publica `cortex.html` en GitHub Pages cuando CI da verde en `main` (y a mano con
+`workflow_dispatch`). La copia a `index.html` ocurre en el pipeline: el repo mantiene una
+única fuente de verdad y el sitio nunca muestra una versión sin verde. Para activarlo hay que
+habilitar Pages una sola vez en **Settings → Pages → Source: GitHub Actions**; el sitio queda
+en `https://morino23.github.io/cortex-brainwave/`.
+
 Un fallo se descubre en CI y no antes del push. Es un intercambio consciente: el primer error
 tarda unos minutos más en aparecer, a cambio de que la máquina de trabajo no se use para
 verificar nunca.

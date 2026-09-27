@@ -1,0 +1,57 @@
+name: GitHub Pages
+
+# Publica la app en GitHub Pages solo cuando CI pasó en main: el sitio nunca
+# muestra una versión que no haya dado verde. La primera vez se puede lanzar
+# a mano (workflow_dispatch) porque workflow_run solo dispara corridas de CI
+# posteriores a la que introdujo este archivo.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+# Permisos mínimos que exige el despliegue a Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Un solo despliegue en vuelo: el push nuevo reemplaza al anterior.
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  pages:
+    name: Publicar la app en Pages
+    runs-on: ubuntu-latest
+    # workflow_run también dispara corridas de CI fallidas: solo se publica
+    # el verde. El dispatch manual salta la compuerta a propósito.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # El HTML es autónomo: la "build" es copiarlo como índice del sitio.
+      # La copia vive solo en el artefacto de despliegue; en el repo hay una
+      # única fuente de verdad (cortex.html).
+      - name: Preparar el sitio
+        run: |
+          mkdir -p site
+          cp cortex.html site/index.html
+          touch site/.nojekyll
+
+      - name: Configurar Pages
+        uses: actions/configure-pages@v5
+
+      - name: Subir el artefacto del sitio
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Desplegar
+        id: deployment
+        uses: actions/deploy-pages@v4
