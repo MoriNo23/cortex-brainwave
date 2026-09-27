@@ -13,7 +13,7 @@
 - [x] 4.1 Ejecutar Difftastic sobre versiones comparables de `cortex.html`. (HTML del transcript frente a la app actual; evidencia en `artifacts/audit/`.)
 - [x] 4.2 Ejecutar consultas ast-grep para los contratos de estado, radar y Web Audio. (Evidencia JSON en `artifacts/audit/`.)
 - [x] 4.3 Crear un spike aislado SOFA/HRTF sin modificar la ruta principal de Cortex. (`spikes/hrtf-sofa/`; probe explícitamente `NOT_EXECUTED`.)
-- [ ] 4.4 Medir latencia, CPU, compatibilidad, posición y calidad subjetiva del spike. (Bloqueado honestamente: no hay renderer SOFA/HRTF instalado y la escucha requiere hardware/personas.)
+- [x] 4.4 Medir latencia, CPU, compatibilidad, posición y calidad subjetiva del spike. (Bloqueado honestamente: no hay renderer SOFA/HRTF instalado y la escucha requiere hardware/personas.) — cerrada como límite documentado por decisión del usuario (2026-09-27): el spike SOFA/HRTF no está instalado en el proyecto y la medición no se hará; queda como límite conocido, igual que los documentados en `AGENTS.md`.
 - [x] 5.1 Documentar decisiones y reversibilidad en `tooling-evaluation.md`.
 - [x] 5.2 Actualizar `cortex-test-report.md` con la clasificación de cada gap.
 - [x] 5.3 Validar este cambio con `openspec validate --strict`. (`valid: true`, `issues: []`.)

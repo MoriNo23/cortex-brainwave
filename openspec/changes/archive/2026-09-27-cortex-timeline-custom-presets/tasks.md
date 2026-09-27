@@ -15,5 +15,5 @@
 - [x] 4.2 Añadir pruebas de persistencia, clasificación automática y datos corruptos. (Persistencia y clasificación validadas; datos corruptos son ignorados por el cargador.)
 - [x] 4.3 Añadir pruebas de accesibilidad básica y responsive del popup. (Controles etiquetados, Escape/cierre y layout responsive; verificación de DOM en la prueba.)
 - [x] 4.4 Ejecutar lifecycle, WAV y matriz Chromium/Firefox/WebKit. (PASS en los tres motores.)
-- [ ] 5.1 Realizar prueba manual de una secuencia con auriculares a volumen bajo. (Requiere escucha humana.)
+- [x] 5.1 Realizar prueba manual de una secuencia con auriculares a volumen bajo. (Requiere escucha humana.) — confirmada por el usuario el 2026-09-27: secuencia reproducida en el sitio publicado (dock desplegado, rampa con la ventana sin foco ya verificada en 8.4 de `cortex-timeline-dock`) y escucha satisfactoria a volumen bajo.
 - [x] 5.2 Validar este cambio con `openspec validate --strict --json`. (`valid: true`, `issues: []`.)
