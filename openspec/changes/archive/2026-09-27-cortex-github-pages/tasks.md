@@ -17,4 +17,4 @@
 
 - [x] 2.1 Habilitar Pages en el repo: Settings → Pages → Source: GitHub Actions. (Acción humana única en GitHub; hasta entonces el workflow falla visiblemente en vez de fingir éxito.)
 - [x] 2.2 Tras un push con CI verde, leer en Actions la corrida de "Publicar la app en Pages" — despachándola a mano la primera vez si `workflow_run` no disparó — y verificar que despliega y reporta la URL del environment `github-pages`.
-- [ ] 2.3 Verificación humana: abrir la URL publicada y comprobar que la app carga como la autónoma, que el audio arranca con el click en Iniciar y que los ajustes guardados son los del origen de Pages. (Requiere una mirada del usuario; sin auriculares obligatorios.)
+- [x] 2.3 Verificación humana: abrir la URL publicada y comprobar que la app carga como la autónoma, que el audio arranca con el click en Iniciar y que los ajustes guardados son los del origen de Pages. (Requiere una mirada del usuario; sin auriculares obligatorios.) — confirmada por el usuario en la sesión del 2026-09-27.

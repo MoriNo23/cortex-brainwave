@@ -70,4 +70,4 @@
 - [x] 8.1 Documentar en el glosario el dock, el playhead y los gestos con su reemplazo por teclado, sin afirmaciones médicas.
 - [x] 8.2 Escribir el reporte del cambio (evidencia de CI, hallazgos, presupuesto de alto verificado) y dejar anotado el trade-off de los clips mínimos.
 - [x] 8.3 Validar con `openspec validate cortex-timeline-dock --strict --json` y anotar el resultado.
-- [ ] 8.4 Verificación humana en la pantalla del usuario: sesión real con el dock desplegado a 1366×768, arrastre de un clip, redimensionado de otro, y escucha de una rampa con la ventana sin foco, verificando que el playhead avanza y que al volver muestra la posición real. (Requiere observación y escucha humana.)
+- [x] 8.4 Verificación humana en la pantalla del usuario: sesión real con el dock desplegado a 1366×768, arrastre de un clip, redimensionado de otro, y escucha de una rampa con la ventana sin foco, verificando que el playhead avanza y que al volver muestra la posición real. (Requiere observación y escucha humana.) — confirmada por el usuario en la sesión del 2026-09-27, sobre el sitio publicado.
