@@ -18,6 +18,14 @@ context: |
 # Per-operation guidance (optional)
 # Add advisory guidance for how apply and archive work should be conducted.
 # This is separate from artifact rules above.
+operations:
+  apply:
+    guidance:
+      - "All verification goes through CI: push or open the PR and read the jobs. There is no local verification command and none should be added. Do not launch a browser engine unless the user explicitly asks for it. See AGENTS.md."
+  archive:
+    guidance:
+      - "Summarize the archive outcome before finishing"
+
 # Example:
 #   operations:
 #     apply:
