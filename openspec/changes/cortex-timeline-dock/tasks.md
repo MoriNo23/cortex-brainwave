@@ -1,5 +1,24 @@
 # Tasks
 
+> ## Cómo se verifica este cambio
+>
+> Casi todas las verificaciones de este cambio son **de UI renderizada** — el dock a 1366×768,
+> si tapa la barra de estado, si el playhead avanza sin disparar layout, si la selección y el
+> inspector funcionan. `npm run verify:light` **no puede contestarlas**: solo lee archivos
+> (sintaxis, autocontención, ids del DOM, forma del arreglo `TESTS`).
+>
+> El camino correcto, según `AGENTS.md`:
+>
+> 1. `npm run verify:light` antes y después de cada tarea, para lo que sí cubre.
+> 2. Escribir el test de Playwright de cada comportamiento y **registrarlo en el workflow de
+>    CI** (tarea 7.5). La corrida ocurre en GitHub Actions, no en la máquina.
+> 3. **No lanzar un navegador en local** por iniciativa propia. Una corrida local levanta
+>    Chromium y satura la máquina; solo se hace si el usuario la pide explícitamente, y se
+>    reporta una sola vez, acotada a lo pedido.
+>
+> Lo que un archivo no puede verificar —que el dock no tape el transporte a 1366×768, que el
+> arrastre y el redimensionado se sientan bien— queda para la tarea 8.4, que es humana.
+
 ## 1. Estructura del dock
 
 - [ ] 1.1 Añadir el contenedor del dock entre el grid principal y la barra de estado con los dos estados (plegado ~48 px / desplegado ~170 px), y verificar en 1366×768 que desplegado no oculta el transporte ni la barra de estado ni la zona cerebral.

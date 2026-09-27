@@ -25,10 +25,10 @@
 
 - [x] 4.1 Añadir el job `ligero` a `.github/workflows/ci.yml` con checkout, `setup-node` y `npm run verify:light`, sin paso `playwright install`, y con subida de `artifacts/light-verify.json` como artifact del workflow; verificar que el YAML es válido y que el job no referencia `playwright`
 - [x] 4.2 Confirmar que los jobs `suite`, `motores` y `matriz` quedan sin modificar, comparando el diff del workflow contra `HEAD`; verificar que el único cambio en `ci.yml` es el job añadido
-- [ ] 4.3 Lanzar un push de prueba y verificar en la corrida que `ligero` termina en verde, que `suite`, `motores` y `matriz` siguen en verde, y que el badge del README refleja el estado real del workflow
+- [x] 4.3 Lanzar un push de prueba y verificar en la corrida que `ligero` termina en verde, que `suite`, `motores` y `matriz` siguen en verde, y que el badge del README refleja el estado real del workflow
 
 ## 5. Verificación de cierre
 
-- [ ] 5.1 Ejecutar `npm run verify:light` con el repo en su estado final y confirmar que el reporte `artifacts/light-verify.json` lista los cuatro chequeos en verde
-- [ ] 5.2 Medir con `/usr/bin/time -v` el consumo de `npm run verify:light` y contrastarlo con el de un script de navegador; verificar que el nivel ligero queda en el orden de milisegundos y sin memoria significativa, y anotar la cifra medida en el informe del cambio
-- [ ] 5.3 Revisar que ningún archivo de `tests/` existente fue modificado o renombrado y que `cortex.html` y `cortex.spec.html` no tienen cambios; verificar con `git status` y `git diff --stat` que el cambio solo toca `AGENTS.md`, `openspec/config.yaml`, `package.json`, `tests/light/`, `tests/README.md`, `README.md` y `.github/workflows/ci.yml`
+- [x] 5.1 Ejecutar `npm run verify:light` con el repo en su estado final y confirmar que el reporte `artifacts/light-verify.json` lista los cuatro chequeos en verde
+- [x] 5.2 Medir con `/usr/bin/time -v` el consumo de `npm run verify:light` y contrastarlo con el de un script de navegador; verificar que el nivel ligero queda en el orden de milisegundos y sin memoria significativa, y anotar la cifra medida en el informe del cambio
+- [x] 5.3 Revisar que ningún archivo de `tests/` existente fue modificado o renombrado y que `cortex.html` y `cortex.spec.html` no tienen cambios; verificar con `git status` y `git diff --stat` que el cambio solo toca `AGENTS.md`, `openspec/config.yaml`, `package.json`, `tests/light/`, `tests/README.md`, `README.md` y `.github/workflows/ci.yml`

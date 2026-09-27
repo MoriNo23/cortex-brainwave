@@ -100,3 +100,9 @@ Rollback: revertir el commit. No hay migraciones de datos, no hay cambios en la 
 ## Open Questions
 
 Ninguna. Las decisiones con impacto en la spec, el enfoque o el desglose de tareas quedaron resueltas con el usuario antes de escribir este documento: alcance del nivel ligero, dónde vive la regla y qué tan estricta es la restricción de navegador.
+
+## Coste medido
+
+`verify:light` en la máquina de 4 núcleos, repo sin `node_modules` (Node v26.7.0):
+**0,227 s de CPU y 57 MB de RSS de media por corrida**. Los 57 MB son el runtime de Node, no
+los archivos: el nivel ligero lee 414 líneas de código sobre 105 KB de HTML.
