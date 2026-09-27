@@ -46,19 +46,29 @@ const { chromium, firefox, webkit } = require('playwright');
   await page.fill('#inspectorDuration', '1');
   await page.dispatchEvent('#inspectorDuration', 'change');
 
-  // Sonda de diagnóstico: registrar los clicks que lleguen a la pista y el
-  // estado del DOM si la selección del segundo clip no se concreta. La
-  // corrección definitiva sale de leer esta evidencia en la corrida de CI.
+  // Sonda de diagnóstico, nivel 2: grabar pointerdown/pointerup/click en el
+  // documento (con objetivo y coordenadas) y mutaciones de la pista con marca
+  // de tiempo. Si el navegador no sintetiza el click porque el nodo bajo el
+  // puntero cambió entre down y up, la mutación queda registrada con su hora.
   await page.evaluate(() => {
-    window.__clicks__ = [];
-    document.getElementById('dockClips').addEventListener('click', ev => {
-      const clip = ev.target.closest('.dock-clip');
-      window.__clicks__.push({
-        targetTag: ev.target.tagName,
-        targetClass: String(ev.target.className),
-        clipIdx: clip ? clip.dataset.stepIndex : null,
+    window.__ev__ = [];
+    const rec = name => ev => {
+      window.__ev__.push({
+        name, t: Math.round(performance.now()),
+        tag: ev.target.tagName, cls: String(ev.target.className).slice(0, 32),
+        x: ev.clientX, y: ev.clientY,
       });
-    }, true);
+    };
+    document.addEventListener('pointerdown', rec('pointerdown'), true);
+    document.addEventListener('pointerup', rec('pointerup'), true);
+    document.addEventListener('click', rec('click'), true);
+    new MutationObserver(muts => {
+      window.__ev__.push({
+        name: 'mutacion-pista', t: Math.round(performance.now()),
+        added: muts.reduce((n, m) => n + m.addedNodes.length, 0),
+        removed: muts.reduce((n, m) => n + m.removedNodes.length, 0),
+      });
+    }).observe(document.getElementById('dockClips'), { childList: true });
   });
   await page.locator('.dock-clip-btn').nth(1).click();
   let selectedSecond = true;
@@ -66,34 +76,34 @@ const { chromium, firefox, webkit } = require('playwright');
     await page.waitForFunction(() => document.getElementById('inspectorName').textContent.includes('Mi Alpha'), null, { timeout: 4000 });
   } catch (e) { selectedSecond = false; }
   if (!selectedSecond) {
-    const diag = await page.evaluate(() => ({
-      clicks: window.__clicks__,
-      selectedStepIndex: window.__CORTEX__.getSelectedStepIndex(),
-      inspectorName: document.getElementById('inspectorName').textContent,
-      inspectorHidden: document.getElementById('dockInspector').hidden,
-      clipCount: document.querySelectorAll('#dockClips .dock-clip').length,
-      clips: [...document.querySelectorAll('#dockClips .dock-clip')].map(c => ({
-        idx: c.dataset.stepIndex, stepId: c.dataset.stepId,
-        selected: c.classList.contains('selected'),
-        rect: (() => { const r = c.getBoundingClientRect(); return [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)]; })(),
-      })),
-      atSecondCenter: (() => {
-        const b = document.querySelectorAll('.dock-clip-btn')[1];
-        if (!b) return 'sin botón 2';
-        const r = b.getBoundingClientRect();
-        const el = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
-        return el ? `${el.tagName}.${el.className}` : 'nada';
-      })(),
-      steps: window.__CORTEX__.timelineState.steps.map(s => ({ id: s.id, name: s.name, dur: s.durationSeconds })),
-    }));
-    const probe = await page.evaluate(() => {
-      window.__CORTEX__.selectStep(1);
-      return {
-        selectedAfterApi: window.__CORTEX__.getSelectedStepIndex(),
-        nameAfterApi: document.getElementById('inspectorName').textContent,
-      };
-    });
-    failures.push(`selección del clip 2 (diagnóstico): ${JSON.stringify({ diag, probe })}`);
+    // segundo intento sin actionability: aísla si el problema está en el
+    // chequeo de hit-target de Playwright o en la entrega del evento
+    await page.locator('.dock-clip-btn').nth(1).click({ force: true });
+    try {
+      await page.waitForFunction(() => document.getElementById('inspectorName').textContent.includes('Mi Alpha'), null, { timeout: 2000 });
+    } catch (e) {
+      const diag = await page.evaluate(() => ({
+        eventos: window.__ev__,
+        selectedStepIndex: window.__CORTEX__.getSelectedStepIndex(),
+        inspectorName: document.getElementById('inspectorName').textContent,
+        atSecondCenter: (() => {
+          const b = document.querySelectorAll('.dock-clip-btn')[1];
+          if (!b) return 'sin botón 2';
+          const r = b.getBoundingClientRect();
+          const el = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+          return el ? `${el.tagName}.${el.className}` : 'nada';
+        })(),
+        steps: window.__CORTEX__.timelineState.steps.map(s => ({ id: s.id, name: s.name, dur: s.durationSeconds })),
+      }));
+      const probe = await page.evaluate(() => {
+        window.__CORTEX__.selectStep(1);
+        return {
+          selectedAfterApi: window.__CORTEX__.getSelectedStepIndex(),
+          nameAfterApi: document.getElementById('inspectorName').textContent,
+        };
+      });
+      failures.push(`selección del clip 2 (diagnóstico nivel 2): ${JSON.stringify({ diag, probe })}`);
+    }
   }
   await page.fill('#inspectorDuration', '1');
   await page.dispatchEvent('#inspectorDuration', 'change');
