@@ -171,10 +171,12 @@ function check(cond, name, detail) {
     const r = await page.evaluate(() => {
       const clips = [...document.querySelectorAll('#dockClips .dock-clip')];
       const segs = [...document.querySelectorAll('#dockRuler .dock-ruler-segment')];
-      const edges = clips.map(c => c.offsetLeft + c.offsetWidth);
-      const segEdges = segs.map(s => s.offsetLeft + s.offsetWidth);
-      const labels = [...document.querySelectorAll('.dock-ruler-label')].map(l => l.textContent.trim());
+      // getBoundingClientRect: coordenadas de viewport, inmunes a que los
+      // clips y los segmentos tengan distintos offsetParent.
+      const edges = clips.map(c => c.getBoundingClientRect().right);
+      const segEdges = segs.map(s => s.getBoundingClientRect().right);
       const maxDiff = Math.max(...edges.map((e, i) => Math.abs(e - segEdges[i])));
+      const labels = [...document.querySelectorAll('.dock-ruler-label')].map(l => l.textContent.trim());
       return { count: segs.length, labels, maxDiff };
     });
     check(r.count === 3, 'la regla tiene un segmento por paso', String(r.count));
@@ -411,7 +413,11 @@ function check(cond, name, detail) {
     check(inSecond.x >= inSecond.left && inSecond.x <= inSecond.left + inSecond.width,
       'en el segundo paso el playhead está dentro del segundo clip', `x=${inSecond.x} clip=[${inSecond.left},${inSecond.left + inSecond.width}]`);
     await page.evaluate(() => window.__CORTEX__.getTimelinePlayer().stop());
-    const hidden = await page.evaluate(() => !document.getElementById('dockPlayhead').classList.contains('visible'));
+    const hidden = await page.evaluate(async () => {
+      // la clase la retira el pase del rAF: esperar el frame antes de leer
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      return !document.getElementById('dockPlayhead').classList.contains('visible');
+    });
     check(hidden, 'al detener el playhead deja de verse');
   }, { needsClock: true });
 
@@ -473,14 +479,17 @@ function check(cond, name, detail) {
       Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'visible' });
       document.dispatchEvent(new Event('visibilitychange'));
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      // medir la geometría ANTES de stop(): el re-render de stop desconecta
+      // los nodos y un offsetWidth posterior leería cero
       const clips = [...document.querySelectorAll('#dockClips .dock-clip')];
+      const clip1 = { left: clips[1].offsetLeft, width: clips[1].offsetWidth };
       const fresh = {
         idx: p.index,
         x: (() => { const raw = document.getElementById('dockPlayhead').style.transform || ''; const m = /translateX\(([-0-9.]+)px\)/.exec(raw); return m ? Number(m[1]) : null; })(),
         status: document.getElementById('timelineStatus').textContent,
       };
       p.stop();
-      return { stale, fresh, clip1: { left: clips[1].offsetLeft, width: clips[1].offsetWidth } };
+      return { stale, fresh, clip1 };
     });
     check(r.fresh.idx >= 1, 'al volver, la posición real está en un paso posterior', `idx=${r.fresh.idx} (stale idx=${r.stale.idx})`);
     check(r.fresh.x !== null && r.fresh.x >= r.clip1.left && r.fresh.x <= r.clip1.left + r.clip1.width,

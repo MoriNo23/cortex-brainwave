@@ -37,11 +37,15 @@ const { chromium, firefox, webkit } = require('playwright');
   await page.locator('[data-add-preset="builtin-delta"]').click();
   await page.locator(`[data-add-preset="${customId}"]`).click();
   // El dock ya no tiene un input por paso: se selecciona el clip y la
-  // duración se edita en el inspector.
+  // duración se edita en el inspector. Se espera a que el inspector muestre
+  // el paso elegido antes de editar: el fill contra un inspector que aún
+  // refleja el paso anterior aplicaría sobre el paso equivocado.
   await page.locator('.dock-clip-btn').nth(0).click();
+  await page.waitForFunction(() => document.getElementById('inspectorName').textContent.includes('Delta'));
   await page.fill('#inspectorDuration', '1');
   await page.dispatchEvent('#inspectorDuration', 'change');
   await page.locator('.dock-clip-btn').nth(1).click();
+  await page.waitForFunction(() => document.getElementById('inspectorName').textContent.includes('Mi Alpha'));
   await page.fill('#inspectorDuration', '1');
   await page.dispatchEvent('#inspectorDuration', 'change');
   await page.check('#timelineLoop');

@@ -1408,10 +1408,19 @@ function selectedStepIndex() {
   return index < 0 ? null : index;
 }
 
+/* La selección NO re-renderiza los clips: alterna la clase en los nodos
+   existentes y abre el inspector. No es solo economía — es corrección: si el
+   primer click de un doble click reemplazara el nodo, el navegador apuntaría
+   el dblclick al ancestro común (fuera del clip) y el preset nunca se
+   aplicaría. Conservar la identidad del nodo entre clicks es lo que hace
+   que el doble click funcione en un navegador real. */
 function selectStep(index) {
   const step = timelineState.steps[index];
   selectedStepId = step ? step.id : null;
-  renderTimeline();
+  const clips = document.querySelectorAll('#dockClips .dock-clip');
+  if (clips.length !== timelineState.steps.length) { renderTimeline(); return; }   // DOM desfasado: render completo
+  clips.forEach(clip => clip.classList.toggle('selected', clip.dataset.stepId === selectedStepId));
+  renderDockInspector();
 }
 
 function formatStepDuration(seconds) {
