@@ -7,6 +7,7 @@ const { chromium, firefox, webkit } = require('playwright');
   const browser = await browserType.launch({ headless: true });
   const page = await browser.newPage();
   const errors = [];
+  const failures = [];   // declarado arriba: la sonda de selección del clip 2 registra aquí
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('http://127.0.0.1:4173/cortex.html', { waitUntil: 'networkidle' });
   await page.evaluate(() => {
@@ -44,8 +45,56 @@ const { chromium, firefox, webkit } = require('playwright');
   await page.waitForFunction(() => document.getElementById('inspectorName').textContent.includes('Delta'));
   await page.fill('#inspectorDuration', '1');
   await page.dispatchEvent('#inspectorDuration', 'change');
+
+  // Sonda de diagnóstico: registrar los clicks que lleguen a la pista y el
+  // estado del DOM si la selección del segundo clip no se concreta. La
+  // corrección definitiva sale de leer esta evidencia en la corrida de CI.
+  await page.evaluate(() => {
+    window.__clicks__ = [];
+    document.getElementById('dockClips').addEventListener('click', ev => {
+      const clip = ev.target.closest('.dock-clip');
+      window.__clicks__.push({
+        targetTag: ev.target.tagName,
+        targetClass: String(ev.target.className),
+        clipIdx: clip ? clip.dataset.stepIndex : null,
+      });
+    }, true);
+  });
   await page.locator('.dock-clip-btn').nth(1).click();
-  await page.waitForFunction(() => document.getElementById('inspectorName').textContent.includes('Mi Alpha'));
+  let selectedSecond = true;
+  try {
+    await page.waitForFunction(() => document.getElementById('inspectorName').textContent.includes('Mi Alpha'), null, { timeout: 4000 });
+  } catch (e) { selectedSecond = false; }
+  if (!selectedSecond) {
+    const diag = await page.evaluate(() => ({
+      clicks: window.__clicks__,
+      selectedStepIndex: window.__CORTEX__.getSelectedStepIndex(),
+      inspectorName: document.getElementById('inspectorName').textContent,
+      inspectorHidden: document.getElementById('dockInspector').hidden,
+      clipCount: document.querySelectorAll('#dockClips .dock-clip').length,
+      clips: [...document.querySelectorAll('#dockClips .dock-clip')].map(c => ({
+        idx: c.dataset.stepIndex, stepId: c.dataset.stepId,
+        selected: c.classList.contains('selected'),
+        rect: (() => { const r = c.getBoundingClientRect(); return [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)]; })(),
+      })),
+      atSecondCenter: (() => {
+        const b = document.querySelectorAll('.dock-clip-btn')[1];
+        if (!b) return 'sin botón 2';
+        const r = b.getBoundingClientRect();
+        const el = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+        return el ? `${el.tagName}.${el.className}` : 'nada';
+      })(),
+      steps: window.__CORTEX__.timelineState.steps.map(s => ({ id: s.id, name: s.name, dur: s.durationSeconds })),
+    }));
+    const probe = await page.evaluate(() => {
+      window.__CORTEX__.selectStep(1);
+      return {
+        selectedAfterApi: window.__CORTEX__.getSelectedStepIndex(),
+        nameAfterApi: document.getElementById('inspectorName').textContent,
+      };
+    });
+    failures.push(`selección del clip 2 (diagnóstico): ${JSON.stringify({ diag, probe })}`);
+  }
   await page.fill('#inspectorDuration', '1');
   await page.dispatchEvent('#inspectorDuration', 'change');
   await page.check('#timelineLoop');
@@ -72,7 +121,6 @@ const { chromium, firefox, webkit } = require('playwright');
     index: window.__CORTEX__.getTimelinePlayer().index,
   }));
 
-  const failures = [];
   if (corrupted.custom !== 0 || corrupted.steps !== 0) failures.push(`corrupt storage: ${JSON.stringify(corrupted)}`);
   if (custom.length !== 1 || custom[0].name !== 'Mi Alpha' || custom[0].emoji !== '🌊' || custom[0].band !== 'alpha') failures.push(`custom preset: ${JSON.stringify(custom)}`);
   if (beforePlay.steps.length !== 2 || beforePlay.stepDurations.join(',') !== '1,1' || !beforePlay.loop) failures.push(`timeline setup: ${JSON.stringify(beforePlay)}`);
