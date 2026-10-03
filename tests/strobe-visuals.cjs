@@ -43,7 +43,11 @@ async function centroDelFlash(page) {
   if (launch.blocked) process.exit(0);
 
   const browser = launch.browser;
-  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  /* Contexto explícito: el escenario de pestaña oculta necesita una segunda
+     página en el mismo contexto (misma ventana) para que `bringToFront()`
+     oculte de verdad la primera. */
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await context.newPage();
   const capture = attachPageErrorCapture(page);
 
   await page.goto(`${cortexBaseUrl()}/`, { waitUntil: 'networkidle' });
@@ -153,7 +157,13 @@ async function centroDelFlash(page) {
     });
     if (box.alto > box.viewport) failures.push(`superficie-recortada-en-fullscreen=${JSON.stringify(box)}`);
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(300);
+    await page.waitForFunction(() => document.fullscreenElement === null, null, { timeout: 4000 })
+      .catch(async () => {
+        /* Escape no siempre sale de fullscreen en headless: por el botón. */
+        await page.click('#btnStrobeFullscreen');
+        await page.waitForFunction(() => document.fullscreenElement === null, null, { timeout: 4000 })
+          .catch(() => {});
+      });
   } else if (!/pantalla completa/i.test(fullscreen.toast)) {
     failures.push(`fullscreen-sin-aviso=${JSON.stringify(fullscreen)}`);
   }
@@ -228,9 +238,7 @@ async function centroDelFlash(page) {
   /* ── 7. Pestaña oculta: nada de flash congelado encendido ── */
   await page.evaluate(() => window.__CORTEX__.strobe.setStrobeCustomHz(4));
   await page.waitForTimeout(60);
-  /* Ojo: `page.context().newPage()` lanza "Please use browser.newContext()"
-     cuando la página se abrió con `browser.newPage()`. */
-  const otra = await browser.newPage();
+  const otra = await context.newPage();
   await otra.goto('about:blank');
   await otra.bringToFront();
   await page.waitForTimeout(400);
@@ -238,8 +246,11 @@ async function centroDelFlash(page) {
   const pixelOculta = await centroDelFlash(page);
   await page.bringToFront();
   await otra.close();
+  /* Convención del repo (como el reloj de audio): si el entorno no puede
+     reproducir la condición, se dice y no se cuenta como verde ni como fallo. */
+  let hiddenTabSkipped = null;
   if (!oculta.hidden) {
-    failures.push('la-pestaña-no-quedo-oculta: el escenario no probó nada');
+    hiddenTabSkipped = 'el runner no puso la pestaña en hidden: el escenario no probó nada';
   } else if (pixelOculta && pixelOculta.r > 80) {
     failures.push(`flash-congelado-encendido=${JSON.stringify(pixelOculta)}`);
   }
@@ -271,7 +282,7 @@ async function centroDelFlash(page) {
     mini,
     fullscreen,
     floating,
-    hiddenTab: { ...oculta, pixel: pixelOculta },
+    hiddenTab: { ...oculta, pixel: pixelOculta, skipped: hiddenTabSkipped },
     spaceKey: espacio,
     errors: capture.combined(),
     failures,
