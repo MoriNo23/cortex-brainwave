@@ -749,13 +749,18 @@ const TESTS = [
   if (C().state.brainwave !== 2) throw new Error('brainwave=' + C().state.brainwave);
   if (!p.classList.contains('active')) throw new Error('preset sin clase active');
 }},
-{ group: 'UI wiring', name: 'click en play alterna state.playing', fn: () => {
+{ group: 'UI wiring', name: 'click en play inicia y detener entra en fade antes de cortar', fn: async () => {
   const btn = $('#btnPlay');
-  const before = C().state.playing;
+  C().state.stopBehavior = { targetBand: 'alpha', fadeSeconds: 0.1 };
+  C().renderStopControls();
   btn.click();
-  if (C().state.playing === before) throw new Error('no alternó');
-  btn.click(); // restaurar
+  if (C().state.playing !== true) throw new Error('no inició');
+  btn.click();
+  if ($('#statusText').textContent !== 'deteniendo suave') throw new Error('sin estado intermedio de stop');
+  await wait(220);
+  if (C().state.playing !== false) throw new Error('no terminó de detener');
 }},
+
 
 /* ── ANIMACIONES ── */
 { group: 'Animaciones', name: 'drawWaveFrame sin playing → solo línea base', fn: () => {
