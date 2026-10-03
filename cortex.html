@@ -444,6 +444,10 @@
   .mod-item input[type="range"]::-webkit-slider-thumb { width: 11px; height: 11px; }
 
   .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .stop-settings { display:grid; gap:10px; }
+  .stop-settings label { display:block; color:var(--text-dim); font:10px 'IBM Plex Mono', monospace; text-transform:uppercase; margin-bottom:5px; }
+  .stop-settings select, .stop-settings input { width:100%; padding:8px; border:1px solid var(--line-2); border-radius:4px; background:var(--bg); color:var(--text); font:11px 'IBM Plex Mono', monospace; }
+  .stop-settings-hint { color:var(--text-mute); font:10px 'IBM Plex Mono', monospace; line-height:1.45; }
   .save-row { display: flex; gap: 6px; margin-top: 10px; }
   .save-row .btn { flex: 1; text-align: center; }
 
@@ -575,6 +579,27 @@
               <input type="range" class="teal" id="sliderMix" min="0" max="100" value="80">
             </div>
           </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Detener suave</div>
+        <div class="stop-settings">
+          <div class="custom-form-row">
+            <label for="stopTargetBand">Caer en</label>
+            <select id="stopTargetBand" aria-label="Banda objetivo al detener">
+              <option value="delta">Delta · 2 Hz</option>
+              <option value="theta">Theta · 6 Hz</option>
+              <option value="alpha">Alpha · 10 Hz</option>
+              <option value="beta">Beta · 20 Hz</option>
+              <option value="gamma">Gamma · 40 Hz</option>
+            </select>
+          </div>
+          <div class="custom-form-row">
+            <label for="stopFadeSeconds">Fade de salida</label>
+            <input id="stopFadeSeconds" type="number" min="0" max="60" step="0.1" value="2" aria-label="Duración del fade al detener">
+          </div>
+          <div class="stop-settings-hint" id="stopSettingsHint">Al detener el timeline o la escucha individual, la app cae primero a la banda elegida y baja el mix gradualmente antes de cortar el audio.</div>
         </div>
       </div>
 
@@ -759,6 +784,8 @@
    CORTEX — Brainwave Entrainment Generator
    ═══════════════════════════════════════════════════════════════ */
 
+const STOP_BEHAVIOR_DEFAULTS = Object.freeze({ targetBand: 'alpha', fadeSeconds: 2 });
+
 /* ── STATE ── */
 const state = {
   brainwave: 10,
@@ -773,7 +800,8 @@ const state = {
   band: 'alpha',
   /* Preferencia de UI del dock del timeline (no es parámetro de audio:
   audioSnapshot solo copia AUDIO_KEYS). Se persiste en cortex-settings. */
-  dockExpanded: false
+  dockExpanded: false,
+  stopBehavior: { ...STOP_BEHAVIOR_DEFAULTS }
 };
 
 /* ── BANDS ── */
@@ -800,6 +828,22 @@ const BUILTIN_PRESETS = [
   { id:'builtin-beta', band:'beta', freq:20, emoji:'⚡', name:'Beta' },
   { id:'builtin-gamma', band:'gamma', freq:40, emoji:'✨', name:'Gamma' },
 ];
+
+function normalizeStopBand(value) {
+  return BUILTIN_PRESETS.some(preset => preset.band === value) ? value : STOP_BEHAVIOR_DEFAULTS.targetBand;
+}
+
+function stopTargetFrequency(band) {
+  const preset = BUILTIN_PRESETS.find(item => item.band === normalizeStopBand(band));
+  return preset ? preset.freq : BUILTIN_PRESETS[2].freq;
+}
+
+function normalizeStopBehavior(value = {}) {
+  return {
+    targetBand: normalizeStopBand(value.targetBand),
+    fadeSeconds: clampTransitionSeconds(value.fadeSeconds ?? STOP_BEHAVIOR_DEFAULTS.fadeSeconds),
+  };
+}
 
 const PRESET_DEFAULTS = {
   delta: { amod:30, binaural:20, stereo:0, fmod:0, noise:10 },
@@ -924,6 +968,17 @@ function applyAudioState(snapshot, { label = null, toast = false } = {}) {
 
 function applyAudioSnapshot(snapshot, label = 'preset aplicado') {
   applyAudioState(snapshot, { label, toast: true });
+}
+
+function stopTargetSnapshot(source = state) {
+  const snapshot = audioSnapshot(source);
+  snapshot.brainwave = stopTargetFrequency(state.stopBehavior.targetBand);
+  snapshot.mix = 0;
+  return snapshot;
+}
+
+function stopTargetLabel() {
+  return BANDS[normalizeStopBand(state.stopBehavior.targetBand)].name;
 }
 
 function persistCustomPresets() {
@@ -1384,6 +1439,14 @@ function renderTransitionControls() {
   renderDurationUnitButtons('transition');
 }
 
+function renderStopControls() {
+  state.stopBehavior = normalizeStopBehavior(state.stopBehavior);
+  const select = document.getElementById('stopTargetBand');
+  const input = document.getElementById('stopFadeSeconds');
+  if (select) select.value = state.stopBehavior.targetBand;
+  if (input) input.value = state.stopBehavior.fadeSeconds;
+}
+
 /* Cambiar la unidad de un contexto (pasos o transición) convierte el valor
  * mostrado sin tocar los segundos guardados. */
 function setDurationUnit(context, unit) {
@@ -1519,18 +1582,23 @@ function renderTimeline() {
 /* ── PLEgado/DESPLEGADO ──
   La preferencia vive en cortex-settings (mezclada, sin borrar el resto de
   los ajustes guardados) y sobrevive recargas. */
-function loadDockPreference() {
+function loadUiPreferences() {
   try {
     const raw = JSON.parse(localStorage.getItem('cortex-settings') || '{}');
     state.dockExpanded = Boolean(raw.dockExpanded);
-  } catch (error) { state.dockExpanded = false; }
+    state.stopBehavior = normalizeStopBehavior(raw.stopBehavior);
+  } catch (error) {
+    state.dockExpanded = false;
+    state.stopBehavior = { ...STOP_BEHAVIOR_DEFAULTS };
+  }
 }
 
-function persistDockPreference() {
+function persistUiPreferences() {
   try {
     let raw = {};
     try { raw = JSON.parse(localStorage.getItem('cortex-settings')) || {}; } catch (error) { raw = {}; }
     raw.dockExpanded = Boolean(state.dockExpanded);
+    raw.stopBehavior = normalizeStopBehavior(state.stopBehavior);
     localStorage.setItem('cortex-settings', JSON.stringify(raw));
   } catch (error) { /* sin localStorage: la preferencia vive en memoria */ }
 }
@@ -1548,7 +1616,7 @@ function applyDockState() {
 function toggleDock() {
   state.dockExpanded = !state.dockExpanded;
   applyDockState();
-  persistDockPreference();
+  persistUiPreferences();
   if (state.dockExpanded) refreshPlayheadGeometry();
 }
 
@@ -2078,6 +2146,121 @@ class AudioEngine {
 
 const engine = new AudioEngine();
 
+const gentleStop = {
+  active: false,
+  frame: 0,
+  startedAtMs: 0,
+  durationMs: 0,
+  sourceState: null,
+  targetState: null,
+  restoreMix: 0,
+  timelineStatusText: null,
+};
+
+function setTimelineTransportDisabled(disabled) {
+  ['btnTimelinePlay', 'btnTimelinePause', 'btnTimelineStop', 'btnTimelineClear'].forEach(id => {
+    const button = document.getElementById(id);
+    if (button) button.disabled = disabled;
+  });
+}
+
+function setPlaybackUi(mode) {
+  const btn = document.getElementById('btnPlay');
+  const dot = document.getElementById('statusDot');
+  const text = document.getElementById('statusText');
+  if (!btn || !dot || !text) return;
+  if (mode === 'playing') {
+    btn.disabled = false;
+    btn.textContent = '■ Detener';
+    btn.classList.remove('primary');
+    dot.classList.add('on');
+    text.textContent = 'reproduciendo';
+    setTimelineTransportDisabled(false);
+    return;
+  }
+  if (mode === 'stopping') {
+    btn.disabled = true;
+    btn.textContent = '■ Deteniendo…';
+    btn.classList.remove('primary');
+    dot.classList.add('on');
+    text.textContent = 'deteniendo suave';
+    setTimelineTransportDisabled(true);
+    return;
+  }
+  btn.disabled = false;
+  btn.textContent = '▶ Iniciar';
+  btn.classList.add('primary');
+  dot.classList.remove('on');
+  text.textContent = 'detenido';
+  setTimelineTransportDisabled(false);
+}
+
+function finishGentleStop() {
+  if (gentleStop.frame) cancelAnimationFrame(gentleStop.frame);
+  const targetState = gentleStop.targetState ? { ...gentleStop.targetState } : stopTargetSnapshot();
+  const restoreMix = gentleStop.restoreMix;
+  const timelineStatusText = gentleStop.timelineStatusText;
+  gentleStop.active = false;
+  gentleStop.frame = 0;
+  gentleStop.startedAtMs = 0;
+  gentleStop.durationMs = 0;
+  gentleStop.sourceState = null;
+  gentleStop.targetState = null;
+  gentleStop.restoreMix = 0;
+  gentleStop.timelineStatusText = null;
+  engine.stop();
+  state.playing = false;
+  Object.assign(state, targetState, { mix: restoreMix });
+  syncUIFromState();
+  updateBrain();
+  updateSpatialReadout();
+  setPlaybackUi('stopped');
+  if (timelineStatusText) setTimelineStatus(timelineStatusText);
+  showToast(`detenido suave → ${stopTargetLabel()}`);
+}
+
+function runGentleStopFrame() {
+  if (!gentleStop.active) return;
+  const progress = gentleStop.durationMs === 0
+    ? 1
+    : Math.min(1, Math.max(0, (performance.now() - gentleStop.startedAtMs) / gentleStop.durationMs));
+  applyAudioState(interpolateAudioState(gentleStop.sourceState, gentleStop.targetState, progress));
+  if (progress >= 1) {
+    finishGentleStop();
+    return;
+  }
+  gentleStop.frame = requestAnimationFrame(runGentleStopFrame);
+}
+
+function requestGentleStop({ stopTimeline = false } = {}) {
+  const timelineWasActive = Boolean(timelinePlayer && (timelinePlayer.running || timelinePlayer.paused));
+  if (timelineWasActive) timelinePlayer.stop();
+  if (!state.playing || gentleStop.active) return false;
+
+  const targetLabel = stopTargetLabel();
+  const sourceState = audioSnapshot(state);
+  const durationMs = clampTransitionSeconds(state.stopBehavior.fadeSeconds) * 1000;
+  gentleStop.active = true;
+  gentleStop.frame = 0;
+  gentleStop.startedAtMs = performance.now();
+  gentleStop.durationMs = durationMs;
+  gentleStop.sourceState = sourceState;
+  gentleStop.targetState = stopTargetSnapshot(sourceState);
+  gentleStop.restoreMix = sourceState.mix;
+  gentleStop.timelineStatusText = (timelineWasActive || stopTimeline) ? `Timeline detenido suavemente en ${targetLabel}.` : null;
+
+  setPlaybackUi('stopping');
+  if (timelineWasActive || stopTimeline) setTimelineStatus(`Deteniendo suavemente hacia ${targetLabel}…`);
+
+  if (!engine.started || durationMs === 0) {
+    applyAudioState(gentleStop.targetState);
+    finishGentleStop();
+    return true;
+  }
+  runGentleStopFrame();
+  return true;
+}
+
 /* ── WAVEFORM ── */
 const waveCanvas = document.getElementById('waveCanvas');
 const waveCtx = waveCanvas.getContext('2d');
@@ -2435,6 +2618,7 @@ const GLOSSARY = [
   { term: 'f-mod (frecuencia)', body: 'Mueve el pitch del carrier alrededor de su frecuencia central. El más audible de los cuatro, pero también el más fatigante. En el radar se muestra como desplazamiento frente↔atrás.' },
   { term: 'Noise (portadora de ruido)', body: 'Ruido filtrado alrededor de la frecuencia carrier. Se mezcla con la senoide: a 0% predomina el tono y a 100% predomina la textura filtrada. f-mod también mueve el centro del filtro. En el radar se ve como una nube difusa alrededor de la cabeza.' },
   { term: 'Mix', body: 'Nivel general de salida. Controla el volumen final de todo lo que suena.' },
+  { term: 'Detener suave', body: 'Al detener la escucha individual o el timeline, la app puede caer primero a una banda elegida (Delta/Theta/Alpha/Beta/Gamma) y hacer un fade del mix antes de cortar el audio. El objetivo es evitar un corte brusco; no representa un protocolo clínico ni una promesa terapéutica.' },
   { term: 'Transición suave', body: 'En la línea de tiempo, mueve gradualmente los ocho parámetros de audio del paso saliente al entrante durante los segundos que elijas (0 a 60), en lugar de cortar en seco. Mientras dura, el estado lo indica con "· transición". Es comodidad de escucha: no representa un protocolo clínico ni un efecto médico.' },
   { term: 'Reloj de la línea de tiempo', body: 'La secuencia avanza con el reloj del contexto de audio, no con temporizadores de la página. Por eso los pasos cambian igual con la ventana minimizada o la pestaña en segundo plano, aunque la interfaz se repinte al volver. El retraso de una transición está acotado por el intervalo de actualización (unos 60 ms) y no se acumula de un paso al siguiente. Al volver de segundo plano solo se aplica el paso que corresponde al momento actual, no los que quedaron atrás.' },
   { term: 'Dock del timeline', body: 'La línea de tiempo vive en un panel fijo abajo de la app, siempre visible, en lugar de una ventana emergente. Se pliega y despliega con el botón ⌁ Timeline y la app recuerda tu preferencia. Plegado ocupa una franja fina con el transporte y una barra de progreso; desplegado muestra la regla de tiempos, los clips y la tira para agregar pasos. Nada de lo demás queda tapado.' },
@@ -2473,7 +2657,7 @@ function showToast(msg) {
 
 /* ── SAVE / LOAD ── */
 function saveSettings() {
-  const data = { ...state };
+  const data = { ...state, stopBehavior: normalizeStopBehavior(state.stopBehavior) };
   delete data.playing; delete data.band;
   localStorage.setItem('cortex-settings', JSON.stringify(data));
   showToast('ajustes guardados');
@@ -2484,7 +2668,10 @@ function loadSettings() {
   try {
     const data = JSON.parse(raw);
     Object.assign(state, data);
+    state.dockExpanded = Boolean(data.dockExpanded);
+    state.stopBehavior = normalizeStopBehavior(data.stopBehavior);
     applyDockState();   // los ajustes traen la preferencia del dock
+    renderStopControls();
     syncUIFromState();
     engine.updateBrainwave(state.brainwave);
     engine.updateCarrier(state.carrier);
@@ -2662,6 +2849,16 @@ function bindEvents() {
   bindMod('sliderMix', 'mix', 'valMix');
 
   document.getElementById('btnOpenTimeline').addEventListener('click', toggleDock);
+  document.getElementById('stopTargetBand').addEventListener('change', event => {
+    state.stopBehavior.targetBand = normalizeStopBand(event.target.value);
+    renderStopControls();
+    persistUiPreferences();
+  });
+  document.getElementById('stopFadeSeconds').addEventListener('change', event => {
+    state.stopBehavior.fadeSeconds = clampTransitionSeconds(event.target.value);
+    renderStopControls();
+    persistUiPreferences();
+  });
   document.getElementById('btnCreatePreset').addEventListener('click', () => openCustomPresetEditor());
   document.getElementById('btnClosePreset').addEventListener('click', () => closeDialog(document.getElementById('presetDialog')));
   document.getElementById('btnCancelPreset').addEventListener('click', () => closeDialog(document.getElementById('presetDialog')));
@@ -2693,7 +2890,10 @@ function bindEvents() {
   });
   document.getElementById('btnTimelinePlay').addEventListener('click', () => timelinePlayer.play());
   document.getElementById('btnTimelinePause').addEventListener('click', () => timelinePlayer.pause());
-  document.getElementById('btnTimelineStop').addEventListener('click', () => timelinePlayer.stop());
+  document.getElementById('btnTimelineStop').addEventListener('click', () => {
+    if (!state.playing) { timelinePlayer.stop(); return; }
+    requestGentleStop({ stopTimeline: true });
+  });
   document.getElementById('btnTimelineClear').addEventListener('click', () => {
     timelinePlayer.stop(); timelineState.steps = []; selectedStepId = null; persistTimeline(); renderTimeline();
   });
@@ -2743,22 +2943,12 @@ function bindEvents() {
   });
 
   document.getElementById('btnPlay').addEventListener('click', () => {
-    const btn = document.getElementById('btnPlay');
     if (state.playing) {
-      if (timelinePlayer && (timelinePlayer.running || timelinePlayer.paused)) timelinePlayer.stop();
-      engine.stop();
-      state.playing = false;
-      btn.textContent = '▶ Iniciar';
-      btn.classList.add('primary');
-      document.getElementById('statusDot').classList.remove('on');
-      document.getElementById('statusText').textContent = 'detenido';
+      requestGentleStop();
     } else {
       engine.start();
       state.playing = true;
-      btn.textContent = '■ Detener';
-      btn.classList.remove('primary');
-      document.getElementById('statusDot').classList.add('on');
-      document.getElementById('statusText').textContent = 'reproduciendo';
+      setPlaybackUi('playing');
       engine.updateBrainwave(state.brainwave);
       engine.updateCarrier(state.carrier);
       engine.updateModLevels();
@@ -2816,7 +3006,7 @@ function renderLoop(ts) {
 function init() {
   loadCustomPresetData();
   loadTimelineData();
-  loadDockPreference();
+  loadUiPreferences();
   timelinePlayer = new TimelinePlayer();
   buildGlossary();
   bindEvents();
@@ -2826,6 +3016,7 @@ function init() {
   renderTimeline();
   renderTimelinePicker();
   renderTransitionControls();
+  renderStopControls();
   resizeWave();
   updateBrain();
   syncUIFromState();
@@ -2866,7 +3057,8 @@ window.__CORTEX__ = {
   // Superficie de transiciones y unidades de duración.
   applyAudioState, interpolateAudioState, persistTimeline, loadTimelineData,
   durationToSeconds, secondsToDuration, durationHint, durationInputConfig, clampTransitionSeconds,
-  setDurationUnit, renderTransitionControls, renderDurationUnitButtons
+  setDurationUnit, renderTransitionControls, renderDurationUnitButtons,
+  renderStopControls, requestGentleStop, loadUiPreferences, persistUiPreferences
 };
 
 init();
