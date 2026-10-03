@@ -36,8 +36,8 @@ The system SHALL provide a custom frequency mode with its own user-editable Hz c
 - **THEN** the flashing frequency changes to that value within the allowed range
 - **AND** the main Brainwave control remains unchanged
 
-### Requirement: El estrobo tiene tres presentaciones
-The system SHALL support an integrated view, a compact mini-player view and a fullscreen view for the stroboscopic surface.
+### Requirement: El estrobo tiene cuatro presentaciones
+The system SHALL support an integrated view, a compact mini-player view, a fullscreen view and a floating Picture-in-Picture window for the stroboscopic surface.
 
 #### Scenario: Mini-player
 - **WHEN** the user switches the strobe to mini-player mode
@@ -48,6 +48,43 @@ The system SHALL support an integrated view, a compact mini-player view and a fu
 - **WHEN** the user requests fullscreen mode for the strobe
 - **THEN** the app enters fullscreen for the stroboscopic surface
 - **AND** the user can exit fullscreen explicitly
+- **AND** the whole flashing square stays inside the viewport
+
+### Requirement: El estrobo puede vivir en una ventana flotante que sobrevive al cambio de pestaña
+The system SHALL offer a floating window presentation, backed by Picture-in-Picture when the browser provides it, in which the stroboscopic surface keeps flashing while the main tab is hidden or the browser is minimized.
+
+#### Scenario: Ventana flotante disponible
+- **WHEN** the user opens the floating window in a browser that supports Picture-in-Picture
+- **THEN** the strobe moves to a separate always-on-top window
+- **AND** the flashing continues while the main tab is not visible
+- **AND** the original panel location shows a visible placeholder explaining where the strobe went
+
+#### Scenario: Controles accesibles desde la ventana flotante
+- **WHEN** the strobe is in the floating window
+- **THEN** play/stop remain reachable
+- **AND** the frequency mode and its Hz readout keep reflecting the live state
+
+#### Scenario: Cierre de la ventana flotante
+- **WHEN** the floating window is closed, either from the app or from the window itself
+- **THEN** the strobe returns to its place in the main document
+- **AND** no stroboscopic surface is left orphaned outside the document
+
+#### Scenario: Navegador sin Picture-in-Picture
+- **WHEN** the user opens the floating window in a browser that cannot provide it, or the floating surface fails to produce frames
+- **THEN** the app reports why in a visible message
+- **AND** it falls back to the mini-player presentation instead of leaving a broken state
+
+### Requirement: La superficie no parpadea fuera de la vista
+The stroboscopic surface MUST NOT keep flashing when it is not visible, and MUST NOT stay frozen on a lit frame.
+
+#### Scenario: Pestaña oculta
+- **WHEN** the strobe is running and its document becomes hidden
+- **THEN** the surface stops flashing and is left in its idle state
+- **AND** it resumes with the correct phase when the document is visible again
+
+#### Scenario: Ventana flotante visible con la pestaña oculta
+- **WHEN** the strobe lives in the floating window and the main tab is hidden
+- **THEN** the floating window keeps flashing, because its own document is the visible one
 
 ### Requirement: La activación del estrobo es deliberada y visible
 The system SHALL require explicit user activation for the stroboscopic feature and MUST present a visible caution message before or during its use.
@@ -69,6 +106,12 @@ The system SHALL render the stroboscopic surface through a deterministic visual 
 - **WHEN** the strobe is running
 - **THEN** the surface alternates between active and inactive visual states according to the selected frequency source
 - **AND** the control state, selected mode and rendered state remain consistent
+
+#### Scenario: Envolvente del flash verificada
+- **WHEN** the strobe paints a frame
+- **THEN** the on/off window follows the duty-0.5 phase contract verified against the Python reference
+- **AND** the painted intensity follows a soft attack/release ramp derived from that same phase, so the rendered flash never contradicts the verified frequency
+- **AND** any surface that paints the strobe, including one driven from a worker, uses that same verified derivation
 
 #### Scenario: Stop limpio
 - **WHEN** the strobe stops

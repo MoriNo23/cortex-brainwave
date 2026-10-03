@@ -14,6 +14,7 @@ export function createRuntimeEventsStack({
   const { bindRegionInfoEvents } = chrome;
   const {
     markUiDirty,
+    updateBrain,
     bindStrobeEvents,
     handleStrobeFullscreenChange,
   } = audio;
@@ -46,6 +47,11 @@ export function createRuntimeEventsStack({
     runtimeState,
     engine,
     markUiDirty,
+    /* Faltaba: el handler del slider Brainwave llama a updateBrain() y no estaba
+       ni en los parámetros del controlador ni aquí. Arrastrar Brainwave lanzaba
+       ReferenceError y el panel de banda, el mapa cerebral y los readouts se
+       quedaban en la banda anterior. */
+    updateBrain,
     toggleDock,
     bindStrobeEvents,
     bindSettingsEvents,

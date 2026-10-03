@@ -57,6 +57,9 @@
 - [x] 6.5 Implementar modo mini-player flotante.
 - [x] 6.6 Implementar fullscreen con Fullscreen API y salida segura.
 - [x] 6.7 Añadir warning/consentimiento visible antes del primer uso del estrobo y asegurar que no haya autoplay.
+- [x] 6.8 Implementar la ventana flotante (Picture-in-Picture) que sigue visible al cambiar de pestaña, con ruta de documento y ruta de vídeo, y degradación explícita a mini player.
+- [x] 6.9 Garantizar que la superficie no parpadea ni queda congelada encendida cuando su documento no es visible.
+- [x] 6.10 Suavizar la envolvente del flash (ataque/caída proporcionales al ciclo) y verificarla contra la referencia Python.
 
 ## 7. Visualizadores y paridad
 
@@ -68,7 +71,8 @@
 
 - [ ] 8.1 Adaptar `cortex.spec.html` o reemplazarlo por una superficie equivalente compatible con la nueva arquitectura, definiendo qué partes permanecen y cuáles se migran.
 - [x] 8.2 Adaptar Playwright y los jobs del workflow para el shell Astro y para el nuevo reproductor estroboscópico.
-- [ ] 8.3 Añadir pruebas específicas del estrobo: play/stop, sync brainwave, custom Hz, mini-player y fullscreen.
+- [x] 8.3 Añadir pruebas específicas del estrobo: play/stop, sync brainwave, custom Hz, mini-player, fullscreen, ventana flotante (o su degradación) y pestaña oculta (`tests/strobe-visuals.cjs`).
+- [x] 8.5 Ejecutar de verdad el Worker de la ventana flotante en Node puro y comprobar que su intensidad y su pintado coinciden con los del hilo principal (`tests/strobe-worker.cjs`).
 - [x] 8.4 Añadir publicación de artifacts para la referencia numérica Python y para capturas visuales del rediseño.
 
 ## 9. Cierre

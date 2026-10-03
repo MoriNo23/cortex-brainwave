@@ -11,7 +11,14 @@
 
   <div class="section strobe-section">
     <div class="section-title">Luz estroboscópica <span class="hint">activación explícita</span></div>
-    <div class="strobe-panel" id="strobePanel" data-strobe-presentation="integrated">
+    <div class="strobe-pip-placeholder" id="strobePipPlaceholder" hidden>
+      <p class="strobe-pip-placeholder-text">
+        El estrobo se mudó a su propia ventana flotante: sigue parpadeando aunque
+        cambies de pestaña o minimices esta.
+      </p>
+      <button class="btn" id="strobePipClose" type="button">✕ Devolver al panel</button>
+    </div>
+    <div class="strobe-panel" id="strobePanel" data-strobe-presentation="integrated" data-strobe-running="off" data-strobe-floating="closed">
       <div class="strobe-warning" id="strobeWarning">⚠️ Visual flashing. Úsalo solo de forma voluntaria y detenlo ante cualquier molestia.</div>
       <div class="strobe-surface-wrap">
         <canvas id="strobeCanvas" aria-label="Superficie estroboscópica"></canvas>
@@ -22,9 +29,10 @@
         </div>
       </div>
       <div class="strobe-controls">
-        <button class="btn primary" id="btnStrobePlay" type="button">▶ Play</button>
-        <button class="btn" id="btnStrobeStop" type="button">■ Stop</button>
+        <button class="btn primary" id="btnStrobePlay" type="button" aria-pressed="false">▶ Play</button>
+        <button class="btn" id="btnStrobeStop" type="button" aria-pressed="true">■ Stop</button>
         <button class="btn" id="btnStrobeMini" type="button">◫ Mini player</button>
+        <button class="btn" id="btnStrobeFloat" type="button">⧉ Ventana flotante</button>
         <button class="btn" id="btnStrobeFullscreen" type="button">⛶ Pantalla completa</button>
       </div>
       <div class="strobe-mode-row">

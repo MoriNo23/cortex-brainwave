@@ -23,7 +23,7 @@ tarda unos minutos más en aparecer, a cambio de que la máquina no se use para 
 
 | Job | Qué corre |
 |---|---|
-| `ligero` | Los cuatro chequeos estáticos, por ruta, sin instalar navegador |
+| `ligero` | Los cuatro chequeos estáticos y el Worker del estrobo, por ruta, sin instalar navegador |
 | `suite` | La suite completa en Chromium |
 | `motores` | Timeline y UI en Chromium, Firefox y WebKit |
 | `matriz` | `browser-matrix.cjs` con ciclo de vida de audio y exportación WAV |
@@ -36,6 +36,16 @@ El job `ligero` es la señal rápida: análisis estático de archivos, sin ejecu
 | `self-contained` | `<script src>`, `<link href>` o `fetch`/`XMLHttpRequest` hacia un origen remoto |
 | `dom-references` | Un id que el script pide con `getElementById`/`$('#id')` y el markup no declara |
 | `scenario-runner-shape` | Una entrada del arreglo `TESTS` sin `group`, `name` o `fn` |
+
+El mismo job corre además `tests/strobe-worker.cjs`: Node puro, sin navegador y sin
+`npm install`. Ejecuta el fuente real del Worker de la ventana flotante en un
+contexto `vm` con un `self` y un lienzo simulados, y comprueba que su intensidad y
+su pintado (operaciones, estilos y geometría) coinciden con los del hilo
+principal. Es la única forma de cubrir ese Worker sin un navegador que no lo
+puede abrir en headless. El job `suite` lo repite con dependencias instaladas, y
+ahí el chequeo añade la variante **minificada** con esbuild: el bundler renombra
+referencias internas y por ahí se cuela un `ReferenceError` que el fuente sin
+minificar no muestra.
 
 Un verde de `ligero` **no** es el verde de la suite con navegador: son jobs distintos de la
 misma corrida. El reporte de `ligero` se descarga del artifact `light-verify`.
@@ -69,6 +79,19 @@ reporta, ni aunque el comando exista en `package.json`.
   simula el retraso de los timers de la página.
 - **La escucha humana sigue siendo necesaria.** Protocolo en
   `cortex-listening-protocol.md`, con auriculares y volumen bajo. Ningún job de CI la cubre.
+- **Las suites profundas siguen apuntando al legado.** `ui-stability`,
+  `timeline-*`, `noise-carrier`, `wav-e2e`, `visual-smoke`, `responsive-smoke`,
+  `snapshots`, `browser-matrix` y el runner in-page navegan a `/cortex.html` o
+  `/cortex.spec.html`, no a la ruta Astro. Del shell nuevo solo responden
+  `astro-shell-smoke.cjs` y `strobe-visuals.cjs`. Es la tarea 8.1 abierta del
+  cambio `cortex-astro-redesign-strobe`.
+- **Ningún runner headless abre una ventana flotante de verdad.** Document
+  Picture-in-Picture necesita un gestor de ventanas. `strobe-visuals.cjs` verifica
+  la decisión (o se abre y el panel se muda, o se degrada a mini player con aviso
+  y sin errores), no la ventana en sí. Abrirla y mirarla es verificación humana.
+- **La ruta de vídeo del PiP (Firefox/Safari) no se cubre en CI.** Se
+  autoverifica en runtime: si el `<video>` no entrega fotogramas en 900 ms, se
+  cierra y se degrada a mini player con aviso.
 
 ## Los scripts `test:*` de `package.json`
 

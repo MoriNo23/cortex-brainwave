@@ -72,16 +72,53 @@ El rediseño no se trata como cambio cosmético sobre el DOM viejo. Se define un
 
 La pantalla estroboscópica debe sentirse como un reproductor visual independiente, no como un checkbox más del panel.
 
-**Decisión de layout:** el estrobo vive en una tarjeta o panel propio con tres estados:
+**Decisión de layout:** el estrobo vive en una tarjeta o panel propio con cuatro presentaciones:
 - **integrado** en la UI;
-- **mini-player** flotante compacto;
-- **fullscreen** usando Fullscreen API.
+- **mini-player** flotante compacto dentro del documento;
+- **fullscreen** usando Fullscreen API;
+- **ventana flotante** (Picture-in-Picture), que sobrevive al cambio de pestaña — ver D5 revisada.
 
-### D5. Mini-player propio, no PiP del navegador
+### D5. Mini-player propio, no PiP del navegador — **REVISADA**
 
-El mini-player se implementa como ventana flotante/acoplada dentro de la app. No se usa Picture-in-Picture porque el estrobo no es video y forzarlo a un `<video>` artificial complicaría la sincronía y la API.
+> **Estado original (superado).** El mini-player se implementó como superficie
+> flotante/acoplada dentro del documento, sin Picture-in-Picture, con el
+> argumento de que el estrobo no es vídeo y forzarlo a un `<video>` artificial
+> complicaría la sincronía y la API.
 
-**Razón:** control total sobre Canvas, overlays, frecuencia y estado compartido con la app.
+**Qué falló de esa decisión.** La superficie flotante vive dentro del documento,
+y un documento en segundo plano no renderiza: al cambiar de pestaña el navegador
+congela `requestAnimationFrame` y el estrobo se queda petrificado en el último
+fotograma (que puede ser el encendido). El requisito real del usuario no era
+"panel pequeño", sino **"que se siga viendo aunque cambie de pestaña"**, y eso
+ninguna superficie dentro del documento lo puede cumplir. La decisión original
+resolvía el tamaño, no la visibilidad.
+
+**Decisión revisada.** El mini-player integrado se conserva (es el plan B y la
+vista por omisión) y se añade una **cuarta presentación: ventana flotante con
+Picture-in-Picture**, en dos rutas:
+
+1. **Document Picture-in-Picture** (Chromium 116+): se abre una ventana real,
+   siempre encima, y se *mueve* el panel del estrobo ahí dentro. No hay `<video>`
+   artificial: es el mismo DOM, el mismo estado y el mismo canvas, así que la
+   objeción de sincronía de la decisión original no aplica. El bucle corre con
+   el `requestAnimationFrame` de la ventana flotante, que sigue vivo aunque la
+   pestaña principal esté oculta.
+2. **PiP de vídeo** (resto de motores): un canvas dedicado se pinta desde un
+   Worker con `OffscreenCanvas` y se sirve a un `<video>` en PiP vía
+   `captureStream()`. El Worker no depende de la visibilidad de la pestaña. La
+   sincronía que preocupaba a la decisión original se resuelve con una única
+   fuente de verdad matemática: el Worker se compone con el fuente de
+   `strobeIntensityAt` y `paintStrobeSurface` (`fn.toString()`), las mismas
+   funciones contrastadas contra la referencia de Python, y `tests/strobe-worker.cjs`
+   lo ejecuta de verdad para comprobar que no divergen.
+
+**Degradación.** Si ninguna ruta está disponible (o el PiP de vídeo no entrega
+fotogramas, que se comprueba en runtime), se avisa por toast y se activa el mini
+player integrado: nunca queda un estado intermedio roto.
+
+**Coste aceptado.** El panel puede vivir en otro documento, así que toda
+lectura/escritura de DOM del estrobo pasa por `surfaceDocument()`. Es el precio
+de la visibilidad entre pestañas.
 
 ### D6. Estrobo con dos fuentes de frecuencia
 
@@ -190,6 +227,9 @@ El legado actual solo puede retirarse cuando el shell Astro cumpla, al menos, co
 - **[El estrobo fullscreen tiene riesgo UX/sensibilidad]** → mitigado con activación explícita, warning y superficie apagada por omisión.
 - **[La referencia Python puede divergir del runtime JS por detalles de implementación]** → mitigado con funciones puras, fixtures compartidos y tolerancias explícitas.
 - **[El mini-player puede competir con el dock/timeline]** → mitigado con reglas de layout y estados mutuamente claros.
+- **[La ventana flotante muda el panel a otro documento y el DOM deja de estar donde el resto del código lo busca]** → mitigado centralizando todo acceso al DOM del estrobo en `surfaceDocument()`, y con reubicación garantizada del panel en `pagehide`.
+- **[Picture-in-Picture no está disponible o no entrega fotogramas en algunos motores]** → mitigado con sondeo de capacidad, autoverificación de fotogramas en runtime y degradación explícita a mini player con aviso.
+- **[El flash congelado con la pestaña oculta deja luz encendida]** → mitigado pintando el reposo en `visibilitychange` y no parpadeando cuando el documento de la superficie no es visible.
 
 ## Migration Plan
 
@@ -205,6 +245,6 @@ El legado actual solo puede retirarse cuando el shell Astro cumpla, al menos, co
 ## Open Questions
 
 - ¿Cuál será el rango exacto permitido para el modo `Custom Hz` del estrobo?
-- ¿El mini-player debe ser movible/libre o simplemente compacto y acoplado?
+- ~~¿El mini-player debe ser movible/libre o simplemente compacto y acoplado?~~ **Resuelta:** ambas cosas, en dos presentaciones distintas. El mini player queda compacto y acoplado dentro del documento; la libertad de moverlo y de conservarlo visible entre pestañas la da la ventana flotante (PiP), que el propio sistema de ventanas del SO permite arrastrar. Ver D5 revisada.
 - ¿La publicación final seguirá sirviendo una build estática en Pages o requiere otra ruta de despliegue?
 - ¿Se mantendrán los visualizadores actuales (radar/waveform/mapa) rediseñados, o alguno será sustituido por una nueva metáfora visual?

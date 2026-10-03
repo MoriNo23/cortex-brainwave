@@ -16,6 +16,8 @@
     "test:noise": "node tests/noise-carrier.cjs",
     "test:wav": "node tests/wav-e2e.cjs",
     "test:visual": "node tests/visual-smoke.cjs",
+    "test:strobe": "node tests/strobe-visuals.cjs",
+    "test:strobe-worker": "node tests/strobe-worker.cjs",
     "test:responsive": "node tests/responsive-smoke.cjs",
     "test:snapshots": "node tests/snapshots.cjs",
     "test:matrix": "node tests/browser-matrix.cjs"

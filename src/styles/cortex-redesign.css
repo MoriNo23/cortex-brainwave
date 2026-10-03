@@ -118,6 +118,9 @@ body::before {
   .btn.primary { background: var(--amber); border-color: var(--amber); color: #0D0C0A; font-weight: 600; }
   .btn.primary:hover { background: #F0BE6E; }
   .btn.icon { padding: 6px 8px; font-size: 13px; }
+  .btn:disabled { opacity: .42; cursor: not-allowed; }
+  .btn:disabled:hover { border-color: var(--line-2); color: var(--text-dim); }
+  .btn.primary:disabled:hover { border-color: var(--amber); color: #0D0C0A; }
 
   /* ── MAIN ── */
   .main {
@@ -509,6 +512,17 @@ body::before {
     align-content: center;
     padding: 28px;
   }
+  /* En pantalla completa el panel mide el alto del monitor: sin este tope la
+     superficie cuadrada (aspect-ratio 1/1) crece hasta el ancho y el flash
+     queda recortado arriba y abajo. */
+  .strobe-panel[data-strobe-presentation="fullscreen"] .strobe-surface-wrap {
+    width: min(100%, calc(100vh - 320px));
+    margin-inline: auto;
+  }
+  .strobe-panel[data-strobe-running="on"] #btnStrobePlay {
+    border-color: var(--amber);
+    color: var(--amber);
+  }
   .strobe-warning {
     color: var(--text-dim);
     font: 10px 'IBM Plex Mono', monospace;
@@ -518,6 +532,61 @@ body::before {
     background: rgba(255, 190, 107, 0.08);
     border: 1px solid rgba(255, 190, 107, 0.12);
   }
+  /* ── Ventana flotante (Picture-in-Picture) ── */
+  .strobe-pip-placeholder {
+    display: grid;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 18px;
+    border: 1px dashed rgba(255, 190, 107, 0.35);
+    background: rgba(255, 190, 107, 0.05);
+  }
+  .strobe-pip-placeholder[hidden] { display: none; }
+  .strobe-pip-placeholder-text {
+    color: var(--text-dim);
+    font: 11px 'IBM Plex Mono', monospace;
+    line-height: 1.6;
+  }
+  /* Lienzo y vídeo de la ruta PiP de vídeo: fuera de la vista pero renderizados
+     (con `display:none` algunos motores no dejan entrar en PiP). */
+  .strobe-pip-canvas,
+  .strobe-pip-video {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 512px;
+    height: 512px;
+    transform: translate3d(-200%, 0, 0);
+    pointer-events: none;
+  }
+  /* La ventana flotante hereda la hoja de estilos de la app: hay que neutralizar
+     el layout de página completa y dejar solo el reproductor. */
+  body.cortex-pip {
+    height: auto;
+    min-height: 100%;
+    overflow: auto;
+    padding: 12px;
+    background: linear-gradient(180deg, #04070e 0%, #09111f 100%);
+  }
+  body.cortex-pip::before { display: none; }
+  body.cortex-pip .strobe-panel,
+  body.cortex-pip .strobe-panel[data-strobe-presentation="mini"] {
+    position: static;
+    inset: auto;
+    width: auto;
+    height: auto;
+    box-shadow: none;
+    padding: 12px;
+    gap: 10px;
+    border-radius: 14px;
+  }
+  body.cortex-pip .strobe-surface-wrap {
+    width: min(100%, 44vh);
+    margin-inline: auto;
+  }
+  body.cortex-pip .strobe-warning { font-size: 9px; padding: 6px 8px; }
+  body.cortex-pip .strobe-controls .btn { flex: 1 1 96px; font-size: 10px; padding: 6px 8px; }
+  body.cortex-pip .strobe-mode-row .loop-label { flex: 1 1 110px; font-size: 10px; }
   .strobe-surface-wrap {
     position: relative;
     border-radius: 18px;

@@ -4,6 +4,7 @@ export function createAppEventsController({
   runtimeState,
   engine,
   markUiDirty,
+  updateBrain,
   toggleDock,
   bindStrobeEvents,
   bindSettingsEvents,
@@ -108,12 +109,25 @@ export function createAppEventsController({
     });
   }
 
+  const INTERACTIVE_TAGS = new Set(['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'A']);
+
+  function isInteractiveTarget(target) {
+    if (!target || target.nodeType !== 1) return false;
+    if (INTERACTIVE_TAGS.has(target.tagName)) return true;
+    return target.isContentEditable === true;
+  }
+
   function bindKeyboardShortcuts() {
     document.addEventListener('keydown', (event) => {
-      if (event.code === 'Space' && event.target.tagName !== 'INPUT') {
-        event.preventDefault();
-        document.getElementById('btnPlay').click();
-      }
+      if (event.code !== 'Space') return;
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      /* Con el foco en un control, Espacio tiene que activar ESE control.
+         Antes se hacía preventDefault sobre todo lo que no fuera INPUT y se
+         lanzaba siempre el transporte de audio: ningún botón (play/stop del
+         estrobo, guardar, timeline) se podía activar por teclado. */
+      if (isInteractiveTarget(event.target)) return;
+      event.preventDefault();
+      document.getElementById('btnPlay')?.click();
     });
   }
 
