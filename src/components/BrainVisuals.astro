@@ -1,0 +1,36 @@
+<div class="brain-area">
+  <div class="viz-row">
+    <div class="brain-svg-wrap">
+      <svg class="brain-svg" viewBox="0 0 360 280" xmlns="http://www.w3.org/2000/svg">
+        <path class="brain-outline" d="M180,12 C95,12 32,70 32,142 C32,214 95,268 180,268 C265,268 328,214 328,142 C328,70 265,12 180,12 Z"/>
+        <line class="fissure" x1="180" y1="20" x2="180" y2="260"/>
+        <path class="region" data-region="frontal" data-hemi="L" d="M180,20 C120,20 62,52 55,105 C50,138 78,160 110,162 L180,162 Z"/>
+        <path class="region" data-region="frontal" data-hemi="R" d="M180,20 C240,20 298,52 305,105 C310,138 282,160 250,162 L180,162 Z"/>
+        <path class="region" data-region="parietal" data-hemi="L" d="M110,162 C78,165 58,195 65,228 C75,252 115,262 180,262 L180,162 Z"/>
+        <path class="region" data-region="parietal" data-hemi="R" d="M250,162 C282,165 302,195 295,228 C285,252 245,262 180,262 L180,162 Z"/>
+        <path class="region" data-region="temporal" data-hemi="L" d="M55,105 C48,122 46,148 58,168 L110,162 C82,150 62,128 55,105 Z"/>
+        <path class="region" data-region="temporal" data-hemi="R" d="M305,105 C312,122 314,148 302,168 L250,162 C278,150 298,128 305,105 Z"/>
+        <path class="region" data-region="occipital" d="M120,232 C140,252 160,262 180,262 C200,262 220,252 240,232 L180,220 Z"/>
+        <circle class="region" data-region="deep" cx="180" cy="140" r="22"/>
+        <text class="region-label" x="120" y="95">frontal</text>
+        <text class="region-label" x="240" y="95">frontal</text>
+        <text class="region-label" x="120" y="215">parietal</text>
+        <text class="region-label" x="240" y="215">parietal</text>
+        <text class="region-label" x="72" y="145">temp</text>
+        <text class="region-label" x="288" y="145">temp</text>
+        <text class="region-label" x="180" y="250">occipital</text>
+        <text class="region-label" x="180" y="143" style="fill:var(--amber-dim)">deep</text>
+      </svg>
+    </div>
+
+    <div class="radar-wrap">
+      <canvas id="radarCanvas"></canvas>
+      <span class="radar-label">campo de percepción · vista superior</span>
+    </div>
+  </div>
+
+  <div class="wave-wrap">
+    <span class="wave-label">forma de onda</span>
+    <canvas id="waveCanvas"></canvas>
+  </div>
+</div>

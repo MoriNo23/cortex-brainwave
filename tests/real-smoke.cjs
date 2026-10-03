@@ -1,21 +1,31 @@
 const { chromium } = require('playwright');
-(async()=>{
- const browser=await chromium.launch({headless:true});
- const page=await browser.newPage();
- const errors=[]; const consoleErrors=[];
- page.on('pageerror', e=>errors.push(e.message));
- page.on('console', m=>{if(m.type()==='error') consoleErrors.push(m.text())});
- await page.goto('http://127.0.0.1:4173/cortex.html',{waitUntil:'networkidle'});
- const initial=await page.locator('#statusText').innerText();
- await page.click('#btnPlay'); await page.waitForTimeout(100);
- const first=await page.locator('#statusText').innerText();
- await page.click('#btnPlay');
- const duringStop=await page.locator('#statusText').innerText();
- await page.waitForFunction(() => document.getElementById('statusText').textContent === 'detenido', null, { timeout: 5000 });
- const second=await page.locator('#statusText').innerText();
- await page.click('#btnPlay'); await page.waitForTimeout(100);
- const third=await page.locator('#statusText').innerText();
- console.log(JSON.stringify({initial,first,duringStop,second,third,errors,consoleErrors},null,2));
- await browser.close();
- process.exit(errors.length?1:0);
-})().catch(e=>{console.error(e);process.exit(2)});
+const {
+  attachPageErrorCapture,
+  ensureArtifactsDir,
+  gotoCortexApp,
+  launchBrowserOrReport,
+  runPlaybackLifecycle,
+} = require('./cortex-browser-helpers.cjs');
+
+(async () => {
+  const artifactsDir = ensureArtifactsDir();
+  const launch = await launchBrowserOrReport({
+    browserType: chromium,
+    engineName: 'chromium',
+    launchOptions: { headless: true },
+    reportFile: require('path').join(artifactsDir, 'real-smoke-chromium.json'),
+  });
+  if (launch.blocked) process.exit(0);
+  const browser = launch.browser;
+  const page = await browser.newPage();
+  const capture = attachPageErrorCapture(page);
+  await gotoCortexApp(page, { waitForTestApi: false });
+  const lifecycle = await runPlaybackLifecycle(page);
+  console.log(JSON.stringify({
+    ...lifecycle,
+    errors: capture.pageErrors,
+    consoleErrors: capture.consoleErrors,
+  }, null, 2));
+  await browser.close();
+  process.exit(capture.pageErrors.length ? 1 : 0);
+})().catch(error => { console.error(error); process.exit(2); });

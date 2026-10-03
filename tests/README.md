@@ -8,7 +8,8 @@ máquina de trabajo. El resultado se lee en la corrida:
 
 [`.github/workflows/ci.yml`](https://github.com/MoriNo23/cortex-brainwave/actions/workflows/ci.yml)
 corre `ligero` (los cuatro chequeos estáticos), `suite` (Chromium), `motores` (timeline y UI en
-los tres motores) y `matriz` (`browser-matrix.cjs`).
+los tres motores), `matriz` (`browser-matrix.cjs`) y la validación de shell Astro + referencia
+matemática Python.
 
 ### `light/` — lo que invoca el job `ligero`
 
@@ -38,8 +39,9 @@ cómo se ejecuta la suite en un entorno con dependencias instaladas.
 
 ```bash
 npm install --no-save playwright@1.63.0
-python3 -m http.server 4173 --bind 0.0.0.0
+npm run dev
 node tests/run-cortex-tests.cjs
+node tests/astro-shell-smoke.cjs
 node tests/real-smoke.cjs
 node tests/visual-smoke.cjs
 node tests/responsive-smoke.cjs
@@ -49,7 +51,7 @@ node tests/snapshots.cjs
 node tests/browser-matrix.cjs
 ```
 
-`wav-e2e.cjs` parses the downloaded PCM WAV and checks RIFF/WAVE metadata, duration, RMS, finiteness and clipping. `noise-carrier.cjs` verifies the filtered noise graph, zero/100% crossfade, carrier/f-mod tracking and a noise-enabled WAV export. `timeline-custom-presets.cjs` verifies custom preset creation, automatic band identification, timeline durations, loop and stop. `snapshots.cjs` writes deterministic PNGs and a pixel-diff report under `artifacts/visual/`. `browser-matrix.cjs` runs available engines, parses PCM16 WAV samples in each engine, and marks missing Firefox/WebKit installations as `BLOCKED`.
+`astro-shell-smoke.cjs` verifies the Astro main route, layout surfaces and the basic strobe module flow (off by default, play, mini-player, custom Hz and stop). `wav-e2e.cjs` parses the downloaded PCM WAV and checks RIFF/WAVE metadata, duration, RMS, finiteness and clipping. `noise-carrier.cjs` verifies the filtered noise graph, zero/100% crossfade, carrier/f-mod tracking and a noise-enabled WAV export. `timeline-custom-presets.cjs` verifies custom preset creation, automatic band identification, timeline durations, loop and stop. `snapshots.cjs` writes deterministic PNGs and a pixel-diff report under `artifacts/visual/`. `browser-matrix.cjs` runs available engines, parses PCM16 WAV samples in each engine, and marks missing Firefox/WebKit installations as `BLOCKED`.
 
 Los tests que aceptan varios motores leen `ENGINE`:
 
