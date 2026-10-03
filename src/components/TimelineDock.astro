@@ -1,0 +1,51 @@
+<div class="dock" id="timelineDock" data-dock-state="collapsed">
+  <div class="dock-toolbar">
+    <button class="btn" id="btnTimelinePlay" type="button">▶ Reproducir</button>
+    <button class="btn" id="btnTimelinePause" type="button">Ⅱ Pausar</button>
+    <button class="btn" id="btnTimelineStop" type="button">■ Detener</button>
+    <button class="btn" id="btnTimelineClear" type="button">Limpiar</button>
+    <label class="loop-label"><input type="checkbox" id="timelineLoop"> Loop infinito</label>
+    <label class="loop-label"><input type="checkbox" id="timelineTransitionEnabled" checked> Transición suave</label>
+    <div class="transition-control duration-editor" aria-label="Duración de transición">
+      <span>Duración</span>
+      <input id="timelineTransitionSeconds" type="number" min="0" max="60" step="0.1" value="2" aria-label="Duración de transición">
+      <span class="duration-unit-toggle" role="group" aria-label="Unidad de duración de transición">
+        <button class="duration-unit-option" id="timelineTransitionUnitMin" type="button" data-duration-unit-context="transition" data-unit="min" aria-pressed="false">min</button>
+        <button class="duration-unit-option" id="timelineTransitionUnitSeconds" type="button" data-duration-unit-context="transition" data-unit="s" aria-pressed="true">s</button>
+      </span>
+      <span class="duration-hint" id="timelineTransitionHint"></span>
+    </div>
+    <div class="dock-progress" id="dockProgress" aria-hidden="true"><div class="dock-progress-fill" id="dockProgressFill"></div></div>
+    <div class="dock-status" id="timelineStatus" role="status" aria-live="polite">Agrega presets para construir una secuencia.</div>
+  </div>
+  <div class="dock-body" id="dockBody">
+    <div class="dock-inspector" id="dockInspector" role="toolbar" aria-label="Inspector del paso seleccionado" hidden>
+      <span class="dock-inspector-name" id="inspectorName"></span>
+      <span class="duration-editor">
+        <input id="inspectorDuration" type="number" aria-label="Duración del paso seleccionado">
+        <span class="duration-unit-toggle" role="group" aria-label="Unidad de duración del paso">
+          <button class="duration-unit-option" id="inspectorUnitMin" type="button" data-duration-unit-context="step" data-unit="min" aria-pressed="false">min</button>
+          <button class="duration-unit-option" id="inspectorUnitSeconds" type="button" data-duration-unit-context="step" data-unit="s" aria-pressed="true">s</button>
+        </span>
+        <span class="duration-hint" id="inspectorDurationHint"></span>
+      </span>
+      <button class="btn btn-mini" id="inspectorApply" type="button">▶ Aplicar</button>
+      <button class="btn btn-mini" id="inspectorMoveUp" type="button" aria-label="Mover el paso hacia atrás">◀</button>
+      <button class="btn btn-mini" id="inspectorMoveDown" type="button" aria-label="Mover el paso hacia adelante">▶</button>
+      <button class="btn btn-mini" id="inspectorDuplicate" type="button" aria-label="Duplicar el paso">＋</button>
+      <button class="btn btn-mini" id="inspectorRemove" type="button" aria-label="Eliminar el paso">×</button>
+    </div>
+    <div class="dock-ruler" id="dockRuler" aria-hidden="true"></div>
+    <div class="dock-track" id="dockTrack">
+      <div class="dock-clips" id="dockClips" role="list" aria-label="Pasos del timeline">
+        <div class="dock-playhead" id="dockPlayhead" aria-hidden="true"></div>
+        <div class="dock-drop-line" id="dockDropLine" aria-hidden="true"></div>
+      </div>
+    </div>
+    <div class="dock-picker">
+      <span class="picker-title">agregar</span>
+      <div class="dock-picker-strip" id="timelinePicker"></div>
+    </div>
+    <span class="visually-hidden" id="dockGestureHint">Arrastrá un clip para reordenar la secuencia y su borde derecho para cambiar la duración. Reemplazo por teclado: seleccioná el clip y usá los botones de mover y el editor de duración del inspector.</span>
+  </div>
+</div>

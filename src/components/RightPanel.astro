@@ -1,0 +1,48 @@
+<aside class="panel panel-right">
+  <div class="section">
+    <div class="section-title">Estado actual</div>
+    <div class="band-info" id="bandInfo">
+      <div class="band-name" id="bandName">Alpha</div>
+      <div class="band-range" id="bandRange">8 – 12 Hz</div>
+      <div class="band-desc" id="bandDesc">Estado de relajación despierta. Creatividad, flow, meditación ligera. Predomina con los ojos cerrados pero sin dormir.</div>
+      <div class="spatial-readout" id="spatialReadout"></div>
+    </div>
+  </div>
+
+  <div class="section strobe-section">
+    <div class="section-title">Luz estroboscópica <span class="hint">activación explícita</span></div>
+    <div class="strobe-panel" id="strobePanel" data-strobe-presentation="integrated">
+      <div class="strobe-warning" id="strobeWarning">⚠️ Visual flashing. Úsalo solo de forma voluntaria y detenlo ante cualquier molestia.</div>
+      <div class="strobe-surface-wrap">
+        <canvas id="strobeCanvas" aria-label="Superficie estroboscópica"></canvas>
+        <div class="strobe-overlay">
+          <span class="strobe-chip" id="strobeModeLabel">Sync Brainwave</span>
+          <span class="strobe-chip" id="strobePresentationLabel">Integrado</span>
+          <span class="strobe-chip" id="strobeHzLabel">10.0 Hz</span>
+        </div>
+      </div>
+      <div class="strobe-controls">
+        <button class="btn primary" id="btnStrobePlay" type="button">▶ Play</button>
+        <button class="btn" id="btnStrobeStop" type="button">■ Stop</button>
+        <button class="btn" id="btnStrobeMini" type="button">◫ Mini player</button>
+        <button class="btn" id="btnStrobeFullscreen" type="button">⛶ Pantalla completa</button>
+      </div>
+      <div class="strobe-mode-row">
+        <label class="loop-label"><input type="radio" name="strobeFrequencyMode" id="strobeModeSync" checked> Sync Brainwave</label>
+        <label class="loop-label"><input type="radio" name="strobeFrequencyMode" id="strobeModeCustom"> Frecuencia propia</label>
+      </div>
+      <div class="ctrl" style="margin-bottom:0">
+        <div class="ctrl-head">
+          <div class="ctrl-label">Flash Hz <small>modo independiente</small></div>
+          <div class="ctrl-val" id="valStrobeHz">10.0 Hz</div>
+        </div>
+        <input type="range" id="sliderStrobeHz" min="0.5" max="40" step="0.1" value="10">
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Glosario <span class="hint">click para expandir</span></div>
+    <div id="glossary"></div>
+  </div>
+</aside>

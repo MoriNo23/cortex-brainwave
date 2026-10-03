@@ -1,38 +1,54 @@
+const fs = require('fs');
+const path = require('path');
 const { chromium, firefox, webkit } = require('playwright');
+const {
+  attachPageErrorCapture,
+  ensureArtifactsDir,
+  gotoCortexApp,
+  launchBrowserOrReport,
+  launchOptionsForEngine,
+} = require('./cortex-browser-helpers.cjs');
 
 (async () => {
   const engineName = process.env.ENGINE || 'chromium';
   const browserType = { chromium, firefox, webkit }[engineName];
   if (!browserType) throw new Error(`Unknown ENGINE: ${engineName}`);
-  const browser = await browserType.launch({ headless: true });
+  const artifactsDir = ensureArtifactsDir();
+  const launch = await launchBrowserOrReport({
+    browserType,
+    engineName,
+    launchOptions: launchOptionsForEngine(engineName),
+    reportFile: path.join(artifactsDir, `timeline-custom-presets-${engineName}.json`),
+  });
+  if (launch.blocked) process.exit(0);
+  const browser = launch.browser;
   const page = await browser.newPage();
-  const errors = [];
+  const capture = attachPageErrorCapture(page);
   const failures = [];   // declarado arriba: la sonda de selección del clip 2 registra aquí
-  page.on('pageerror', error => errors.push(error.message));
-  await page.goto('http://127.0.0.1:4173/cortex.html', { waitUntil: 'networkidle' });
+  await gotoCortexApp(page);
   await page.evaluate(() => {
     localStorage.setItem('cortex-custom-presets-v1', '{bad-json');
     localStorage.setItem('cortex-timeline-v1', JSON.stringify({ steps: [{ durationSeconds: 0 }] }));
   });
   await page.reload({ waitUntil: 'networkidle' });
   const corrupted = await page.evaluate(() => ({
-    custom: window.__CORTEX__.getCustomPresets().length,
-    steps: window.__CORTEX__.timelineState.steps.length,
+    custom: window.__CORTEX__.timeline.getCustomPresets().length,
+    steps: window.__CORTEX__.session.timelineState.steps.length,
   }));
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: 'networkidle' });
 
   await page.evaluate(() => {
     const c = window.__CORTEX__;
-    Object.assign(c.state, { brainwave: 10, carrier: 300, amod: 20, binaural: 10, stereo: 5, fmod: 0, noise: 15, mix: 70 });
-    c.syncUIFromState();
+    Object.assign(c.session.state, { brainwave: 10, carrier: 300, amod: 20, binaural: 10, stereo: 5, fmod: 0, noise: 15, mix: 70 });
+    c.ui.syncUIFromState();
   });
   await page.click('#btnCreatePreset');
   await page.fill('#customPresetName', 'Mi Alpha');
   await page.locator('[data-emoji="🌊"]').click();
   await page.click('#btnSavePreset');
 
-  const custom = await page.evaluate(() => window.__CORTEX__.getCustomPresets());
+  const custom = await page.evaluate(() => window.__CORTEX__.timeline.getCustomPresets());
   const customId = custom[0] && custom[0].id;
   await page.click('#btnOpenTimeline');
   await page.locator('[data-add-preset="builtin-delta"]').click();
@@ -84,7 +100,7 @@ const { chromium, firefox, webkit } = require('playwright');
     } catch (e) {
       const diag = await page.evaluate(() => ({
         eventos: window.__ev__,
-        selectedStepIndex: window.__CORTEX__.getSelectedStepIndex(),
+        selectedStepIndex: window.__CORTEX__.timeline.getSelectedStepIndex(),
         inspectorName: document.getElementById('inspectorName').textContent,
         atSecondCenter: (() => {
           const b = document.querySelectorAll('.dock-clip-btn')[1];
@@ -93,12 +109,12 @@ const { chromium, firefox, webkit } = require('playwright');
           const el = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
           return el ? `${el.tagName}.${el.className}` : 'nada';
         })(),
-        steps: window.__CORTEX__.timelineState.steps.map(s => ({ id: s.id, name: s.name, dur: s.durationSeconds })),
+        steps: window.__CORTEX__.session.timelineState.steps.map(s => ({ id: s.id, name: s.name, dur: s.durationSeconds })),
       }));
       const probe = await page.evaluate(() => {
-        window.__CORTEX__.selectStep(1);
+        window.__CORTEX__.timeline.selectStep(1);
         return {
-          selectedAfterApi: window.__CORTEX__.getSelectedStepIndex(),
+          selectedAfterApi: window.__CORTEX__.timeline.getSelectedStepIndex(),
           nameAfterApi: document.getElementById('inspectorName').textContent,
         };
       });
@@ -110,25 +126,25 @@ const { chromium, firefox, webkit } = require('playwright');
   await page.check('#timelineLoop');
 
   const beforePlay = await page.evaluate(() => ({
-    custom: window.__CORTEX__.getCustomPresets(),
-    steps: window.__CORTEX__.timelineState.steps,
-    loop: window.__CORTEX__.timelineState.loop,
-    stepDurations: window.__CORTEX__.timelineState.steps.map(step => step.durationSeconds),
+    custom: window.__CORTEX__.timeline.getCustomPresets(),
+    steps: window.__CORTEX__.session.timelineState.steps,
+    loop: window.__CORTEX__.session.timelineState.loop,
+    stepDurations: window.__CORTEX__.session.timelineState.steps.map(step => step.durationSeconds),
   }));
 
   await page.click('#btnTimelinePlay');
   await page.waitForTimeout(1150);
   const duringPlay = await page.evaluate(() => ({
-    playing: window.__CORTEX__.state.playing,
-    running: window.__CORTEX__.getTimelinePlayer().running,
-    index: window.__CORTEX__.getTimelinePlayer().index,
-    stateBand: window.__CORTEX__.state.band,
+    playing: window.__CORTEX__.session.state.playing,
+    running: window.__CORTEX__.session.getTimelinePlayer().running,
+    index: window.__CORTEX__.session.getTimelinePlayer().index,
+    stateBand: window.__CORTEX__.session.state.band,
   }));
   await page.click('#btnTimelineStop');
   const afterStop = await page.evaluate(() => ({
-    running: window.__CORTEX__.getTimelinePlayer().running,
-    paused: window.__CORTEX__.getTimelinePlayer().paused,
-    index: window.__CORTEX__.getTimelinePlayer().index,
+    running: window.__CORTEX__.session.getTimelinePlayer().running,
+    paused: window.__CORTEX__.session.getTimelinePlayer().paused,
+    index: window.__CORTEX__.session.getTimelinePlayer().index,
   }));
 
   if (corrupted.custom !== 0 || corrupted.steps !== 0) failures.push(`corrupt storage: ${JSON.stringify(corrupted)}`);
@@ -136,13 +152,10 @@ const { chromium, firefox, webkit } = require('playwright');
   if (beforePlay.steps.length !== 2 || beforePlay.stepDurations.join(',') !== '1,1' || !beforePlay.loop) failures.push(`timeline setup: ${JSON.stringify(beforePlay)}`);
   if (!duringPlay.playing || !duringPlay.running) failures.push(`timeline play: ${JSON.stringify(duringPlay)}`);
   if (!afterStop || afterStop.running || afterStop.paused) failures.push(`timeline stop: ${JSON.stringify(afterStop)}`);
-  if (errors.length) failures.push(`pageErrors=${errors.join(' | ')}`);
+  if (capture.combined().length) failures.push(`pageErrors=${capture.combined().join(' | ')}`);
 
   const report = { engine: engineName, corrupted, beforePlay, duringPlay, afterStop, failures };
-  const fs = require('fs');
-  const path = require('path');
-  fs.mkdirSync(path.join(process.cwd(), 'artifacts'), { recursive: true });
-  fs.writeFileSync(path.join(process.cwd(), 'artifacts', `timeline-custom-presets-${engineName}.json`), JSON.stringify(report, null, 2));
+  fs.writeFileSync(path.join(artifactsDir, `timeline-custom-presets-${engineName}.json`), JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report, null, 2));
   await browser.close();
   process.exit(failures.length ? 1 : 0);

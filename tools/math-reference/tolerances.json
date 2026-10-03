@@ -1,0 +1,6 @@
+{
+  "mixGain": 1e-9,
+  "frequencyHz": 1e-9,
+  "cycleMs": 1e-9,
+  "phase": 1e-8
+}

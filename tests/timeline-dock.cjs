@@ -7,30 +7,36 @@
 const fs = require('fs');
 const path = require('path');
 const { chromium, firefox, webkit } = require('playwright');
+const {
+  attachPageErrorCapture,
+  ensureArtifactsDir,
+  gotoCortexApp,
+  launchOptionsForEngine,
+  startAudioClock,
+} = require('./cortex-browser-helpers.cjs');
 
 const engineName = process.env.ENGINE || 'chromium';
 const browserType = { chromium, firefox, webkit }[engineName];
 if (!browserType) throw new Error(`Unknown ENGINE: ${engineName}`);
-const URL = `http://127.0.0.1:${process.env.PORT || 4173}/cortex.html`;
 
 /* Pasos con snapshot mínimo pero válido: la suite mide la pista, no el audio. */
 const SNAP = (bw) => ({ brainwave: bw, carrier: 200, amod: 0, binaural: 0, stereo: 0, fmod: 0, noise: 0, mix: 80 });
 const STEPS = `(() => {
   const C = window.__CORTEX__;
-  C.timelineState.steps = [
+  C.session.timelineState.steps = [
     { id:'d1', presetId:'builtin-delta', durationSeconds:10, snapshot:${JSON.stringify(SNAP(2))},  name:'Delta', emoji:'D', band:'delta' },
     { id:'t1', presetId:'builtin-theta', durationSeconds:20, snapshot:${JSON.stringify(SNAP(6))},  name:'Theta', emoji:'T', band:'theta' },
     { id:'a1', presetId:'builtin-alpha', durationSeconds:30, snapshot:${JSON.stringify(SNAP(10))}, name:'Alpha', emoji:'A', band:'alpha' },
   ];
-  C.timelineState.loop = false;
-  C.timelineState.transition.enabled = false;
-  C.timelineState.transition.seconds = 0;
-  C.timelineState.durationUnits.step = 's';
-  C.renderTimeline();
+  C.session.timelineState.loop = false;
+  C.session.timelineState.transition.enabled = false;
+  C.session.timelineState.transition.seconds = 0;
+  C.session.timelineState.durationUnits.step = 's';
+  C.timeline.renderTimeline();
   return true;
 })()`;
 
-fs.mkdirSync(path.join(process.cwd(), 'artifacts'), { recursive: true });
+const artifactsDir = ensureArtifactsDir();
 
 const results = [];
 const skipped = [];
@@ -40,17 +46,14 @@ function check(cond, name, detail) {
 }
 
 (async () => {
-  const launchOptions = { headless: true };
-  if (engineName === 'chromium') {
-    launchOptions.args = ['--autoplay-policy=no-user-gesture-required'];
-  }
+  const launchOptions = launchOptionsForEngine(engineName);
 
   let browser;
   try {
     browser = await browserType.launch(launchOptions);
   } catch (e) {
     console.log(`BLOCKED  ${engineName} no disponible: ${e.message.split('\n')[0]}`);
-    fs.writeFileSync(path.join(process.cwd(), 'artifacts', `timeline-dock-${engineName}.json`),
+    fs.writeFileSync(path.join(artifactsDir, `timeline-dock-${engineName}.json`),
       JSON.stringify({ engine: engineName, status: 'BLOCKED', reason: e.message.split('\n')[0] }, null, 2));
     process.exit(0);
   }
@@ -58,21 +61,14 @@ function check(cond, name, detail) {
   async function scenario(title, fn, { needsClock = true, viewport = null } = {}) {
     console.log(`\n-- ${title} --`);
     const page = viewport ? await browser.newPage({ viewport }) : await browser.newPage();
-    const errors = [];
-    page.on('pageerror', e => errors.push('pageerror: ' + e.message));
-    page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
-    await page.goto(URL, { waitUntil: 'networkidle' });
-    await page.waitForFunction(() => typeof window.__CORTEX__ === 'object');
+    const capture = attachPageErrorCapture(page);
+    await gotoCortexApp(page);
     let clockReady = true;
     if (needsClock) {
-      await page.click('#btnPlay');
-      clockReady = await page.waitForFunction(
-        () => { const c = window.__CORTEX__.engine.ctx; return Boolean(c) && c.state === 'running'; },
-        null, { timeout: 8000 }
-      ).then(() => true).catch(() => false);
+      const clock = await startAudioClock(page);
+      clockReady = clock.ready;
       if (!clockReady) {
-        const st = await page.evaluate(() => (window.__CORTEX__.engine.ctx || {}).state || 'none');
-        console.log(`SKIP  ${title}: el reloj de audio no quedó disponible (ctx=${st}) — Firefox headless no habilita audio`);
+        console.log(`SKIP  ${title}: el reloj de audio no quedó disponible (ctx=${clock.state}) — Firefox headless no habilita audio`);
         skipped.push(title);
         await page.close();
         return;
@@ -83,12 +79,12 @@ function check(cond, name, detail) {
     } catch (e) {
       check(false, `${title}: sin excepción`, e.message);
     }
-    check(errors.length === 0, `${title}: página sin errores`, errors.join(' | '));
+    check(capture.combined().length === 0, `${title}: página sin errores`, capture.combined().join(' | '));
     await page.close();
   }
 
   const expand = (page) => page.evaluate(() => {
-    if (!window.__CORTEX__.state.dockExpanded) window.__CORTEX__.toggleDock();
+    if (!window.__CORTEX__.session.state.dockExpanded) window.__CORTEX__.timeline.toggleDock();
   });
   const playheadX = () => {
     const raw = document.getElementById('dockPlayhead').style.transform || '';
@@ -127,8 +123,8 @@ function check(cond, name, detail) {
     check(afterReload2 === 'collapsed', 'tras recargar sigue plegado', afterReload2);
     // la preferencia se mezcla sin borrar el resto de los ajustes guardados
     const merged = await page.evaluate(() => {
-      window.__CORTEX__.saveSettings();
-      window.__CORTEX__.toggleDock();
+      window.__CORTEX__.settings.saveSettings();
+      window.__CORTEX__.timeline.toggleDock();
       const raw = JSON.parse(localStorage.getItem('cortex-settings') || '{}');
       return { brainwave: raw.brainwave, dockExpanded: raw.dockExpanded };
     });
@@ -153,10 +149,10 @@ function check(cond, name, detail) {
     const min = await page.evaluate(() => {
       const C = window.__CORTEX__;
       const snap = (bw) => ({ brainwave: bw, carrier: 200, amod: 0, binaural: 0, stereo: 0, fmod: 0, noise: 0, mix: 80 });
-      C.timelineState.steps = [1, 1, 1, 300].map((d, i) => ({
+      C.session.timelineState.steps = [1, 1, 1, 300].map((d, i) => ({
         id: 'x' + i, presetId: 'builtin-alpha', durationSeconds: d, snapshot: snap(10), name: 'S' + i, emoji: 'A', band: 'alpha',
       }));
-      C.renderTimeline();
+      C.timeline.renderTimeline();
       const clips = [...document.querySelectorAll('#dockClips .dock-clip')];
       return clips.map(c => c.offsetWidth);
     });
@@ -203,7 +199,7 @@ function check(cond, name, detail) {
     await page.fill('#inspectorDuration', '90');
     await page.dispatchEvent('#inspectorDuration', 'change');
     const edited = await page.evaluate(() => ({
-      seconds: window.__CORTEX__.timelineState.steps[0].durationSeconds,
+      seconds: window.__CORTEX__.session.timelineState.steps[0].durationSeconds,
       chip: document.querySelector('[data-clip-chip]').textContent.trim(),
       stored: (JSON.parse(localStorage.getItem('cortex-timeline-v1'))).steps[0].durationSeconds,
       width: document.querySelector('#dockClips .dock-clip').offsetWidth,
@@ -216,18 +212,18 @@ function check(cond, name, detail) {
     // duplicar y eliminar desde el inspector
     await page.click('#inspectorDuplicate');
     const dup = await page.evaluate(() => ({
-      count: window.__CORTEX__.timelineState.steps.length,
+      count: window.__CORTEX__.session.timelineState.steps.length,
       selectedName: document.getElementById('inspectorName').textContent,
     }));
     check(dup.count === 4, 'duplicar agrega un paso', String(dup.count));
     check(dup.selectedName.includes('Delta'), 'la selección sigue al duplicado', dup.selectedName);
     await page.click('#inspectorRemove');
-    const rem = await page.evaluate(() => window.__CORTEX__.timelineState.steps.length);
+    const rem = await page.evaluate(() => window.__CORTEX__.session.timelineState.steps.length);
     check(rem === 3, 'eliminar quita un paso', String(rem));
     // mover con los botones (reemplazo por teclado del arrastre)
-    await page.evaluate(() => window.__CORTEX__.selectStep(0));
+    await page.evaluate(() => window.__CORTEX__.timeline.selectStep(0));
     await page.click('#inspectorMoveDown');
-    const moved = await page.evaluate(() => window.__CORTEX__.timelineState.steps.map(s => s.name));
+    const moved = await page.evaluate(() => window.__CORTEX__.session.timelineState.steps.map(s => s.name));
     check(moved.join(',') === 'Theta,Delta,Alpha', 'mover con el inspector reordena', moved.join(','));
     const stored = await page.evaluate(() => (JSON.parse(localStorage.getItem('cortex-timeline-v1'))).steps.map(s => s.name));
     check(stored.join(',') === 'Theta,Delta,Alpha', 'el reorden persiste', stored.join(','));
@@ -238,7 +234,7 @@ function check(cond, name, detail) {
     await page.evaluate(STEPS);
     await expand(page);
     await page.locator('.dock-clip-btn').nth(0).dblclick();
-    const bw = await page.evaluate(() => window.__CORTEX__.state.brainwave);
+    const bw = await page.evaluate(() => window.__CORTEX__.session.state.brainwave);
     check(bw === 2, 'el doble click aplica el snapshot del paso (Delta = 2 Hz)', String(bw));
   }, { needsClock: false });
 
@@ -256,7 +252,7 @@ function check(cond, name, detail) {
     await page.mouse.move(to.x, to.y, { steps: 12 });
     await page.mouse.up();
     const afterDrag = await page.evaluate(() => ({
-      order: window.__CORTEX__.timelineState.steps.map(s => s.name),
+      order: window.__CORTEX__.session.timelineState.steps.map(s => s.name),
       stored: (JSON.parse(localStorage.getItem('cortex-timeline-v1'))).steps.map(s => s.name),
       dropLineVisible: document.getElementById('dockDropLine').classList.contains('visible'),
     }));
@@ -265,10 +261,10 @@ function check(cond, name, detail) {
     check(!afterDrag.dropLineVisible, 'la línea de destino se retira al soltar');
     // el reemplazo por teclado produce el mismo resultado
     await page.evaluate(STEPS);
-    await page.evaluate(() => window.__CORTEX__.selectStep(0));
+    await page.evaluate(() => window.__CORTEX__.timeline.selectStep(0));
     await page.click('#inspectorMoveDown');
     await page.click('#inspectorMoveDown');
-    const byKeyboard = await page.evaluate(() => window.__CORTEX__.timelineState.steps.map(s => s.name));
+    const byKeyboard = await page.evaluate(() => window.__CORTEX__.session.timelineState.steps.map(s => s.name));
     check(byKeyboard.join(',') === 'Theta,Alpha,Delta', 'mover dos veces con teclado da el mismo orden', byKeyboard.join(','));
   }, { needsClock: false });
 
@@ -285,7 +281,7 @@ function check(cond, name, detail) {
     await page.mouse.move(startX + 45, y, { steps: 8 });
     await page.mouse.up();
     const resized = await page.evaluate(() => ({
-      seconds: window.__CORTEX__.timelineState.steps[0].durationSeconds,
+      seconds: window.__CORTEX__.session.timelineState.steps[0].durationSeconds,
       chip: document.querySelector('#dockClips [data-clip-chip]').textContent.trim(),
       stored: (JSON.parse(localStorage.getItem('cortex-timeline-v1'))).steps[0].durationSeconds,
       before: 10,
@@ -297,11 +293,11 @@ function check(cond, name, detail) {
     await page.evaluate(() => {
       const C = window.__CORTEX__;
       const snap = (bw) => ({ brainwave: bw, carrier: 200, amod: 0, binaural: 0, stereo: 0, fmod: 0, noise: 0, mix: 80 });
-      C.timelineState.steps = [
+      C.session.timelineState.steps = [
         { id: 'long1', presetId: 'builtin-alpha', durationSeconds: 3000, snapshot: snap(10), name: 'Largo', emoji: 'A', band: 'alpha' },
         { id: 'long2', presetId: 'builtin-delta', durationSeconds: 3000, snapshot: snap(2), name: 'Largo2', emoji: 'D', band: 'delta' },
       ];
-      C.renderTimeline();
+      C.timeline.renderTimeline();
       return true;
     });
     const longClip = await page.locator('#dockClips .dock-clip').nth(0).boundingBox();
@@ -309,18 +305,18 @@ function check(cond, name, detail) {
     await page.mouse.down();
     await page.mouse.move(longClip.x + longClip.width + 200, longClip.y + longClip.height / 2, { steps: 10 });
     await page.mouse.up();
-    const clamped = await page.evaluate(() => window.__CORTEX__.timelineState.steps[0].durationSeconds);
+    const clamped = await page.evaluate(() => window.__CORTEX__.session.timelineState.steps[0].durationSeconds);
     check(clamped === 3600, 'el resultado queda dentro del límite de 3600 s', String(clamped));
     // en minutos, el snap es de 30 s
     await page.evaluate(() => {
       const C = window.__CORTEX__;
       const snap = (bw) => ({ brainwave: bw, carrier: 200, amod: 0, binaural: 0, stereo: 0, fmod: 0, noise: 0, mix: 80 });
-      C.timelineState.steps = [
+      C.session.timelineState.steps = [
         { id: 'm1', presetId: 'builtin-alpha', durationSeconds: 90, snapshot: snap(10), name: 'Noventa', emoji: 'A', band: 'alpha' },
         { id: 'm2', presetId: 'builtin-delta', durationSeconds: 30, snapshot: snap(2), name: 'Treinta', emoji: 'D', band: 'delta' },
       ];
-      C.setDurationUnit('step', 'min');
-      C.renderTimeline();
+      C.timeline.setDurationUnit('step', 'min');
+      C.timeline.renderTimeline();
       return true;
     });
     const minClip = await page.locator('#dockClips .dock-clip').nth(0).boundingBox();
@@ -329,7 +325,7 @@ function check(cond, name, detail) {
     await page.mouse.move(minClip.x + minClip.width + 300, minClip.y + minClip.height / 2, { steps: 6 });
     await page.mouse.up();
     const inMinutes = await page.evaluate(() => ({
-      seconds: window.__CORTEX__.timelineState.steps[0].durationSeconds,
+      seconds: window.__CORTEX__.session.timelineState.steps[0].durationSeconds,
       chip: document.querySelector('#dockClips [data-clip-chip]').textContent.trim(),
     }));
     check(inMinutes.seconds % 30 === 0 && inMinutes.seconds !== 90, 'en minutos el snap es múltiplo de 30 s', String(inMinutes.seconds));
@@ -341,11 +337,11 @@ function check(cond, name, detail) {
     await page.evaluate(() => {
       const C = window.__CORTEX__;
       const snap = (bw) => ({ brainwave: bw, carrier: 200, amod: 0, binaural: 0, stereo: 0, fmod: 0, noise: 0, mix: 80 });
-      C.timelineState.steps = [
+      C.session.timelineState.steps = [
         { id: 'p1', presetId: 'builtin-delta', durationSeconds: 2, snapshot: snap(2), name: 'Delta', emoji: 'D', band: 'delta' },
         { id: 'p2', presetId: 'builtin-alpha', durationSeconds: 2, snapshot: snap(10), name: 'Alpha', emoji: 'A', band: 'alpha' },
       ];
-      C.renderTimeline();
+      C.timeline.renderTimeline();
     });
     const collapsedState = await page.evaluate(() => ({
       dockState: document.getElementById('timelineDock').dataset.dockState,
@@ -363,7 +359,7 @@ function check(cond, name, detail) {
     check(r, 'la barra fina de progreso avanza mientras suena');
     const status = await page.evaluate(() => document.getElementById('timelineStatus').textContent);
     check(status.includes('Paso 1/2'), 'el paso en curso y su restante se ven sin desplegar', status);
-    await page.evaluate(() => window.__CORTEX__.getTimelinePlayer().stop());
+    await page.evaluate(() => window.__CORTEX__.session.getTimelinePlayer().stop());
   }, { needsClock: true });
 
   // 9. Playhead: avance dentro del clip y cruce al siguiente, sin tocar el layout de los clips
@@ -371,11 +367,11 @@ function check(cond, name, detail) {
     await page.evaluate(() => {
       const C = window.__CORTEX__;
       const snap = (bw) => ({ brainwave: bw, carrier: 200, amod: 0, binaural: 0, stereo: 0, fmod: 0, noise: 0, mix: 80 });
-      C.timelineState.steps = [
+      C.session.timelineState.steps = [
         { id: 'p1', presetId: 'builtin-delta', durationSeconds: 2, snapshot: snap(2), name: 'Delta', emoji: 'D', band: 'delta' },
         { id: 'p2', presetId: 'builtin-alpha', durationSeconds: 2, snapshot: snap(10), name: 'Alpha', emoji: 'A', band: 'alpha' },
       ];
-      C.renderTimeline();
+      C.timeline.renderTimeline();
     });
     await expand(page);
     await page.click('#btnTimelinePlay');
@@ -397,7 +393,7 @@ function check(cond, name, detail) {
     check(early.b.clip0.left === early.a.clip0.left && early.b.clip0.width === early.a.clip0.width,
       'los clips no se re-maquetan mientras el playhead avanza');
     const crossed = await page.waitForFunction(() => {
-      const p = window.__CORTEX__.getTimelinePlayer();
+      const p = window.__CORTEX__.session.getTimelinePlayer();
       const raw = document.getElementById('dockPlayhead').style.transform || '';
       const m = /translateX\(([-0-9.]+)px\)/.exec(raw);
       return p.index === 1 && m && Number(m[1]) > 0;
@@ -412,7 +408,7 @@ function check(cond, name, detail) {
     });
     check(inSecond.x >= inSecond.left && inSecond.x <= inSecond.left + inSecond.width,
       'en el segundo paso el playhead está dentro del segundo clip', `x=${inSecond.x} clip=[${inSecond.left},${inSecond.left + inSecond.width}]`);
-    await page.evaluate(() => window.__CORTEX__.getTimelinePlayer().stop());
+    await page.evaluate(() => window.__CORTEX__.session.getTimelinePlayer().stop());
     const hidden = await page.evaluate(async () => {
       // la clase la retira el pase del rAF: esperar el frame antes de leer
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -426,12 +422,12 @@ function check(cond, name, detail) {
     await page.evaluate(() => {
       const C = window.__CORTEX__;
       const snap = (bw) => ({ brainwave: bw, carrier: 200, amod: 0, binaural: 0, stereo: 0, fmod: 0, noise: 0, mix: 80 });
-      C.timelineState.steps = [
+      C.session.timelineState.steps = [
         { id: 'p1', presetId: 'builtin-delta', durationSeconds: 1, snapshot: snap(2), name: 'Delta', emoji: 'D', band: 'delta' },
         { id: 'p2', presetId: 'builtin-alpha', durationSeconds: 1, snapshot: snap(10), name: 'Alpha', emoji: 'A', band: 'alpha' },
       ];
-      C.timelineState.loop = true;
-      C.renderTimeline();
+      C.session.timelineState.loop = true;
+      C.timeline.renderTimeline();
     });
     await expand(page);
     await page.click('#btnTimelinePlay');
@@ -439,14 +435,14 @@ function check(cond, name, detail) {
       const read = () => {
         const raw = document.getElementById('dockPlayhead').style.transform || '';
         const m = /translateX\(([-0-9.]+)px\)/.exec(raw);
-        return { idx: window.__CORTEX__.getTimelinePlayer().index, x: m ? Number(m[1]) : null };
+        return { idx: window.__CORTEX__.session.getTimelinePlayer().index, x: m ? Number(m[1]) : null };
       };
       const samples = [];
       for (let i = 0; i < 32; i++) {
         samples.push(read());
         await new Promise(r2 => setTimeout(r2, 100));
       }
-      window.__CORTEX__.getTimelinePlayer().stop();
+      window.__CORTEX__.session.getTimelinePlayer().stop();
       return samples;
     });
     const firstPass = r.find(s => s.idx === 0 && s.x !== null && s.x > 0);
@@ -462,15 +458,15 @@ function check(cond, name, detail) {
     await page.evaluate(() => {
       const C = window.__CORTEX__;
       const snap = (bw) => ({ brainwave: bw, carrier: 200, amod: 0, binaural: 0, stereo: 0, fmod: 0, noise: 0, mix: 80 });
-      C.timelineState.steps = [2, 2, 2].map((d, i) => ({
+      C.session.timelineState.steps = [2, 2, 2].map((d, i) => ({
         id: 'r' + i, presetId: 'builtin-delta', durationSeconds: d, snapshot: snap(2), name: 'S' + i, emoji: 'D', band: 'delta',
       }));
-      C.renderTimeline();
+      C.timeline.renderTimeline();
     });
     await expand(page);
     await page.click('#btnTimelinePlay');
     const r = await page.evaluate(async () => {
-      const C = window.__CORTEX__, p = C.getTimelinePlayer();
+      const C = window.__CORTEX__, p = C.session.getTimelinePlayer();
       await new Promise(r => setTimeout(r, 150));
       p.clearTick(); p.clearTimer();
       await new Promise(r => setTimeout(r, 2600));
@@ -501,7 +497,7 @@ function check(cond, name, detail) {
   await scenario('presupuesto de alto 1366×768', async page => {
     await page.evaluate(STEPS);
     await expand(page);
-    await page.evaluate(() => window.__CORTEX__.selectStep(0));   // peor caso: inspector abierto
+    await page.evaluate(() => window.__CORTEX__.timeline.selectStep(0));   // peor caso: inspector abierto
     const r = await page.evaluate(() => {
       const rect = el => el.getBoundingClientRect();
       const dock = rect(document.getElementById('timelineDock'));
@@ -527,10 +523,10 @@ function check(cond, name, detail) {
     await page.evaluate(() => {
       const C = window.__CORTEX__;
       const snap = (bw) => ({ brainwave: bw, carrier: 200, amod: 0, binaural: 0, stereo: 0, fmod: 0, noise: 0, mix: 80 });
-      C.timelineState.steps = Array.from({ length: 10 }, (_, i) => ({
+      C.session.timelineState.steps = Array.from({ length: 10 }, (_, i) => ({
         id: 'n' + i, presetId: 'builtin-alpha', durationSeconds: 30, snapshot: snap(10), name: 'S' + i, emoji: 'A', band: 'alpha',
       }));
-      C.renderTimeline();
+      C.timeline.renderTimeline();
     });
     await expand(page);
     const r = await page.evaluate(() => {
@@ -586,7 +582,7 @@ function check(cond, name, detail) {
 
   await browser.close();
   const failures = results.filter(x => !x.pass).map(x => x.name + (x.detail ? ` (${x.detail})` : ''));
-  fs.writeFileSync(path.join(process.cwd(), 'artifacts', `timeline-dock-${engineName}.json`),
+  fs.writeFileSync(path.join(artifactsDir, `timeline-dock-${engineName}.json`),
     JSON.stringify({ engine: engineName, total: results.length, failed: failures.length, skipped, results }, null, 2));
   console.log(`\n${results.length - failures.length}/${results.length} verificaciones OK` +
     (skipped.length ? ` · ${skipped.length} omitidas por reloj de audio` : ''));

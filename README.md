@@ -2,20 +2,26 @@
 
 ![CI](https://github.com/MoriNo23/cortex-brainwave/actions/workflows/ci.yml/badge.svg)
 
-Aplicación HTML autocontenida para experimentar con síntesis Web Audio, visualizaciones Canvas/SVG y varias formas de modulación. No usa React, Vue, Svelte, bundler ni dependencias de producción.
+Aplicación para experimentar con síntesis Web Audio, visualizaciones Canvas/SVG, timeline y varias formas de modulación. La base histórica sigue existiendo como HTML autónomo, y el rebuild en curso monta una shell en **Astro** para permitir rediseño completo, mejor separación de módulos y nuevas superficies como el reproductor estroboscópico.
 
 ## Ejecutar
 
 ```bash
-npm run serve
+npm run dev
 ```
 
-Equivale a `python3 -m http.server 4173 --bind 127.0.0.1`. Después abrir:
+Levanta la shell Astro en el puerto `4173`. Rutas útiles:
 
-- <http://127.0.0.1:4173/cortex.html> — la app
-- <http://127.0.0.1:4173/cortex.spec.html> — la suite de escenarios OpenSpec (botón *Correr tests*)
+- <http://127.0.0.1:4173/> — shell Astro en rebuild
+- <http://127.0.0.1:4173/cortex.html> — superficie legado conservada por compatibilidad
+- <http://127.0.0.1:4173/cortex-legacy.html> — alias explícito de la app legado
+- <http://127.0.0.1:4173/cortex.spec.html> — la suite de escenarios OpenSpec legado (botón *Correr tests*)
 
-También puede abrirse `cortex.html` como archivo local en un navegador moderno, aunque el servidor local facilita las pruebas.
+Si necesitás servir solo la copia antigua con un servidor estático simple:
+
+```bash
+npm run serve:legacy
+```
 
 **Hay que hacer click en `Iniciar` antes de esperar audio.** Los navegadores no liberan el contexto de audio hasta un gesto del usuario; sin ese click la línea de tiempo no puede medir el tiempo y la app lo avisa en vez de fingir que avanza.
 
