@@ -5,8 +5,16 @@ function cortexBaseUrl() {
   return process.env.BASE_URL || `http://127.0.0.1:${process.env.PORT || 4173}`;
 }
 
+/* La app principal es el shell Astro, en la ruta raíz.
+
+   `/cortex.html` sigue sirviendo el monolito legado, cuyo `__CORTEX__` es plano
+   (`state`, `engine`, `timelineState`…). Estas suites ya hablan el API por
+   dominios del shell nuevo (`session`, `timeline`, `strobe`, `settings`,
+   `visualizers`, `ui`, `catalog`), así que apuntarlas al legado las hacía fallar
+   todas con "Cannot read properties of undefined". `LEGACY_APP=1` mantiene la
+   ruta vieja disponible para comparar. */
 function cortexAppUrl() {
-  return `${cortexBaseUrl()}/cortex.html`;
+  return process.env.LEGACY_APP ? `${cortexBaseUrl()}/cortex.html` : `${cortexBaseUrl()}/`;
 }
 
 function cortexSpecUrl() {
