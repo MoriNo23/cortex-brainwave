@@ -58,6 +58,44 @@ def strobe_samples(mode: str, brainwave: float, custom_hz: float, timestamps_ms:
     }
 
 
+STROBE_RAMP_RATIO = 0.12
+STROBE_RAMP_MAX_MS = 16.0
+
+
+def strobe_ramp_ratio(hz: float) -> float:
+    """Rampa de ataque/caída en fracción de ciclo: 12 % con techo de 16 ms."""
+    cycle_ms = 1000.0 / clamp(hz, 0.5, 40)
+    return min(STROBE_RAMP_RATIO, STROBE_RAMP_MAX_MS / cycle_ms)
+
+
+def strobe_intensity(progress: float, ramp: float) -> float:
+    """Intensidad pintada en [0, 1] a partir de la fase del flash."""
+    t = clamp(progress, 0.0, 1.0)
+    r = clamp(ramp, 0.0, 0.25)
+    if r == 0.0:
+        return 1.0 if t < 0.5 else 0.0
+    if t < r:
+        return t / r
+    if t < 0.5:
+        return 1.0
+    if t < 0.5 + r:
+        return 1.0 - (t - 0.5) / r
+    return 0.0
+
+
+def strobe_envelope(mode: str, brainwave: float, custom_hz: float, timestamps_ms: list[float]) -> dict:
+    hz = strobe_hz(mode, brainwave, custom_hz)
+    cycle_ms = 1000.0 / hz
+    ramp = strobe_ramp_ratio(hz)
+    phases = [float((ts % cycle_ms) / cycle_ms) for ts in timestamps_ms]
+    return {
+        "hz": hz,
+        "cycleMs": cycle_ms,
+        "ramp": ramp,
+        "intensity": [strobe_intensity(phase, ramp) for phase in phases],
+    }
+
+
 def build_reference() -> dict:
     fixtures = json.loads(FIXTURES.read_text())
     carrier, brainwave = sp.symbols("carrier brainwave")
@@ -68,6 +106,8 @@ def build_reference() -> dict:
             "binauralFormula": binaural_expr,
             "mixFormula": "clamp(mix, 0, 100) / 100 * 0.5",
             "strobeDuty": 0.5,
+            "strobeRampRatio": STROBE_RAMP_RATIO,
+            "strobeRampMaxMs": STROBE_RAMP_MAX_MS,
         },
         "bands": [{"hz": hz, "band": band_from_freq(hz)} for hz in fixtures["bandCases"]],
         "binaural": [
@@ -86,6 +126,15 @@ def build_reference() -> dict:
                 **strobe_samples(case["mode"], case["brainwave"], case["customHz"], case["timestampsMs"]),
             }
             for case in fixtures["strobeCases"]
+        ],
+        "strobeEnvelope": [
+            {
+                "mode": case["mode"],
+                "brainwave": case["brainwave"],
+                "customHz": case["customHz"],
+                **strobe_envelope(case["mode"], case["brainwave"], case["customHz"], case["timestampsMs"]),
+            }
+            for case in fixtures["strobeEnvelopeCases"]
         ],
     }
 

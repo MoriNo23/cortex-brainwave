@@ -24,6 +24,11 @@ jobs:
       - name: Nivel ligero de verificación
         run: node tests/light/run-light-verify.cjs
 
+      # Node puro también: ejecuta el fuente real del Worker de la ventana
+      # flotante contra un `self` y un lienzo simulados.
+      - name: Worker del estrobo (sin navegador)
+        run: node tests/strobe-worker.cjs
+
       - name: Subir reporte
         if: always()
         uses: actions/upload-artifact@v7
@@ -135,6 +140,16 @@ jobs:
       - name: Smoke del shell Astro
         if: always()
         run: node tests/astro-shell-smoke.cjs
+
+      # Aquí hay dependencias instaladas, así que el chequeo del Worker sí puede
+      # repetir la comparación sobre el fuente minificado con esbuild.
+      - name: Worker del estrobo (también sobre el bundle minificado)
+        if: always()
+        run: node tests/strobe-worker.cjs
+
+      - name: Estrobo y ventana flotante
+        if: always()
+        run: node tests/strobe-visuals.cjs
 
       - name: Suite in-page (spec de OpenSpec)
         if: always()

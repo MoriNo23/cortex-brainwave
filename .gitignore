@@ -28,5 +28,15 @@ tools/difftastic/difft
 # Reporte del job `ligero`: lo entrega upload-artifact en cada corrida de CI
 artifacts/light-verify.json
 
+# Reportes que genera CI en cada corrida: se leen como artifacts, no se versionan
+artifacts/strobe-worker.json
+artifacts/math-reference-python.json
+artifacts/math-reference-js.json
+artifacts/math-reference-compare.json
+
+# Build de Astro y su caché
+dist/
+.astro/
+
 # Conversaciones exportadas y notas personales: no forman parte del proyecto
 *-gemini-*.txt

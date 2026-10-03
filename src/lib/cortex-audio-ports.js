@@ -67,7 +67,10 @@ export function createDebugAudioNamespaces(audioStack) {
       effectiveStrobeHz: strobe.effectiveStrobeHz,
       toggleStrobeMini: strobe.toggleStrobeMini,
       toggleStrobeFullscreen: strobe.toggleStrobeFullscreen,
+      toggleStrobeFloating: strobe.toggleStrobeFloating,
       setStrobeActive: strobe.setStrobeActive,
+      getFloatingInfo: strobe.getFloatingInfo,
+      getPipCapability: strobe.getPipCapability,
     },
   };
 }
