@@ -4,29 +4,35 @@
 const path = require('path');
 const fs = require('fs');
 const { chromium, firefox, webkit } = require('playwright');
+const {
+  attachPageErrorCapture,
+  ensureArtifactsDir,
+  gotoCortexApp,
+  launchOptionsForEngine,
+  startAudioClock,
+} = require('./cortex-browser-helpers.cjs');
 
 const engineName = process.env.ENGINE || 'chromium';
 const browserType = { chromium, firefox, webkit }[engineName];
 if (!browserType) throw new Error(`Unknown ENGINE: ${engineName}`);
-const URL = `http://127.0.0.1:${process.env.PORT || 4173}/cortex.html`;
 
 const STEPS = `(() => {
   const C = window.__CORTEX__;
-  C.timelineState.steps = [
+  C.session.timelineState.steps = [
     { id:'s1', presetId:'builtin-delta', durationSeconds:1, snapshot:{ brainwave:2,  carrier:200, amod:0, binaural:0, stereo:0, fmod:0, noise:0, mix:80 }, name:'Delta', emoji:'D', band:'delta' },
     { id:'s2', presetId:'builtin-theta', durationSeconds:1, snapshot:{ brainwave:6,  carrier:210, amod:0, binaural:0, stereo:0, fmod:0, noise:0, mix:80 }, name:'Theta', emoji:'T', band:'theta' },
     { id:'s3', presetId:'builtin-alpha', durationSeconds:1, snapshot:{ brainwave:10, carrier:220, amod:0, binaural:0, stereo:0, fmod:0, noise:0, mix:80 }, name:'Alpha', emoji:'A', band:'alpha' }
   ];
-  C.timelineState.loop = false;
+  C.session.timelineState.loop = false;
   // Transición desactivada: esta suite mide límites de paso puros (saltos a
   // valores conocidos). Las rampas las cubre tests/timeline-transitions.cjs.
-  C.timelineState.transition.enabled = false;
-  C.timelineState.transition.seconds = 0;
-  C.renderTimeline();
+  C.session.timelineState.transition.enabled = false;
+  C.session.timelineState.transition.seconds = 0;
+  C.timeline.renderTimeline();
 })()`;
 
 // El runner escribe en artifacts/: se asegura de que exista en CI y en local.
-fs.mkdirSync(path.join(process.cwd(), 'artifacts'), { recursive: true });
+const artifactsDir = ensureArtifactsDir();
 
 const results = [];
 function check(cond, name, detail) {
@@ -43,17 +49,14 @@ function check(cond, name, detail) {
   //    audio no avanza y estos escenarios se OMITEN. No es un defecto de la app:
   //    browser-matrix.cjs sí corre en Firefox. Se deja explícito para que un
   //    skip no se confunda con un verde.
-  const launchOptions = { headless: true };
-  if (engineName === 'chromium') {
-    launchOptions.args = ['--autoplay-policy=no-user-gesture-required'];
-  }
+  const launchOptions = launchOptionsForEngine(engineName);
 
   let browser;
   try {
     browser = await browserType.launch(launchOptions);
   } catch (e) {
     console.log(`BLOCKED  ${engineName} no disponible: ${e.message.split('\n')[0]}`);
-    fs.writeFileSync(path.join(process.cwd(), 'artifacts', `timeline-scheduling-${engineName}.json`),
+    fs.writeFileSync(path.join(artifactsDir, `timeline-scheduling-${engineName}.json`),
       JSON.stringify({ engine: engineName, status: 'BLOCKED', reason: e.message.split('\n')[0] }, null, 2));
     process.exit(0);
   }
@@ -62,11 +65,8 @@ function check(cond, name, detail) {
   async function scenario(title, fn, { needsClock = true } = {}) {
     console.log(`\n-- ${title} --`);
     const page = await browser.newPage();
-    const errors = [];
-    page.on('pageerror', e => errors.push('pageerror: ' + e.message));
-    page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
-    await page.goto(URL, { waitUntil: 'networkidle' });
-    await page.waitForFunction(() => typeof window.__CORTEX__ === 'object');
+    const capture = attachPageErrorCapture(page);
+    await gotoCortexApp(page);
     // Casi todos los escenarios de esta suite dependen del reloj de audio
     // corriendo; el de timeline vacío solo reproduce un mensaje y no lo necesita
     // (en Firefox headless el contexto queda suspendido por falta de audio).
@@ -75,16 +75,10 @@ function check(cond, name, detail) {
       // El AudioContext no arranca sin un gesto real del usuario en navegadores con
       // autoplay estricto (Firefox). Por eso se hace click en vez de llamar a
       // engine.start() desde evaluate: el click es un gesto confiable.
-      await page.click('#btnPlay');
-      // ctx.resume() es asíncrono: leer el estado justo después del click da una
-      // carrera. Se espera a que el contexto quede 'running'.
-      clockReady = await page.waitForFunction(
-        () => { const c = window.__CORTEX__.engine.ctx; return Boolean(c) && c.state === 'running'; },
-        null, { timeout: 8000 }
-      ).then(() => true).catch(() => false);
+      const clock = await startAudioClock(page);
+      clockReady = clock.ready;
       if (!clockReady) {
-        const st = await page.evaluate(() => (window.__CORTEX__.engine.ctx || {}).state || 'none');
-        console.log(`SKIP  ${title}: el reloj de audio no quedó disponible (ctx=${st})`);
+        console.log(`SKIP  ${title}: el reloj de audio no quedó disponible (ctx=${clock.state})`);
         await page.close();
         return;
       }
@@ -94,7 +88,7 @@ function check(cond, name, detail) {
     } catch (e) {
       check(false, `${title}: sin excepción`, e.message);
     }
-    check(errors.length === 0, `${title}: página sin errores`, errors.join(' | '));
+    check(capture.combined().length === 0, `${title}: página sin errores`, capture.combined().join(' | '));
     await page.close();
   }
 
@@ -102,16 +96,16 @@ function check(cond, name, detail) {
   await scenario('reproducción normal', async page => {
     await page.evaluate(STEPS);
     const r = await page.evaluate(async () => {
-      const C = window.__CORTEX__, p = C.getTimelinePlayer();
+      const C = window.__CORTEX__, p = C.session.getTimelinePlayer();
       p.play();
-      const t0 = C.engine.ctx.currentTime;
+      const t0 = C.audio.engine.ctx.currentTime;
       const snap = [];
       for (let i = 0; i < 40; i++) {
         await new Promise(r => setTimeout(r, 100));
-        snap.push({ idx: p.index, running: p.running, bw: C.state.brainwave, rem: Math.round(p.remainingMs) });
+        snap.push({ idx: p.index, running: p.running, bw: C.session.state.brainwave, rem: Math.round(p.remainingMs) });
         if (!p.running) break;
       }
-      return { t0, t1: C.engine.ctx.currentTime, snap, status: document.getElementById('timelineStatus').textContent };
+      return { t0, t1: C.audio.engine.ctx.currentTime, snap, status: document.getElementById('timelineStatus').textContent };
     });
     const visited = [...new Set(r.snap.map(s => s.idx))];
     check(r.snap[0].idx === 0, 'arranca en el paso 0', `idx=${r.snap[0].idx}`);
@@ -128,7 +122,7 @@ function check(cond, name, detail) {
   await scenario('temporizadores retrasados', async page => {
     await page.evaluate(STEPS);
     const r = await page.evaluate(async () => {
-      const C = window.__CORTEX__, p = C.getTimelinePlayer();
+      const C = window.__CORTEX__, p = C.session.getTimelinePlayer();
       const realTimeout = window.setTimeout, realInterval = window.setInterval;
       let delayed = 0;
       window.setTimeout = (fn, ms, ...a) => { delayed++; return realTimeout(() => realTimeout(fn, 0, ...a), ms + 2000); };
@@ -150,7 +144,7 @@ function check(cond, name, detail) {
   await scenario('fast-forward', async page => {
     await page.evaluate(STEPS);
     const r = await page.evaluate(async () => {
-      const C = window.__CORTEX__, p = C.getTimelinePlayer();
+      const C = window.__CORTEX__, p = C.session.getTimelinePlayer();
       const applied = [];
       p.onStep = i => applied.push(i);
       p.play();
@@ -172,8 +166,8 @@ function check(cond, name, detail) {
   await scenario('loop', async page => {
     await page.evaluate(STEPS);
     const r = await page.evaluate(async () => {
-      const C = window.__CORTEX__, p = C.getTimelinePlayer();
-      C.timelineState.loop = true;
+      const C = window.__CORTEX__, p = C.session.getTimelinePlayer();
+      C.session.timelineState.loop = true;
       const applied = [];
       p.onStep = i => applied.push(i);
       p.play();
@@ -190,7 +184,7 @@ function check(cond, name, detail) {
   await scenario('pausa y reanudación', async page => {
     await page.evaluate(STEPS);
     const r = await page.evaluate(async () => {
-      const C = window.__CORTEX__, p = C.getTimelinePlayer();
+      const C = window.__CORTEX__, p = C.session.getTimelinePlayer();
       p.play();
       await new Promise(r => setTimeout(r, 600));
       p.pause();
@@ -216,15 +210,15 @@ function check(cond, name, detail) {
   await scenario('edición de duración', async page => {
     await page.evaluate(STEPS);
     const r = await page.evaluate(async () => {
-      const C = window.__CORTEX__, p = C.getTimelinePlayer();
+      const C = window.__CORTEX__, p = C.session.getTimelinePlayer();
       p.play();
       await new Promise(r => setTimeout(r, 200));
-      C.timelineState.steps[0].durationSeconds = 6;
+      C.session.timelineState.steps[0].durationSeconds = 6;
       p.reschedule();
       const after = p.remainingMs;
       await new Promise(r => setTimeout(r, 1400));
       const stillFirst = p.index, remLater = p.remainingMs;
-      C.timelineState.steps[0].durationSeconds = 0.2;
+      C.session.timelineState.steps[0].durationSeconds = 0.2;
       p.reschedule();
       p.catchUp();
       const idx = p.index, running = p.running, rem = p.remainingMs;
@@ -242,7 +236,7 @@ function check(cond, name, detail) {
   await scenario('limpieza', async page => {
     await page.evaluate(STEPS);
     const r = await page.evaluate(async () => {
-      const C = window.__CORTEX__, p = C.getTimelinePlayer();
+      const C = window.__CORTEX__, p = C.session.getTimelinePlayer();
       const applied = [];
       p.onStep = i => applied.push(i);
       p.play();
@@ -267,7 +261,7 @@ function check(cond, name, detail) {
   await scenario('resync de visibilidad', async page => {
     await page.evaluate(STEPS);
     const r = await page.evaluate(async () => {
-      const C = window.__CORTEX__, p = C.getTimelinePlayer();
+      const C = window.__CORTEX__, p = C.session.getTimelinePlayer();
       p.play();
       await new Promise(r => setTimeout(r, 100));
       p.clearTick(); p.clearTimer();
@@ -296,8 +290,8 @@ function check(cond, name, detail) {
   await scenario('timeline vacío', async page => {
     const r = await page.evaluate(() => {
       const C = window.__CORTEX__;
-      C.timelineState.steps = [];
-      const p = C.getTimelinePlayer();
+      C.session.timelineState.steps = [];
+      const p = C.session.getTimelinePlayer();
       const started = p.play();
       return { started, running: p.running, status: document.getElementById('timelineStatus').textContent };
     });
@@ -308,7 +302,7 @@ function check(cond, name, detail) {
   await browser.close();
 
   for (const r of results) if (!r.pass) failures.push(r.name);
-  fs.writeFileSync(path.join(process.cwd(), 'artifacts', `timeline-scheduling-${engineName}.json`),
+  fs.writeFileSync(path.join(artifactsDir, `timeline-scheduling-${engineName}.json`),
     JSON.stringify({ engine: engineName, total: results.length, failed: failures.length, results }, null, 2));
 
   console.log(`\n${results.length - failures.length}/${results.length} verificaciones OK`);
