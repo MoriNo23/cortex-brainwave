@@ -228,7 +228,9 @@ async function centroDelFlash(page) {
   /* ── 7. Pestaña oculta: nada de flash congelado encendido ── */
   await page.evaluate(() => window.__CORTEX__.strobe.setStrobeCustomHz(4));
   await page.waitForTimeout(60);
-  const otra = await page.context().newPage();
+  /* Ojo: `page.context().newPage()` lanza "Please use browser.newContext()"
+     cuando la página se abrió con `browser.newPage()`. */
+  const otra = await browser.newPage();
   await otra.goto('about:blank');
   await otra.bringToFront();
   await page.waitForTimeout(400);
