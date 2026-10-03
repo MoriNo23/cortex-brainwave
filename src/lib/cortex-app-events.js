@@ -4,6 +4,7 @@ export function createAppEventsController({
   runtimeState,
   engine,
   markUiDirty,
+  updateBrain,
   toggleDock,
   bindStrobeEvents,
   bindSettingsEvents,
