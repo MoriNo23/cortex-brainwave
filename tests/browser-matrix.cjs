@@ -65,7 +65,8 @@ async function runEngine(name, browserType) {
     await page.waitForTimeout(80);
     const first = await page.locator('#statusText').innerText();
     await page.click('#btnPlay');
-    await page.waitForTimeout(80);
+    const duringStop = await page.locator('#statusText').innerText();
+    await page.waitForFunction(() => document.getElementById('statusText').textContent === 'detenido', null, { timeout: 5000 });
     const second = await page.locator('#statusText').innerText();
     await page.click('#btnPlay');
     await page.waitForTimeout(80);
@@ -83,12 +84,12 @@ async function runEngine(name, browserType) {
 
     const failures = [];
     if (!dom.hasTestApi || !dom.hasPlay || !dom.noHorizontalOverflow || !dom.radarDataUrl) failures.push(`DOM/Canvas: ${JSON.stringify(dom)}`);
-    if (first !== 'reproduciendo' || second !== 'detenido' || third !== 'reproduciendo') failures.push(`lifecycle: ${first}/${second}/${third}`);
+    if (first !== 'reproduciendo' || duringStop !== 'deteniendo suave' || second !== 'detenido' || third !== 'reproduciendo') failures.push(`lifecycle: ${first}/${duringStop}/${second}/${third}`);
     if (!downloadOk) failures.push(`WAV parse invalid: ${wavError}`);
     if (wav && (wav.channels !== 2 || wav.sampleRate !== 44100 || wav.durationSeconds < 59.9 || wav.durationSeconds > 60.1)) failures.push(`WAV metadata: ${JSON.stringify(wav)}`);
     if (wav && (wav.nonFinite !== 0 || wav.rms.some(v => v <= 0.0001) || wav.peaks.some(v => v > 1.00001) || wav.clipRate.some(v => v > 0.01))) failures.push(`WAV samples: ${JSON.stringify(wav)}`);
     if (errors.length) failures.push(`errors=${errors.join(' | ')}`);
-    return { engine: name, status: failures.length ? 'FAIL' : 'PASS', dom, lifecycle: { first, second, third }, downloadOk, wav, errors, failures };
+    return { engine: name, status: failures.length ? 'FAIL' : 'PASS', dom, lifecycle: { first, duringStop, second, third }, downloadOk, wav, errors, failures };
   } catch (error) {
     return { engine: name, status: 'FAIL', reason: error.message, errors };
   } finally {

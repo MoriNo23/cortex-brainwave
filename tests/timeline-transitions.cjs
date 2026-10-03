@@ -189,7 +189,92 @@ const SETUP = `(() => {
     check(Math.abs(r.resumed - 2) < 0.05, 'reanudar completa la rampa hasta el destino', 'bw=' + r.resumed.toFixed(2));
   });
 
-  // 6. Unidades s/min en la UI
+  // 6. Stop suave manual fuera del timeline
+  await scenario('stop suave manual', async page => {
+    const r = await page.evaluate(async () => {
+      const C = window.__CORTEX__;
+      C.state.stopBehavior = { targetBand: 'delta', fadeSeconds: 1.2 };
+      C.renderStopControls();
+      C.applyAudioState({ brainwave:20, carrier:240, amod:0, binaural:0, stereo:0, fmod:0, noise:0, mix:80 });
+      document.getElementById('btnPlay').click();
+      await new Promise(r => setTimeout(r, 250));
+      const mid = {
+        status: document.getElementById('statusText').textContent,
+        playing: C.state.playing,
+        bw: C.state.brainwave,
+        mix: C.state.mix,
+      };
+      await new Promise((resolve, reject) => {
+        const started = performance.now();
+        const poll = () => {
+          if (document.getElementById('statusText').textContent === 'detenido') return resolve();
+          if (performance.now() - started > 4000) return reject(new Error('timeout esperando detener manual'));
+          setTimeout(poll, 25);
+        };
+        poll();
+      });
+      return {
+        mid,
+        final: {
+          playing: C.state.playing,
+          bw: C.state.brainwave,
+          mix: C.state.mix,
+          button: document.getElementById('btnPlay').textContent.trim(),
+        }
+      };
+    });
+    check(r.mid.status === 'deteniendo suave', 'el stop manual expone el estado intermedio', r.mid.status);
+    check(r.mid.playing === true, 'durante el fade sigue marcado como reproduciendo', JSON.stringify(r.mid));
+    check(r.mid.bw < 20 && r.mid.bw > 2, 'la brainwave cae gradualmente hacia el destino', r.mid.bw.toFixed(2));
+    check(r.mid.mix < 80 && r.mid.mix > 0, 'el mix cae gradualmente antes del corte', r.mid.mix.toFixed(2));
+    check(r.final.playing === false && Math.abs(r.final.bw - 2) < 0.1, 'al finalizar queda detenido en la banda objetivo', JSON.stringify(r.final));
+    check(r.final.mix === 80 && r.final.button === '▶ Iniciar', 'el mix del control se restaura para la próxima sesión', JSON.stringify(r.final));
+  });
+
+  // 7. Stop suave desde el botón del timeline
+  await scenario('stop suave del timeline', async page => {
+    await page.evaluate(SETUP);
+    const r = await page.evaluate(async () => {
+      const C = window.__CORTEX__, p = C.getTimelinePlayer();
+      C.state.stopBehavior = { targetBand: 'theta', fadeSeconds: 1 };
+      C.renderStopControls();
+      p.play();
+      await new Promise(r => setTimeout(r, 250));
+      document.getElementById('btnTimelineStop').click();
+      await new Promise(r => setTimeout(r, 120));
+      const mid = {
+        running: p.running,
+        paused: p.paused,
+        status: document.getElementById('statusText').textContent,
+        timeline: document.getElementById('timelineStatus').textContent,
+        playing: C.state.playing,
+      };
+      await new Promise((resolve, reject) => {
+        const started = performance.now();
+        const poll = () => {
+          if (document.getElementById('statusText').textContent === 'detenido') return resolve();
+          if (performance.now() - started > 4000) return reject(new Error('timeout esperando detener timeline'));
+          setTimeout(poll, 25);
+        };
+        poll();
+      });
+      return {
+        mid,
+        final: {
+          playing: C.state.playing,
+          bw: C.state.brainwave,
+          timeline: document.getElementById('timelineStatus').textContent,
+        }
+      };
+    });
+    check(r.mid.running === false && r.mid.paused === false, 'el player del timeline se detiene enseguida', JSON.stringify(r.mid));
+    check(r.mid.status === 'deteniendo suave' && r.mid.playing === true, 'el audio entra en fade tras detener el timeline', JSON.stringify(r.mid));
+    check(r.mid.timeline.includes('Deteniendo suavemente hacia Theta'), 'el status del timeline explica el aterrizaje', r.mid.timeline);
+    check(r.final.playing === false && Math.abs(r.final.bw - 6) < 0.1, 'el stop del timeline cae en la banda elegida', JSON.stringify(r.final));
+    check(r.final.timeline.includes('Timeline detenido suavemente en Theta'), 'el timeline confirma el aterrizaje final', r.final.timeline);
+  });
+
+  // 8. Unidades s/min en la UI
   await scenario('unidades de duración', async page => {
     await page.evaluate(SETUP);
     const r = await page.evaluate(async () => {
@@ -224,7 +309,7 @@ const SETUP = `(() => {
     check(r.transHint.includes('2 s'), 'la pista de transición muestra el equivalente', r.transHint);
   }, { needsClock: false });
 
-  // 7. Persistencia de la configuración y de las duraciones editadas
+  // 9. Persistencia de la configuración y de las duraciones editadas
   // Nota: cada escenario de esta suite abre una página en un contexto NUEVO
   // (browser.newPage()), así que el localStorage NO viaja entre escenarios.
   // Este escenario debe ser autosuficiente: edita, persiste y recarga.
@@ -241,6 +326,12 @@ const SETUP = `(() => {
       input.dispatchEvent(new Event('change', { bubbles: true }));
       C.timelineState.transition.seconds = 5;
       C.persistTimeline();
+      const stopBand = document.getElementById('stopTargetBand');
+      stopBand.value = 'gamma';
+      stopBand.dispatchEvent(new Event('change', { bubbles: true }));
+      const stopFade = document.getElementById('stopFadeSeconds');
+      stopFade.value = '3.5';
+      stopFade.dispatchEvent(new Event('change', { bubbles: true }));
     });
     await page.reload({ waitUntil: 'networkidle' });
     await page.waitForFunction(() => typeof window.__CORTEX__ === 'object');
@@ -252,14 +343,17 @@ const SETUP = `(() => {
         steps: C.timelineState.steps.length,
         firstDuration: C.timelineState.steps[0] && C.timelineState.steps[0].durationSeconds,
         unit: C.timelineState.durationUnits.step,
+        stopBand: C.state.stopBehavior.targetBand,
+        stopFade: C.state.stopBehavior.fadeSeconds,
       };
     });
     check(r.seconds === 5 && r.enabled === true, 'la configuración de transición sobrevive la recarga', JSON.stringify(r));
     check(r.firstDuration === 120, 'la duración editada en minutos sobrevive', 'primera=' + r.firstDuration);
     check(r.unit === 'min', 'la unidad elegida también sobrevive', 'unidad=' + r.unit);
+    check(r.stopBand === 'gamma' && r.stopFade === 3.5, 'el stop suave también sobrevive la recarga', JSON.stringify(r));
   }, { needsClock: false });
 
-  // 8. Datos previos sin campos de transición cargan con defaults
+  // 10. Datos previos sin campos de transición cargan con defaults
   await scenario('datos legacy', async page => {
     const r = await page.evaluate(() => {
       const C = window.__CORTEX__;
