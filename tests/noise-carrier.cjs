@@ -10,6 +10,8 @@ const {
   startAudioClock,
 } = require('./cortex-browser-helpers.cjs');
 
+const outDir = ensureArtifactsDir();
+
 (async () => {
   const launch = await launchBrowserOrReport({
     browserType: chromium,
