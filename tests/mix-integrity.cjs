@@ -2,6 +2,9 @@
    Spec: openspec/changes/fix-timeline-mix-reset/specs/audio-mix-integrity/spec.md
    Node puro: sin navegador y sin npm install. Importa el fuente real de src/lib con un
    motor de audio y un reloj simulados, igual que tests/strobe-worker.cjs hace con el Worker. */
+const fs = require('fs');
+const path = require('path');
+
 const results = [];
 function check(cond, name, detail) {
   results.push({ name, pass: !!cond });
@@ -167,6 +170,30 @@ function makeEngine() {
   }
   await gentleStopScenario('rAF normal', 'normal');
   await gentleStopScenario('pestaña oculta', 'hidden');
+
+  /* Anclaje de las rampas del motor: el requisito exige que cada rampa parte
+     del valor actual del parámetro, o una rampa encadenada arranca del último
+     objetivo programado y el salto se oye. El único sitio con `.linearRamp`
+     permitido es el helper `rampTo`, que ancla antes con `setValueAtTime`;
+     cualquier rampa fuera de él es un salto potencial. Igual que strobe-worker,
+     se lee el fuente real en vez de simularlo. */
+  const engineSrc = fs.readFileSync(
+    path.join(__dirname, '..', 'src', 'lib', 'cortex-audio-engine.js'),
+    'utf8',
+  );
+  const rampasTotales = (engineSrc.match(/\.linearRampToValueAtTime\(/g) || []).length;
+  const anclajes = (engineSrc.match(/\.setValueAtTime\(/g) || []).length;
+  const rampasAncladas = (engineSrc.match(/\brampTo\(/g) || []).length - 1; // -1: la definición
+  check(
+    rampasTotales === 1 && anclajes === 1,
+    'rampas del motor: la única rampa del código es la del helper anclado',
+    `linearRamp=${rampasTotales} (se admite 1, la del helper) setValueAtTime=${anclajes}`,
+  );
+  check(
+    rampasAncladas > 0,
+    'rampas del motor: todo cambio pasa por rampTo, que ancla al valor actual',
+    `rampTo() llamadas=${rampasAncladas}`,
+  );
 
   const failed = results.filter((r) => !r.pass);
   console.log(`\n${results.length - failed.length}/${results.length} comprobaciones OK`);

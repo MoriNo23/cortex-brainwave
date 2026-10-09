@@ -52,7 +52,7 @@ The system SHALL interpret stored timeline steps and custom presets safely: a ca
 - **AND** the stored data is not required to be rewritten
 
 ### Requirement: Las rampas del motor parten del valor actual
-The system SHOULD anchor each audio parameter ramp at the parameter's current value so that chained ramps do not produce jumps.
+The system SHALL anchor each audio parameter ramp at the parameter's current value so that chained ramps do not produce jumps.
 
 #### Scenario: Transición larga
 - **WHEN** a transition between two steps runs for several seconds

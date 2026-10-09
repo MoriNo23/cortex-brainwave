@@ -1,5 +1,13 @@
 const AUDIO_RAMP_SECONDS = 0.05;
 
+/* Ancla la rampa al valor que el parámetro tiene ahora mismo. Sin ese
+   anclaje, una rampa encadenada parte del último objetivo programado y no
+   de donde está realmente el sonido: al solaparse, el salto se oye. */
+function rampTo(param, value, t) {
+  param.setValueAtTime(param.value, t);
+  param.linearRampToValueAtTime(value, t + AUDIO_RAMP_SECONDS);
+}
+
 export function noiseFilterDepthValue(carrier, fmod, sampleRate) {
   const maxFrequency = sampleRate * 0.45;
   const center = Math.min(Math.max(carrier, 20), maxFrequency);
@@ -237,22 +245,22 @@ export class AudioEngine {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
     const filterCenter = Math.min(Math.max(freq, 20), this.ctx.sampleRate * 0.45);
-    this.nodes.carrierOsc.frequency.linearRampToValueAtTime(freq, t + AUDIO_RAMP_SECONDS);
-    this.nodes.binOscL.frequency.linearRampToValueAtTime(freq, t + AUDIO_RAMP_SECONDS);
-    this.nodes.binOscR.frequency.linearRampToValueAtTime(freq + this.state.brainwave, t + AUDIO_RAMP_SECONDS);
-    this.nodes.stereoOsc.frequency.linearRampToValueAtTime(freq, t + AUDIO_RAMP_SECONDS);
-    this.nodes.noiseFilterL.frequency.linearRampToValueAtTime(filterCenter, t + AUDIO_RAMP_SECONDS);
-    this.nodes.noiseFilterR.frequency.linearRampToValueAtTime(filterCenter, t + AUDIO_RAMP_SECONDS);
-    this.nodes.noiseFilterDepth.gain.linearRampToValueAtTime(noiseFilterDepthValue(freq, this.state.fmod, this.ctx.sampleRate), t + AUDIO_RAMP_SECONDS);
+    rampTo(this.nodes.carrierOsc.frequency, freq, t);
+    rampTo(this.nodes.binOscL.frequency, freq, t);
+    rampTo(this.nodes.binOscR.frequency, freq + this.state.brainwave, t);
+    rampTo(this.nodes.stereoOsc.frequency, freq, t);
+    rampTo(this.nodes.noiseFilterL.frequency, filterCenter, t);
+    rampTo(this.nodes.noiseFilterR.frequency, filterCenter, t);
+    rampTo(this.nodes.noiseFilterDepth.gain, noiseFilterDepthValue(freq, this.state.fmod, this.ctx.sampleRate), t);
   }
 
   updateBrainwave(freq) {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
-    this.nodes.amLfo.frequency.linearRampToValueAtTime(freq, t + AUDIO_RAMP_SECONDS);
-    this.nodes.stereoLfo.frequency.linearRampToValueAtTime(freq, t + AUDIO_RAMP_SECONDS);
-    this.nodes.fmLfo.frequency.linearRampToValueAtTime(freq, t + AUDIO_RAMP_SECONDS);
-    this.nodes.binOscR.frequency.linearRampToValueAtTime(this.state.carrier + freq, t + AUDIO_RAMP_SECONDS);
+    rampTo(this.nodes.amLfo.frequency, freq, t);
+    rampTo(this.nodes.stereoLfo.frequency, freq, t);
+    rampTo(this.nodes.fmLfo.frequency, freq, t);
+    rampTo(this.nodes.binOscR.frequency, this.state.carrier + freq, t);
   }
 
   updateModLevels() {
@@ -260,16 +268,16 @@ export class AudioEngine {
     const state = this.state;
     const t = this.ctx.currentTime;
     const o = this.nodes;
-    o.amLfoGain.gain.linearRampToValueAtTime(state.amod / 100, t + AUDIO_RAMP_SECONDS);
+    rampTo(o.amLfoGain.gain, state.amod / 100, t);
     const binLevel = state.binaural / 100 * 0.5;
-    o.binGainL.gain.linearRampToValueAtTime(binLevel, t + AUDIO_RAMP_SECONDS);
-    o.binGainR.gain.linearRampToValueAtTime(binLevel, t + AUDIO_RAMP_SECONDS);
-    o.stereoGain.gain.linearRampToValueAtTime(state.stereo / 100 * 0.5, t + AUDIO_RAMP_SECONDS);
-    o.stereoLfoGain.gain.linearRampToValueAtTime(state.stereo / 100, t + AUDIO_RAMP_SECONDS);
-    o.fmLfoDepth.gain.linearRampToValueAtTime(state.fmod / 100 * 20, t + AUDIO_RAMP_SECONDS);
-    o.carrierGain.gain.linearRampToValueAtTime(0.25 * (1 - state.noise / 100), t + AUDIO_RAMP_SECONDS);
-    o.noiseBlendGain.gain.linearRampToValueAtTime(0.25 * (state.noise / 100), t + AUDIO_RAMP_SECONDS);
-    o.noiseFilterDepth.gain.linearRampToValueAtTime(noiseFilterDepthValue(state.carrier, state.fmod, this.ctx.sampleRate), t + AUDIO_RAMP_SECONDS);
-    o.masterGain.gain.linearRampToValueAtTime(state.mix / 100 * 0.5, t + AUDIO_RAMP_SECONDS);
+    rampTo(o.binGainL.gain, binLevel, t);
+    rampTo(o.binGainR.gain, binLevel, t);
+    rampTo(o.stereoGain.gain, state.stereo / 100 * 0.5, t);
+    rampTo(o.stereoLfoGain.gain, state.stereo / 100, t);
+    rampTo(o.fmLfoDepth.gain, state.fmod / 100 * 20, t);
+    rampTo(o.carrierGain.gain, 0.25 * (1 - state.noise / 100), t);
+    rampTo(o.noiseBlendGain.gain, 0.25 * (state.noise / 100), t);
+    rampTo(o.noiseFilterDepth.gain, noiseFilterDepthValue(state.carrier, state.fmod, this.ctx.sampleRate), t);
+    rampTo(o.masterGain.gain, state.mix / 100 * 0.5, t);
   }
 }
