@@ -12,10 +12,7 @@ const REPORTE = path.join(RAIZ, 'artifacts', 'light-verify.json');
 
 /* Registro de chequeos. Todos leen archivos del repo: ninguno lanza un motor. */
 const CHEQUOS = [
-  { id: 'inline-syntax', ruta: 'checks/inline-syntax.cjs' },
-  { id: 'self-contained', ruta: 'checks/self-contained.cjs' },
   { id: 'dom-references', ruta: 'checks/dom-references.cjs' },
-  { id: 'scenario-runner-shape', ruta: 'checks/scenario-runner-shape.cjs' },
 ];
 
 async function cargar(fn) {

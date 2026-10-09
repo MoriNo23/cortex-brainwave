@@ -1,7 +1,7 @@
 # AGENTS.md
 
 Reglas del proyecto para agentes y personas que trabajen en **Cortex Brainwave Audio**.
-La app es un HTML autónomo: `cortex.html` no usa bundler ni dependencias de producción.
+La app es una shell **Astro** (`src/`): el audio, el timeline y los visuales viven en módulos de navegador en `src/lib`.
 
 ## Verificación: todo va por CI
 
@@ -52,14 +52,6 @@ reporta, ni aunque el comando exista en `package.json`.
 
 ## Límites conocidos
 
-- **`self-contained` no ve las fuentes web.** `cortex.html:8` hace
-  `@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Serif…')`. El chequeo
-  cubre `<script src>`, `<link href>`, `fetch` y `XMLHttpRequest`, no los `@import` de CSS:
-  es una dependencia remota conocida y documentada, no un descuido. Sin red la app no se
-  rompe — el stack ya declara fallback (`'Inter', system-ui, sans-serif`) y degrada a
-  fuentes del sistema. Autoalojar el subset `latin` costaría ~279 KB en base64 sobre un
-  archivo que hoy pesa 103 KB.
-- **`inline-syntax` valida sintaxis, no semántica.** Un error de runtime sigue escapando.
 - **`dom-references` cubre dos patrones**, `getElementById('x')` y `$('#x')`. No interpreta
   selectores CSS completos, a propósito: los falsos positivos erosionan la señal.
 - **Firefox en CI no puede correr los escenarios de timeline.** Un runner headless no tiene

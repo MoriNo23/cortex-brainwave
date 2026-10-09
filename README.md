@@ -41,10 +41,8 @@ corre cuatro jobs en cada push y en cada pull request:
 | `motores` | Timeline y UI en Chromium, Firefox y WebKit |
 | `matriz` | `browser-matrix.cjs` con ciclo de vida de audio y exportación WAV |
 
-El job `ligero` es la señal rápida: análisis estático, sin ejecutar la app. Comprueba la
-sintaxis del JavaScript inline, que la app siga siendo autónoma, que los ids que el script pide
-existan en el markup, y que cada entrada del arreglo `TESTS` de `cortex.spec.html` declare
-`group`, `name` y `fn`. Su reporte se descarga del artifact `light-verify` de la corrida.
+El job `ligero` es la señal rápida: análisis estático, sin ejecutar la app. Comprueba que los ids que el script pide
+existan en los componentes de `src/`. Su reporte se descarga del artifact `light-verify` de la corrida.
 
 Un verde de `ligero` **no es** el verde de la suite con navegador: son jobs distintos de la
 misma corrida, y un fallo de comportamiento aparece en `suite`, `motores` o `matriz`.
@@ -52,9 +50,8 @@ misma corrida, y un fallo de comportamiento aparece en `suite`, `motores` o `mat
 ### GitHub Pages
 
 [`.github/workflows/pages.yml`](https://github.com/MoriNo23/cortex-brainwave/actions/workflows/pages.yml)
-publica `cortex.html` en GitHub Pages cuando CI da verde en `main` (y a mano con
-`workflow_dispatch`). La copia a `index.html` ocurre en el pipeline: el repo mantiene una
-única fuente de verdad y el sitio nunca muestra una versión sin verde. Para activarlo hay que
+publica la build de Astro (`dist/`) en GitHub Pages cuando CI da verde en `main` (y a mano con
+`workflow_dispatch`). La build ocurre en el pipeline y el sitio nunca muestra una versión sin verde. Para activarlo hay que
 habilitar Pages una sola vez en **Settings → Pages → Source: GitHub Actions**; el sitio queda
 en `https://morino23.github.io/cortex-brainwave/`.
 
@@ -62,22 +59,20 @@ Un fallo se descubre en CI y no antes del push. Es un intercambio consciente: el
 tarda unos minutos más en aparecer, a cambio de que la máquina de trabajo no se use para
 verificar nunca.
 
-Tres límites conocidos, documentados en `cortex-stability-report.md` y `AGENTS.md`:
+Dos límites conocidos, documentados en `cortex-stability-report.md` y `AGENTS.md`:
 
 - En CI, Firefox no puede correr los escenarios de timeline: un runner headless no tiene dispositivo de audio y su `AudioContext` queda suspendido. Los tests lo omiten con un mensaje explícito en vez de dar un verde vacío.
 - Ninguna prueba automatizada reproduce el estrangulamiento real de temporizadores del navegador; la suite simula el retraso de los timers de la página.
-- `self-contained` no ve las fuentes web: `cortex.html:8` hace `@import` de Google Fonts. Es una dependencia remota conocida; sin red la app degrada a fuentes del sistema, no se rompe.
 
 ### Los scripts `test:*`
 
-`package.json` sigue declarando `npm test` y los `test:*` de Playwright, que documentan cómo se
+`package.json` sigue declarando los `test:*` de Playwright, que documentan cómo se
 ejecuta la suite en un entorno con dependencias instaladas. Ya no son el camino de verificación
 y no se invocan por omisión:
 
 ```bash
 npm install                # Playwright y sus motores
 npm run serve              # servidor en 127.0.0.1:4173
-npm test                   # suite in-page (cortex.spec.html)
 npm run test:timeline      # programación temporal sobre el reloj de audio
 npm run test:ui            # estabilidad de UI ante interacción rápida
 npm run test:matrix        # matriz Chromium/Firefox/WebKit

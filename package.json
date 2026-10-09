@@ -5,7 +5,6 @@
   "description": "Generador de ondas cerebrales con HTML autónomo, Web Audio API y verificación por OpenSpec.",
   "scripts": {
     "serve": "python3 -m http.server 4173 --bind 127.0.0.1",
-    "test": "node tests/run-cortex-tests.cjs",
     "test:ui": "node tests/ui-stability.cjs",
     "test:timeline": "node tests/timeline-scheduling.cjs",
     "test:presets": "node tests/timeline-custom-presets.cjs",

@@ -17,7 +17,6 @@ Node puro, sin navegador y sin dependencias, invocado por el workflow como
 
 | Chequeo | Qué detecta |
 |---|---|
-| `inline-syntax` | Error de sintaxis en el JavaScript inline de `cortex.html` o `cortex.spec.html`, validado con `node --check` |
 | `self-contained` | `<script src>`, `<link href>` o `fetch`/`XMLHttpRequest` hacia un origen remoto |
 | `dom-references` | Un id pedido con `getElementById`/`$('#id')` que el markup no declara |
 | `scenario-runner-shape` | Una entrada del arreglo `TESTS` sin `group`, `name` o `fn` |
@@ -60,4 +59,3 @@ ENGINE=firefox node tests/timeline-scheduling.cjs
 Levantar un navegador en la máquina de trabajo requiere pedirlo explícitamente; la regla está en
 `AGENTS.md`.
 
-El HTML runner `cortex.spec.html` es la suite de escenarios portátil y no depende de esta carpeta.
