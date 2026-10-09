@@ -64,6 +64,11 @@ reporta, ni aunque el comando exista en `package.json`.
 - **Firefox en CI no puede correr los escenarios de timeline.** Un runner headless no tiene
   dispositivo de audio y su `AudioContext` queda suspendido; los tests lo omiten con un
   mensaje explícito en vez de dar un verde vacío. Detalle en `cortex-stability-report.md`.
+- **Ningún runner headless oculta una pestaña.** Chromium arranca con `--headless` (modo
+  antiguo), sin gestor de ventanas: `bringToFront` no deja a la pestaña anterior en
+  `document.hidden`. El escenario de «flash congelado con la pestaña oculta» en
+  `strobe-visuals.cjs` se reporta en `skipped`, no en `failures`, porque el entorno no puede
+  montarlo; verificarlo requiere un navegador real.
 - **Ningún test automatizado reproduce el estrangulamiento real de temporizadores.** La suite
   simula el retraso de los timers de la página.
 - **La escucha humana sigue siendo necesaria.** Protocolo en
