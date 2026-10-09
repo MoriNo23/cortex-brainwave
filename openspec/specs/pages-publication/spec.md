@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Define cómo la app autónoma llega al público: la publicación en GitHub Pages es un despliegue que sigue al verde de CI, nunca lo reemplaza, y nunca duplica la fuente de verdad del repo.
+Define cómo la app llega al público: la build de Astro ocurre en el pipeline de GitHub Pages, el artefacto de despliegue es la única copia del sitio, y el despliegue sigue al verde de CI nunca lo reemplaza.
 
 ## Requirements
 
@@ -11,7 +11,7 @@ The publication workflow SHALL deploy the app to GitHub Pages only after the CI 
 
 #### Scenario: CI verde en main
 - **WHEN** the CI workflow completes successfully on `main`
-- **THEN** the publication workflow deploys the current `cortex.html`
+- **THEN** the publication workflow builds the Astro shell and deploys `dist/`
 - **AND** the site serves that version
 
 #### Scenario: CI rojo en main
@@ -25,16 +25,17 @@ The publication workflow SHALL deploy the app to GitHub Pages only after the CI 
 - **AND** the deployment is recorded as manual in the run history
 
 ### Requirement: Una sola fuente de verdad
-The publication SHALL produce the site's entry file by copying `cortex.html` at deploy time. The repository MUST NOT contain a duplicate `index.html`, and the deployed site MUST NOT require a build step, external libraries, or services beyond the app's documented dependencies.
+The publication SHALL build the Astro shell at deploy time and publish the result of that build. The repository MUST NOT contain a duplicate built `index.html`, and the built site MUST NOT require a server, external libraries, or services beyond the app's documented dependencies. The build happens only in the pipeline; the repository keeps `src/` as its single source of truth.
 
-#### Scenario: Copia en el pipeline
+#### Scenario: Build en el pipeline
 - **WHEN** the publication workflow prepares the site
-- **THEN** it copies `cortex.html` as the site's index
-- **AND** the copy exists only in the deployment artifact, not in the repository
+- **THEN** it runs `npx astro build` with `PAGES_BASE=/cortex-brainwave`
+- **AND** it uploads `dist/` as the deployment artifact
+- **AND** `dist/` exists only in the artifact, not in the repository
 
-#### Scenario: La app publicada es la autónoma
-- **WHEN** a visitor opens the published site
-- **THEN** it behaves as the standalone app: no bundler, no server-side logic
+#### Scenario: La app publicada carga bajo el subpath
+- **WHEN** a visitor opens the published site under `/cortex-brainwave/`
+- **THEN** assets resolve correctly because `base` was set at build time
 - **AND** audio still requires a user gesture, as in any browser
 
 ### Requirement: El despliegue no tapa al anterior ni escala permisos

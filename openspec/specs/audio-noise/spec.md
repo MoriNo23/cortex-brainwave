@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Define el control `Noise` como portadora de ruido filtrada y modulable alrededor del `Carrier`, con la ruta en vivo y la de exportación WAV en acuerdo, el ciclo de vida seguro y la app mantenida como HTML autónomo.
+Define el control `Noise` como portadora de ruido filtrada y modulable alrededor del `Carrier`, con la ruta en vivo y la de exportación WAV en acuerdo, el ciclo de vida seguro y la app mantenida sobre Web Audio nativo sin dependencias de ejecución.
 
 ## Requirements
 
@@ -49,9 +49,9 @@ The new noise sources and filters MUST participate in the existing start-stop-st
 - **AND** the browser reports no page errors
 
 ### Requirement: Portable implementation
-The change MUST keep Cortex as a standalone HTML app with native Web Audio APIs and MUST NOT add a production framework or runtime package.
+The change MUST keep Cortex on native Web Audio APIs running in the browser. It MUST NOT add a runtime package that the published site depends on at runtime; a build step producing static output is allowed, and Web Audio APIs MUST be used directly rather than through an audio framework.
 
 #### Scenario: Open the app without a project install
-- **WHEN** a user opens `cortex.html` in a modern browser
+- **WHEN** a user opens the app in a modern browser
 - **THEN** the noise path is available after the user gesture that starts audio
 - **AND** no npm install or backend is required

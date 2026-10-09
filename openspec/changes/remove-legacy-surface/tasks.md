@@ -15,4 +15,4 @@
 - [ ] 3.2 Leer el primer CI: si `dom-references` da falsos positivos (ids generados por JS que el patrón no ve), ampliar `DECLARACIONES` en vez de relajar el chequeo.
 
 ## 4. Deuda de specs
-- [ ] 4.1 Actualizar o archivar los requisitos vigentes que todavía nombran `cortex.html` / `cortex.spec.html`.
+- [x] 4.1 Actualizar o archivar los requisitos vigentes que todavía nombran `cortex.html` / `cortex.spec.html`.

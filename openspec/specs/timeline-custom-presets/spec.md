@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Define el timeline de pasos con presets personalizados: una secuencia arbitraria y ordenada con duraciones propias, reproducción con loop, seguridad del ciclo de audio, y la creación, uso y persistencia de presets con identidad visual y banda autoidentificada — todo dentro del HTML autónomo y con controles accesibles por teclado.
+Define el timeline de pasos con presets personalizados: una secuencia arbitraria y ordenada con duraciones propias, reproducción con loop, seguridad del ciclo de audio, y la creación, uso y persistencia de presets con identidad visual y banda autoidentificada — todo dentro de la app y con controles accesibles por teclado.
 
 ## Requirements
 
@@ -63,12 +63,12 @@ The application MUST allow the user to create, name, save, edit, use and delete 
 - **AND** the band label is not treated as a medical diagnosis
 
 #### Scenario: Persist custom presets
-- **WHEN** the user reloads the standalone HTML app
+- **WHEN** the user reloads the app
 - **THEN** valid custom presets and the saved timeline are restored from local storage
 - **AND** malformed or incompatible data is ignored without a page error
 
 ### Requirement: Dock controls are usable without a server or external dependency
-The timeline and custom preset UI MUST remain inside the standalone HTML app and MUST provide keyboard-accessible controls. The timeline lives in a permanent bottom dock instead of a modal dialog: no dialog covers the app and no focus trap applies.
+The timeline and custom preset UI MUST remain inside the app itself and MUST provide keyboard-accessible controls. The timeline lives in a permanent bottom dock instead of a modal dialog: no dialog covers the app and no focus trap applies.
 
 #### Scenario: Keyboard behavior
 - **WHEN** the user interacts with the dock
