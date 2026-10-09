@@ -43,7 +43,12 @@ async function centroDelFlash(page) {
   if (launch.blocked) process.exit(0);
 
   const browser = launch.browser;
-  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  /* Un solo contexto para las dos pestañas. `browser.newPage()` crea un
+     contexto propio con `_ownerPage`, y añadirle una segunda pestaña lanza
+     "Please use browser.newContext()". Sin contexto común, traer la otra
+     pestaña al frente no oculta esta, y el paso 7 comprueba justamente eso. */
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await context.newPage();
   const capture = attachPageErrorCapture(page);
 
   await page.goto(`${cortexBaseUrl()}/`, { waitUntil: 'networkidle' });
@@ -153,7 +158,22 @@ async function centroDelFlash(page) {
     });
     if (box.alto > box.viewport) failures.push(`superficie-recortada-en-fullscreen=${JSON.stringify(box)}`);
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(300);
+    /* En headless la pulsación sintética de Escape no siempre surte efecto
+       sobre la pantalla completa. Se espera la transición de verdad y, si no
+       llega, se sale por la API para no arrastrar el estado al paso 6, donde
+       la app rechaza abrir la ventana flotante mientras haya fullscreen. */
+    const salio = await page
+      .waitForFunction(() => document.fullscreenElement === null, null, { timeout: 3000 })
+      .then(() => true)
+      .catch(() => false);
+    if (!salio) {
+      await page
+        .evaluate(() => (document.fullscreenElement ? document.exitFullscreen() : null))
+        .catch(() => {});
+      await page
+        .waitForFunction(() => document.fullscreenElement === null, null, { timeout: 3000 })
+        .catch(() => failures.push('fullscreen-sin-salir'));
+    }
   } else if (!/pantalla completa/i.test(fullscreen.toast)) {
     failures.push(`fullscreen-sin-aviso=${JSON.stringify(fullscreen)}`);
   }
@@ -228,9 +248,7 @@ async function centroDelFlash(page) {
   /* ── 7. Pestaña oculta: nada de flash congelado encendido ── */
   await page.evaluate(() => window.__CORTEX__.strobe.setStrobeCustomHz(4));
   await page.waitForTimeout(60);
-  /* Ojo: `page.context().newPage()` lanza "Please use browser.newContext()"
-     cuando la página se abrió con `browser.newPage()`. */
-  const otra = await browser.newPage();
+  const otra = await context.newPage();
   await otra.goto('about:blank');
   await otra.bringToFront();
   await page.waitForTimeout(400);
