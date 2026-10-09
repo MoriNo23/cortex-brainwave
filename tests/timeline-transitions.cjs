@@ -4,13 +4,18 @@
 const fs = require('fs');
 const path = require('path');
 const { chromium, firefox, webkit } = require('playwright');
+const {
+  attachPageErrorCapture,
+  ensureArtifactsDir,
+  gotoCortexApp,
+  launchOptionsForEngine,
+  startAudioClock,
+} = require('./cortex-browser-helpers.cjs');
 
 const engineName = process.env.ENGINE || 'chromium';
 const browserType = { chromium, firefox, webkit }[engineName];
 if (!browserType) throw new Error(`Unknown ENGINE: ${engineName}`);
-const URL = `http://127.0.0.1:${process.env.PORT || 4173}/cortex.html`;
-
-fs.mkdirSync(path.join(process.cwd(), 'artifacts'), { recursive: true });
+const artifactsDir = ensureArtifactsDir();
 
 const results = [];
 function check(cond, name, detail) {
@@ -20,32 +25,31 @@ function check(cond, name, detail) {
 
 const SETUP = `(() => {
   const C = window.__CORTEX__;
-  C.timelineState.steps = [
+  C.session.timelineState.steps = [
     { id:'s1', presetId:'builtin-delta', durationSeconds:4, snapshot:{ brainwave:2,  carrier:200, amod:0, binaural:0, stereo:0, fmod:0, noise:0, mix:80 }, name:'Delta', emoji:'D', band:'delta' },
     { id:'s2', presetId:'builtin-gamma', durationSeconds:4, snapshot:{ brainwave:40, carrier:400, amod:50, binaural:50, stereo:0, fmod:0, noise:0, mix:40 }, name:'Gamma', emoji:'G', band:'gamma' },
   ];
-  C.timelineState.loop = false;
-  C.timelineState.transition.enabled = true;
-  C.timelineState.transition.seconds = 2;
-  C.timelineState.durationUnits.step = 's';
-  C.timelineState.durationUnits.transition = 's';
+  C.session.timelineState.loop = false;
+  C.session.timelineState.transition.enabled = true;
+  C.session.timelineState.transition.seconds = 2;
+  C.session.timelineState.durationUnits.step = 's';
+  C.session.timelineState.durationUnits.transition = 's';
   // Estado vivo conocido: cada rampa parte de Alpha-200.
-  C.applyAudioState({ brainwave:10, carrier:200, amod:0, binaural:0, stereo:0, fmod:0, noise:0, mix:80 });
-  C.renderTimeline();
-  C.renderTransitionControls();
+  C.audio.applyAudioState({ brainwave:10, carrier:200, amod:0, binaural:0, stereo:0, fmod:0, noise:0, mix:80 });
+  C.timeline.renderTimeline();
+  C.timeline.renderTransitionControls();
   return true;
 })()`;
 
 (async () => {
-  const launchOptions = { headless: true };
-  if (engineName === 'chromium') launchOptions.args = ['--autoplay-policy=no-user-gesture-required'];
+  const launchOptions = launchOptionsForEngine(engineName);
 
   let browser;
   try {
     browser = await browserType.launch(launchOptions);
   } catch (e) {
     console.log(`BLOCKED  ${engineName} no disponible: ${e.message.split('\n')[0]}`);
-    fs.writeFileSync(path.join(process.cwd(), 'artifacts', `timeline-transitions-${engineName}.json`),
+    fs.writeFileSync(path.join(artifactsDir, `timeline-transitions-${engineName}.json`),
       JSON.stringify({ engine: engineName, status: 'BLOCKED', reason: e.message.split('\n')[0] }, null, 2));
     process.exit(0);
   }
@@ -53,24 +57,17 @@ const SETUP = `(() => {
   async function scenario(title, fn, { needsClock = true } = {}) {
     console.log(`\n-- ${title} --`);
     const page = await browser.newPage();
-    const errors = [];
-    page.on('pageerror', e => errors.push('pageerror: ' + e.message));
-    page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
-    await page.goto(URL, { waitUntil: 'networkidle' });
-    await page.waitForFunction(() => typeof window.__CORTEX__ === 'object');
+    const capture = attachPageErrorCapture(page);
+    await gotoCortexApp(page);
     // Los escenarios de rampa necesitan el reloj de audio corriendo; los de
     // unidades y persistencia solo tocan UI y localStorage, así que corren en
     // cualquier motor (en Firefox headless el contexto queda suspendido).
     let clockReady = true;
     if (needsClock) {
-      await page.click('#btnPlay');
-      clockReady = await page.waitForFunction(
-        () => { const c = window.__CORTEX__.engine.ctx; return Boolean(c) && c.state === 'running'; },
-        null, { timeout: 8000 }
-      ).then(() => true).catch(() => false);
+      const clock = await startAudioClock(page);
+      clockReady = clock.ready;
       if (!clockReady) {
-        const st = await page.evaluate(() => (window.__CORTEX__.engine.ctx || {}).state || 'none');
-        console.log(`SKIP  ${title}: el reloj de audio no quedó disponible (ctx=${st})`);
+        console.log(`SKIP  ${title}: el reloj de audio no quedó disponible (ctx=${clock.state})`);
         await page.close();
         return;
       }
@@ -80,7 +77,7 @@ const SETUP = `(() => {
     } catch (e) {
       check(false, `${title}: sin excepción`, e.message);
     }
-    check(errors.length === 0, `${title}: página sin errores`, errors.join(' | '));
+    check(capture.combined().length === 0, `${title}: página sin errores`, capture.combined().join(' | '));
     await page.close();
   }
 
@@ -88,14 +85,14 @@ const SETUP = `(() => {
   await scenario('rampa completa', async page => {
     await page.evaluate(SETUP);
     const r = await page.evaluate(async () => {
-      const C = window.__CORTEX__, p = C.getTimelinePlayer();
+      const C = window.__CORTEX__, p = C.session.getTimelinePlayer();
       const applied = [];
       p.onStep = (i, step, durationMs, info) => applied.push({ i, transitionMs: info.transitionMs, source: info.source.brainwave, target: info.target.brainwave });
       p.play();
       const samples = [];
       for (let i = 0; i < 30; i++) {
         await new Promise(r => setTimeout(r, 250));
-        samples.push({ idx: p.index, bw: C.state.brainwave });
+        samples.push({ idx: p.index, bw: C.session.state.brainwave });
         if (!p.running) break;
       }
       p.stop();
@@ -112,7 +109,7 @@ const SETUP = `(() => {
   await scenario('status de transición', async page => {
     await page.evaluate(SETUP);
     const r = await page.evaluate(async () => {
-      const C = window.__CORTEX__, p = C.getTimelinePlayer();
+      const C = window.__CORTEX__, p = C.session.getTimelinePlayer();
       p.play();
       const seen = [];
       for (let i = 0; i < 14; i++) {
@@ -130,12 +127,12 @@ const SETUP = `(() => {
   // 3. Transición desactivada = corte directo
   await scenario('corte directo', async page => {
     await page.evaluate(SETUP);
-    await page.evaluate(() => { window.__CORTEX__.timelineState.transition.enabled = false; });
+    await page.evaluate(() => { window.__CORTEX__.session.timelineState.transition.enabled = false; });
     const r = await page.evaluate(async () => {
-      const C = window.__CORTEX__, p = C.getTimelinePlayer();
+      const C = window.__CORTEX__, p = C.session.getTimelinePlayer();
       p.play();
       await new Promise(r => setTimeout(r, 150));
-      const early = { bw: C.state.brainwave, carrier: C.state.carrier };
+      const early = { bw: C.session.state.brainwave, carrier: C.session.state.carrier };
       p.stop();
       return early;
     });
@@ -146,16 +143,16 @@ const SETUP = `(() => {
   await scenario('edición en vivo', async page => {
     await page.evaluate(SETUP);
     const r = await page.evaluate(async () => {
-      const C = window.__CORTEX__, p = C.getTimelinePlayer();
+      const C = window.__CORTEX__, p = C.session.getTimelinePlayer();
       p.play();
       await new Promise(r => setTimeout(r, 500));
-      const before = { idx: p.index, rem: Math.round(p.remainingMs), bw: C.state.brainwave };
-      C.timelineState.transition.seconds = 6;
+      const before = { idx: p.index, rem: Math.round(p.remainingMs), bw: C.session.state.brainwave };
+      C.session.timelineState.transition.seconds = 6;
       p.refreshTransition();
-      const after = { idx: p.index, rem: Math.round(p.remainingMs), transitionMs: p.transitionMs, bw: C.state.brainwave };
-      C.timelineState.transition.enabled = false;
+      const after = { idx: p.index, rem: Math.round(p.remainingMs), transitionMs: p.transitionMs, bw: C.session.state.brainwave };
+      C.session.timelineState.transition.enabled = false;
       p.refreshTransition();
-      const disabled = { done: p.transitionDone, bw: C.state.brainwave };
+      const disabled = { done: p.transitionDone, bw: C.session.state.brainwave };
       p.stop();
       return { before, after, disabled };
     });
@@ -169,17 +166,17 @@ const SETUP = `(() => {
   await scenario('pausa en rampa', async page => {
     await page.evaluate(SETUP);
     const r = await page.evaluate(async () => {
-      const C = window.__CORTEX__, p = C.getTimelinePlayer();
+      const C = window.__CORTEX__, p = C.session.getTimelinePlayer();
       p.play();
       await new Promise(r => setTimeout(r, 1000));
-      const midBw = C.state.brainwave;
+      const midBw = C.session.state.brainwave;
       p.pause();
       const tRem = p.pausedTransitionMs;
       await new Promise(r => setTimeout(r, 700));
-      const frozenBw = C.state.brainwave;
+      const frozenBw = C.session.state.brainwave;
       p.play();
       await new Promise(r => setTimeout(r, 1600));
-      const resumed = C.state.brainwave;
+      const resumed = C.session.state.brainwave;
       p.stop();
       return { midBw, tRem, frozenBw, resumed };
     });
@@ -189,7 +186,92 @@ const SETUP = `(() => {
     check(Math.abs(r.resumed - 2) < 0.05, 'reanudar completa la rampa hasta el destino', 'bw=' + r.resumed.toFixed(2));
   });
 
-  // 6. Unidades s/min en la UI
+  // 6. Stop suave manual fuera del timeline
+  await scenario('stop suave manual', async page => {
+    const r = await page.evaluate(async () => {
+      const C = window.__CORTEX__;
+      C.session.state.stopBehavior = { targetBand: 'delta', fadeSeconds: 1.2 };
+      C.settings.renderStopControls();
+      C.audio.applyAudioState({ brainwave:20, carrier:240, amod:0, binaural:0, stereo:0, fmod:0, noise:0, mix:80 });
+      document.getElementById('btnPlay').click();
+      await new Promise(r => setTimeout(r, 250));
+      const mid = {
+        status: document.getElementById('statusText').textContent,
+        playing: C.session.state.playing,
+        bw: C.session.state.brainwave,
+        mix: C.session.state.mix,
+      };
+      await new Promise((resolve, reject) => {
+        const started = performance.now();
+        const poll = () => {
+          if (document.getElementById('statusText').textContent === 'detenido') return resolve();
+          if (performance.now() - started > 4000) return reject(new Error('timeout esperando detener manual'));
+          setTimeout(poll, 25);
+        };
+        poll();
+      });
+      return {
+        mid,
+        final: {
+          playing: C.session.state.playing,
+          bw: C.session.state.brainwave,
+          mix: C.session.state.mix,
+          button: document.getElementById('btnPlay').textContent.trim(),
+        }
+      };
+    });
+    check(r.mid.status === 'deteniendo suave', 'el stop manual expone el estado intermedio', r.mid.status);
+    check(r.mid.playing === true, 'durante el fade sigue marcado como reproduciendo', JSON.stringify(r.mid));
+    check(r.mid.bw < 20 && r.mid.bw > 2, 'la brainwave cae gradualmente hacia el destino', r.mid.bw.toFixed(2));
+    check(r.mid.mix < 80 && r.mid.mix > 0, 'el mix cae gradualmente antes del corte', r.mid.mix.toFixed(2));
+    check(r.final.playing === false && Math.abs(r.final.bw - 2) < 0.1, 'al finalizar queda detenido en la banda objetivo', JSON.stringify(r.final));
+    check(r.final.mix === 80 && r.final.button === '▶ Iniciar', 'el mix del control se restaura para la próxima sesión', JSON.stringify(r.final));
+  });
+
+  // 7. Stop suave desde el botón del timeline
+  await scenario('stop suave del timeline', async page => {
+    await page.evaluate(SETUP);
+    const r = await page.evaluate(async () => {
+      const C = window.__CORTEX__, p = C.session.getTimelinePlayer();
+      C.session.state.stopBehavior = { targetBand: 'theta', fadeSeconds: 1 };
+      C.settings.renderStopControls();
+      p.play();
+      await new Promise(r => setTimeout(r, 250));
+      document.getElementById('btnTimelineStop').click();
+      await new Promise(r => setTimeout(r, 120));
+      const mid = {
+        running: p.running,
+        paused: p.paused,
+        status: document.getElementById('statusText').textContent,
+        timeline: document.getElementById('timelineStatus').textContent,
+        playing: C.session.state.playing,
+      };
+      await new Promise((resolve, reject) => {
+        const started = performance.now();
+        const poll = () => {
+          if (document.getElementById('statusText').textContent === 'detenido') return resolve();
+          if (performance.now() - started > 4000) return reject(new Error('timeout esperando detener timeline'));
+          setTimeout(poll, 25);
+        };
+        poll();
+      });
+      return {
+        mid,
+        final: {
+          playing: C.session.state.playing,
+          bw: C.session.state.brainwave,
+          timeline: document.getElementById('timelineStatus').textContent,
+        }
+      };
+    });
+    check(r.mid.running === false && r.mid.paused === false, 'el player del timeline se detiene enseguida', JSON.stringify(r.mid));
+    check(r.mid.status === 'deteniendo suave' && r.mid.playing === true, 'el audio entra en fade tras detener el timeline', JSON.stringify(r.mid));
+    check(r.mid.timeline.includes('Deteniendo suavemente hacia Theta'), 'el status del timeline explica el aterrizaje', r.mid.timeline);
+    check(r.final.playing === false && Math.abs(r.final.bw - 6) < 0.1, 'el stop del timeline cae en la banda elegida', JSON.stringify(r.final));
+    check(r.final.timeline.includes('Timeline detenido suavemente en Theta'), 'el timeline confirma el aterrizaje final', r.final.timeline);
+  });
+
+  // 8. Unidades s/min en la UI
   await scenario('unidades de duración', async page => {
     await page.evaluate(SETUP);
     const r = await page.evaluate(async () => {
@@ -197,21 +279,21 @@ const SETUP = `(() => {
       // El editor de duración vive en el inspector: se selecciona el primer clip.
       document.querySelector('.dock-clip-btn').click();
       const before = document.getElementById('inspectorDuration').value;
-      C.setDurationUnit('step', 'min');
+      C.timeline.setDurationUnit('step', 'min');
       await new Promise(r => requestAnimationFrame(r));
       const after = document.getElementById('inspectorDuration').value;
       const hint = document.getElementById('inspectorDurationHint').textContent;
-      const stored = C.timelineState.steps[0].durationSeconds;
+      const stored = C.session.timelineState.steps[0].durationSeconds;
       const input = document.getElementById('inspectorDuration');
       input.value = '2';
       input.dispatchEvent(new Event('change', { bubbles: true }));
-      const storedAfterEdit = C.timelineState.steps[0].durationSeconds;
-      C.setDurationUnit('step', 's');
+      const storedAfterEdit = C.session.timelineState.steps[0].durationSeconds;
+      C.timeline.setDurationUnit('step', 's');
       const back = document.getElementById('inspectorDuration').value;
-      C.setDurationUnit('transition', 'min');
+      C.timeline.setDurationUnit('transition', 'min');
       const transValue = document.getElementById('timelineTransitionSeconds').value;
       const transHint = document.getElementById('timelineTransitionHint').textContent;
-      C.setDurationUnit('transition', 's');
+      C.timeline.setDurationUnit('transition', 's');
       return { before, after, hint, stored, storedAfterEdit, back, transValue, transHint };
     });
     check(r.before === '4', 'la duración se muestra en segundos al inicio', r.before);
@@ -224,7 +306,7 @@ const SETUP = `(() => {
     check(r.transHint.includes('2 s'), 'la pista de transición muestra el equivalente', r.transHint);
   }, { needsClock: false });
 
-  // 7. Persistencia de la configuración y de las duraciones editadas
+  // 9. Persistencia de la configuración y de las duraciones editadas
   // Nota: cada escenario de esta suite abre una página en un contexto NUEVO
   // (browser.newPage()), así que el localStorage NO viaja entre escenarios.
   // Este escenario debe ser autosuficiente: edita, persiste y recarga.
@@ -235,38 +317,47 @@ const SETUP = `(() => {
       // editar el primer paso a 2 min = 120 s, como haría una persona:
       // click en el clip, edición en el inspector del dock.
       document.querySelector('.dock-clip-btn').click();
-      C.setDurationUnit('step', 'min');
+      C.timeline.setDurationUnit('step', 'min');
       const input = document.getElementById('inspectorDuration');
       input.value = '2';
       input.dispatchEvent(new Event('change', { bubbles: true }));
-      C.timelineState.transition.seconds = 5;
-      C.persistTimeline();
+      C.session.timelineState.transition.seconds = 5;
+      C.timeline.persistTimeline();
+      const stopBand = document.getElementById('stopTargetBand');
+      stopBand.value = 'gamma';
+      stopBand.dispatchEvent(new Event('change', { bubbles: true }));
+      const stopFade = document.getElementById('stopFadeSeconds');
+      stopFade.value = '3.5';
+      stopFade.dispatchEvent(new Event('change', { bubbles: true }));
     });
     await page.reload({ waitUntil: 'networkidle' });
     await page.waitForFunction(() => typeof window.__CORTEX__ === 'object');
     const r = await page.evaluate(() => {
       const C = window.__CORTEX__;
       return {
-        seconds: C.timelineState.transition.seconds,
-        enabled: C.timelineState.transition.enabled,
-        steps: C.timelineState.steps.length,
-        firstDuration: C.timelineState.steps[0] && C.timelineState.steps[0].durationSeconds,
-        unit: C.timelineState.durationUnits.step,
+        seconds: C.session.timelineState.transition.seconds,
+        enabled: C.session.timelineState.transition.enabled,
+        steps: C.session.timelineState.steps.length,
+        firstDuration: C.session.timelineState.steps[0] && C.session.timelineState.steps[0].durationSeconds,
+        unit: C.session.timelineState.durationUnits.step,
+        stopBand: C.session.state.stopBehavior.targetBand,
+        stopFade: C.session.state.stopBehavior.fadeSeconds,
       };
     });
     check(r.seconds === 5 && r.enabled === true, 'la configuración de transición sobrevive la recarga', JSON.stringify(r));
     check(r.firstDuration === 120, 'la duración editada en minutos sobrevive', 'primera=' + r.firstDuration);
     check(r.unit === 'min', 'la unidad elegida también sobrevive', 'unidad=' + r.unit);
+    check(r.stopBand === 'gamma' && r.stopFade === 3.5, 'el stop suave también sobrevive la recarga', JSON.stringify(r));
   }, { needsClock: false });
 
-  // 8. Datos previos sin campos de transición cargan con defaults
+  // 10. Datos previos sin campos de transición cargan con defaults
   await scenario('datos legacy', async page => {
     const r = await page.evaluate(() => {
       const C = window.__CORTEX__;
       const old = { steps: [{ id:'x', presetId:'b', durationSeconds: 30, snapshot:{ brainwave:10, carrier:200, amod:0, binaural:0, stereo:0, fmod:0, noise:0, mix:80 }, name:'A', emoji:'a', band:'alpha' }] };
       localStorage.setItem('cortex-timeline-v1', JSON.stringify(old));
-      C.loadTimelineData();
-      return { seconds: C.timelineState.transition.seconds, enabled: C.timelineState.transition.enabled, units: C.timelineState.durationUnits.step, steps: C.timelineState.steps.length };
+      C.timeline.loadTimelineData();
+      return { seconds: C.session.timelineState.transition.seconds, enabled: C.session.timelineState.transition.enabled, units: C.session.timelineState.durationUnits.step, steps: C.session.timelineState.steps.length };
     });
     check(r.enabled === true && r.seconds === 2 && r.units === 's', 'datos previos sin transición cargan con defaults', JSON.stringify(r));
     check(r.steps === 1, 'los pasos legacy se conservan', String(r.steps));
@@ -274,7 +365,7 @@ const SETUP = `(() => {
 
   await browser.close();
   const failures = results.filter(x => !x.pass).map(x => x.name);
-  fs.writeFileSync(path.join(process.cwd(), 'artifacts', `timeline-transitions-${engineName}.json`),
+  fs.writeFileSync(path.join(artifactsDir, `timeline-transitions-${engineName}.json`),
     JSON.stringify({ engine: engineName, total: results.length, failed: failures.length, results }, null, 2));
   console.log(`\n${results.length - failures.length}/${results.length} verificaciones OK`);
   if (failures.length) {

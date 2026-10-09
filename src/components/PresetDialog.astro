@@ -1,0 +1,24 @@
+<dialog id="presetDialog" class="modal-dialog" aria-labelledby="presetTitle">
+  <div class="modal-head">
+    <div>
+      <div class="modal-title" id="presetTitle">Preset personalizado</div>
+      <div class="modal-subtitle">guarda el estado actual con una identidad visual</div>
+    </div>
+    <button class="btn btn-mini" id="btnClosePreset" type="button" aria-label="Cerrar editor de preset">✕</button>
+  </div>
+  <div class="modal-body">
+    <div class="custom-form-row">
+      <label for="customPresetName">Nombre</label>
+      <input type="text" id="customPresetName" maxlength="32" placeholder="Mi preset">
+    </div>
+    <div class="custom-form-row">
+      <label>Emote disponible</label>
+      <div class="emoji-grid" id="emojiOptions"></div>
+      <div class="custom-band-preview" id="customBandPreview"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="btnCancelPreset" type="button">Cancelar</button>
+      <button class="btn primary" id="btnSavePreset" type="button">Guardar preset</button>
+    </div>
+  </div>
+</dialog>

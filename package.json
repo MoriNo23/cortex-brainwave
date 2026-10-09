@@ -2,9 +2,13 @@
   "name": "cortex-brainwave",
   "version": "0.1.0",
   "private": true,
-  "description": "Generador de ondas cerebrales con HTML autónomo, Web Audio API y verificación por OpenSpec.",
+  "description": "Generador de ondas cerebrales con shell Astro, Web Audio API y verificación por OpenSpec.",
   "scripts": {
-    "serve": "python3 -m http.server 4173 --bind 127.0.0.1",
+    "dev": "astro dev --host 0.0.0.0 --port 4173",
+    "build": "astro build",
+    "preview": "astro preview --host 0.0.0.0 --port 4173",
+    "serve": "astro dev --host 0.0.0.0 --port 4173",
+    "serve:legacy": "python3 -m http.server 4173 --bind 127.0.0.1",
     "test": "node tests/run-cortex-tests.cjs",
     "test:ui": "node tests/ui-stability.cjs",
     "test:timeline": "node tests/timeline-scheduling.cjs",
@@ -12,6 +16,8 @@
     "test:noise": "node tests/noise-carrier.cjs",
     "test:wav": "node tests/wav-e2e.cjs",
     "test:visual": "node tests/visual-smoke.cjs",
+    "test:strobe": "node tests/strobe-visuals.cjs",
+    "test:strobe-worker": "node tests/strobe-worker.cjs",
     "test:responsive": "node tests/responsive-smoke.cjs",
     "test:snapshots": "node tests/snapshots.cjs",
     "test:matrix": "node tests/browser-matrix.cjs"
@@ -19,5 +25,8 @@
   "devDependencies": {
     "playwright": "^1.49.0",
     "pngjs": "^7.0.0"
+  },
+  "dependencies": {
+    "astro": "^5.18.2"
   }
 }

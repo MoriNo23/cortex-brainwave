@@ -1,0 +1,8 @@
+{
+  "mixGain": 1e-9,
+  "frequencyHz": 1e-9,
+  "cycleMs": 1e-9,
+  "phase": 1e-8,
+  "rampRatio": 1e-12,
+  "intensity": 1e-12
+}
