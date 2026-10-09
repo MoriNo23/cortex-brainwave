@@ -69,7 +69,7 @@
 
 ## 8. Suites y CI
 
-- [ ] 8.1 Adaptar `cortex.spec.html` o reemplazarlo por una superficie equivalente compatible con la nueva arquitectura, definiendo qué partes permanecen y cuáles se migran.
+- [x] 8.1 La suite in-page `cortex.spec.html` no se adapta: se retira con `remove-legacy-surface` y su cobertura la asume la suite Playwright sobre el shell Astro (`astro-shell-smoke`, `strobe-visuals`, `timeline-*`, `ui-stability`, `noise-carrier`, `wav-e2e`).
 - [x] 8.2 Adaptar Playwright y los jobs del workflow para el shell Astro y para el nuevo reproductor estroboscópico.
 - [x] 8.3 Añadir pruebas específicas del estrobo: play/stop, sync brainwave, custom Hz, mini-player, fullscreen, ventana flotante (o su degradación) y pestaña oculta (`tests/strobe-visuals.cjs`).
 - [x] 8.5 Ejecutar de verdad el Worker de la ventana flotante en Node puro y comprobar que su intensidad y su pintado coinciden con los del hilo principal (`tests/strobe-worker.cjs`).

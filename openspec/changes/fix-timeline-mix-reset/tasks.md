@@ -19,5 +19,5 @@
 - [ ] 3.3 Test de ambos; si no aportan, retirarlos sin tocar el grupo 2.
 
 ## 4. Cierre
-- [ ] 4.1 Actualizar `cortex.spec.html` / `TESTS` si algún caso asume el `mix` por paso.
+- [x] 4.1 Sin objeto: `cortex.spec.html` y su arreglo `TESTS` se retiraron con `remove-legacy-surface`; el `mix` por paso queda cubierto por `tests/mix-integrity.cjs`.
 - [ ] 4.2 Verificación humana: reproducir un timeline real de varios pasos, detener, reiniciar, y confirmar audio sin recargar.

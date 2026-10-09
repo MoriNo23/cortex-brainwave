@@ -26,7 +26,7 @@
 ## 5. Contrato y tests
 - [ ] 5.1 Inventario de ids del DOM; conservar o migrar con su test.
 - [ ] 5.2 Nuevo `tests/desktop-layout.cjs`; actualizar `tests/ui-stability.cjs` y `tests/responsive-smoke.cjs`; registrar en `ci.yml`.
-- [ ] 5.3 Actualizar `cortex.spec.html` donde dependa del markup anterior.
+- [x] 5.3 Sin objeto: `cortex.spec.html` se retiró con `remove-legacy-surface` y ya no hay markup que actualizar.
 
 ## 6. Degradación
 - [ ] 6.1 Confirmar que por debajo de 900 px las acciones principales siguen alcanzables.

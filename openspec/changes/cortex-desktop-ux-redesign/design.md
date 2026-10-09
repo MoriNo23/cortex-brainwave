@@ -4,7 +4,7 @@
 
 - Shell Astro ya montado: `.app` es un grid `header | main (panel izq. · visuales · panel der.) | dock timeline | status bar` (filas 60px · 1fr · auto · 44px).
 - El único recurso escaso confirmado en el repo es el alto en **1366×768** (precedente de `timeline-dock`).
-- Hay dos superficies (Astro y `public/cortex.html` legado); solo la Astro se rediseña.
+- Hay una sola superficie, la Astro: la legado (`public/cortex.html`) se retiró con `remove-legacy-surface`, así que no queda paridad que conservar.
 - Este documento fija *principios y alternativas*. **La dirección visual concreta está pendiente de elección** (Open Questions), así que no se especifican colores ni tipografías finales.
 
 ## Goals / Non-Goals

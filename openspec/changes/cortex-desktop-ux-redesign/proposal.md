@@ -33,7 +33,7 @@ El rediseño ya figura en el cambio en vuelo `cortex-astro-redesign-strobe` (tar
 
 - `src/components/*.astro` (Header, LeftPanel, RightPanel, BrainVisuals, TimelineDock, StatusBar, PresetDialog, Toast), `src/layouts/AppLayout.astro`, `src/styles/cortex-redesign.css` (se reorganiza en tokens + componentes + layout).
 - `src/lib/cortex-ui-shell.js` / `cortex-ui-chrome.js` / `cortex-app-events.js` para atajos y toggles.
-- La superficie legado (`public/cortex.html`) **no se rediseña**; queda congelada como referencia de paridad.
+- La superficie legado (`public/cortex.html`) ya no existe: se retiró con `remove-legacy-surface`, así que el rediseño cubre la app entera.
 - Pruebas: nuevo `tests/desktop-layout.cjs` (sin scroll de página en 1366×768, 1920×1080 y 2560×1080; transporte y timeline visibles), actualización de `tests/ui-stability.cjs` y `tests/responsive-smoke.cjs`; registro en `ci.yml`. Sin comando local.
 - Coordinación: depende de `fix-timeline-mix-reset` solo en que la zona de *salida* exponga el volumen como control de sesión.
 - Sin dependencias nuevas. Límite conocido: las fuentes web remotas (`@import`) ya están documentadas en `AGENTS.md`; el rediseño no debe agravarlo.
