@@ -1,7 +1,7 @@
 # AGENTS.md
 
 Reglas del proyecto para agentes y personas que trabajen en **Cortex Brainwave Audio**.
-La app es un HTML autónomo: `cortex.html` no usa bundler ni dependencias de producción.
+La app es una shell **Astro** (`src/`): el audio, el timeline y los visuales viven en módulos de navegador en `src/lib`.
 
 ## Verificación: todo va por CI
 
@@ -23,7 +23,7 @@ tarda unos minutos más en aparecer, a cambio de que la máquina no se use para 
 
 | Job | Qué corre |
 |---|---|
-| `ligero` | Los cuatro chequeos estáticos, por ruta, sin instalar navegador |
+| `ligero` | Los cuatro chequeos estáticos y el Worker del estrobo, por ruta, sin instalar navegador |
 | `suite` | La suite completa en Chromium |
 | `motores` | Timeline y UI en Chromium, Firefox y WebKit |
 | `matriz` | `browser-matrix.cjs` con ciclo de vida de audio y exportación WAV |
@@ -32,10 +32,17 @@ El job `ligero` es la señal rápida: análisis estático de archivos, sin ejecu
 
 | Chequeo | Qué detecta |
 |---|---|
-| `inline-syntax` | Error de sintaxis en el JavaScript inline de `cortex.html` o `cortex.spec.html` |
-| `self-contained` | `<script src>`, `<link href>` o `fetch`/`XMLHttpRequest` hacia un origen remoto |
-| `dom-references` | Un id que el script pide con `getElementById`/`$('#id')` y el markup no declara |
-| `scenario-runner-shape` | Una entrada del arreglo `TESTS` sin `group`, `name` o `fn` |
+| `dom-references` | Un id que el script de `src/` pide con `getElementById`/`$('#id')` y que ningún componente, plantilla o cadena de HTML del propio JS declara |
+
+El mismo job corre además `tests/strobe-worker.cjs`: Node puro, sin navegador y sin
+`npm install`. Ejecuta el fuente real del Worker de la ventana flotante en un
+contexto `vm` con un `self` y un lienzo simulados, y comprueba que su intensidad y
+su pintado (operaciones, estilos y geometría) coinciden con los del hilo
+principal. Es la única forma de cubrir ese Worker sin un navegador que no lo
+puede abrir en headless. El job `suite` lo repite con dependencias instaladas, y
+ahí el chequeo añade la variante **minificada** con esbuild: el bundler renombra
+referencias internas y por ahí se cuela un `ReferenceError` que el fuente sin
+minificar no muestra.
 
 Un verde de `ligero` **no** es el verde de la suite con navegador: son jobs distintos de la
 misma corrida. El reporte de `ligero` se descarga del artifact `light-verify`.
@@ -52,14 +59,6 @@ reporta, ni aunque el comando exista en `package.json`.
 
 ## Límites conocidos
 
-- **`self-contained` no ve las fuentes web.** `cortex.html:8` hace
-  `@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Serif…')`. El chequeo
-  cubre `<script src>`, `<link href>`, `fetch` y `XMLHttpRequest`, no los `@import` de CSS:
-  es una dependencia remota conocida y documentada, no un descuido. Sin red la app no se
-  rompe — el stack ya declara fallback (`'Inter', system-ui, sans-serif`) y degrada a
-  fuentes del sistema. Autoalojar el subset `latin` costaría ~279 KB en base64 sobre un
-  archivo que hoy pesa 103 KB.
-- **`inline-syntax` valida sintaxis, no semántica.** Un error de runtime sigue escapando.
 - **`dom-references` cubre dos patrones**, `getElementById('x')` y `$('#x')`. No interpreta
   selectores CSS completos, a propósito: los falsos positivos erosionan la señal.
 - **Firefox en CI no puede correr los escenarios de timeline.** Un runner headless no tiene
@@ -69,6 +68,13 @@ reporta, ni aunque el comando exista en `package.json`.
   simula el retraso de los timers de la página.
 - **La escucha humana sigue siendo necesaria.** Protocolo en
   `cortex-listening-protocol.md`, con auriculares y volumen bajo. Ningún job de CI la cubre.
+- **Ningún runner headless abre una ventana flotante de verdad.** Document
+  Picture-in-Picture necesita un gestor de ventanas. `strobe-visuals.cjs` verifica
+  la decisión (o se abre y el panel se muda, o se degrada a mini player con aviso
+  y sin errores), no la ventana en sí. Abrirla y mirarla es verificación humana.
+- **La ruta de vídeo del PiP (Firefox/Safari) no se cubre en CI.** Se
+  autoverifica en runtime: si el `<video>` no entrega fotogramas en 900 ms, se
+  cierra y se degrada a mini player con aviso.
 
 ## Los scripts `test:*` de `package.json`
 

@@ -24,12 +24,89 @@ jobs:
       - name: Nivel ligero de verificación
         run: node tests/light/run-light-verify.cjs
 
+      # Node puro también: ejecuta el fuente real del Worker de la ventana
+      # flotante contra un `self` y un lienzo simulados.
+      - name: Worker del estrobo (sin navegador)
+        run: node tests/strobe-worker.cjs
+
+      # Node puro: volumen y portadora frente al timeline y al stop suave,
+      # con el fuente real de src/lib y un motor de audio simulado.
+      - name: Integridad de mix y carrier (sin navegador)
+        run: node tests/mix-integrity.cjs
+
       - name: Subir reporte
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: light-verify
           path: artifacts/light-verify.json
+          if-no-files-found: warn
+
+  astro-y-math:
+    name: Shell Astro + referencia matemática
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Instalar dependencias Node
+        run: npm install --no-audit --no-fund
+
+      - name: Build Astro
+        run: npm run build
+
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Servir preview Astro en el puerto 4173
+        run: |
+          nohup npm run preview > /tmp/cortex-preview.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl -sf http://127.0.0.1:4173/ > /dev/null; then
+              echo "preview listo"
+              exit 0
+            fi
+            sleep 0.5
+          done
+          echo "el preview no respondió"
+          cat /tmp/cortex-preview.log
+          exit 1
+
+      - name: Smoke del shell Astro
+        if: always()
+        run: node tests/astro-shell-smoke.cjs
+
+      - name: Instalar dependencias Python
+        if: always()
+        run: python3 -m pip install --upgrade pip && python3 -m pip install -r requirements-math.txt
+
+      - name: Generar referencia Python
+        if: always()
+        run: |
+          mkdir -p artifacts
+          python3 tools/math-reference/reference.py > artifacts/math-reference-python.json
+
+      - name: Generar referencia JS
+        if: always()
+        run: node tools/math-reference/compare.mjs > artifacts/math-reference-js.json
+
+      - name: Comparar JS vs Python
+        if: always()
+        run: node tools/math-reference/compare.mjs artifacts/math-reference-python.json > artifacts/math-reference-compare.json
+
+      - name: Subir reportes
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: astro-shell-y-math
+          path: artifacts/
           if-no-files-found: warn
 
   suite:
@@ -45,21 +122,39 @@ jobs:
       - name: Instalar dependencias
         run: npm install --no-audit --no-fund
 
+      - name: Build Astro
+        run: npm run build
+
       - name: Instalar Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Servir la app en el puerto 4173
+      - name: Servir preview Astro en el puerto 4173
         run: |
-          nohup python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/cortex-server.log 2>&1 &
-          for i in $(seq 1 30); do
-            if curl -sf http://127.0.0.1:4173/cortex.html > /dev/null; then echo "servidor listo"; exit 0; fi
+          nohup npm run preview > /tmp/cortex-preview.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl -sf http://127.0.0.1:4173/ > /dev/null; then
+              echo "preview listo"
+              exit 0
+            fi
             sleep 0.5
           done
-          echo "el servidor no respondió"; cat /tmp/cortex-server.log; exit 1
+          echo "el preview no respondió"
+          cat /tmp/cortex-preview.log
+          exit 1
 
-      - name: Suite in-page (spec de OpenSpec)
+      - name: Smoke del shell Astro
         if: always()
-        run: node tests/run-cortex-tests.cjs
+        run: node tests/astro-shell-smoke.cjs
+
+      # Aquí hay dependencias instaladas, así que el chequeo del Worker sí puede
+      # repetir la comparación sobre el fuente minificado con esbuild.
+      - name: Worker del estrobo (también sobre el bundle minificado)
+        if: always()
+        run: node tests/strobe-worker.cjs
+
+      - name: Estrobo y ventana flotante
+        if: always()
+        run: node tests/strobe-visuals.cjs
 
       - name: Estabilidad de UI
         if: always()
@@ -130,17 +225,25 @@ jobs:
       - name: Instalar dependencias
         run: npm install --no-audit --no-fund
 
+      - name: Build Astro
+        run: npm run build
+
       - name: Instalar ${{ matrix.engine }}
         run: npx playwright install --with-deps ${{ matrix.engine }}
 
-      - name: Servir la app en el puerto 4173
+      - name: Servir preview Astro en el puerto 4173
         run: |
-          nohup python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/cortex-server.log 2>&1 &
-          for i in $(seq 1 30); do
-            if curl -sf http://127.0.0.1:4173/cortex.html > /dev/null; then echo "servidor listo"; exit 0; fi
+          nohup npm run preview > /tmp/cortex-preview.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl -sf http://127.0.0.1:4173/ > /dev/null; then
+              echo "preview listo"
+              exit 0
+            fi
             sleep 0.5
           done
-          echo "el servidor no respondió"; cat /tmp/cortex-server.log; exit 1
+          echo "el preview no respondió"
+          cat /tmp/cortex-preview.log
+          exit 1
 
       - name: Programación temporal del timeline
         if: always()
@@ -193,17 +296,25 @@ jobs:
       - name: Instalar dependencias
         run: npm install --no-audit --no-fund
 
+      - name: Build Astro
+        run: npm run build
+
       - name: Instalar los tres motores
         run: npx playwright install --with-deps chromium firefox webkit
 
-      - name: Servir la app en el puerto 4173
+      - name: Servir preview Astro en el puerto 4173
         run: |
-          nohup python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/cortex-server.log 2>&1 &
-          for i in $(seq 1 30); do
-            if curl -sf http://127.0.0.1:4173/cortex.html > /dev/null; then echo "servidor listo"; exit 0; fi
+          nohup npm run preview > /tmp/cortex-preview.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl -sf http://127.0.0.1:4173/ > /dev/null; then
+              echo "preview listo"
+              exit 0
+            fi
             sleep 0.5
           done
-          echo "el servidor no respondió"; cat /tmp/cortex-server.log; exit 1
+          echo "el preview no respondió"
+          cat /tmp/cortex-preview.log
+          exit 1
 
       - name: Matriz de navegadores
         run: node tests/browser-matrix.cjs
