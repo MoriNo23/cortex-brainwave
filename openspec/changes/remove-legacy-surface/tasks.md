@@ -8,7 +8,7 @@
 
 ## 2. Pages sobre Astro
 - [x] 2.1 `pages.yml` construye con `PAGES_BASE=/cortex-brainwave` y publica `dist/`.
-- [ ] 2.2 Lanzar el workflow a mano una vez (`workflow_dispatch`) y comprobar que la página, scripts y estilos cargan bajo `/cortex-brainwave/` sin 404.
+- [x] 2.2 Lanzar el workflow a mano una vez (`workflow_dispatch`) y comprobar que la página, scripts y estilos cargan bajo `/cortex-brainwave/` sin 404.
 
 ## 3. Verificación
 - [x] 3.1 `dom-references` recorre `src/`; `ligero` queda con ese chequeo y `strobe-worker`.
