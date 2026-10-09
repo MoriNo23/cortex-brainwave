@@ -1,4 +1,5 @@
-import { audioSnapshot, clampTransitionSeconds } from './cortex-persistence.js';
+import { PRESET_PRESERVED_KEYS } from './cortex-config.js';
+import { audioSnapshot, clampTransitionSeconds, resolveAudioSnapshot } from './cortex-persistence.js';
 
 /* Intervalo del tick de catch-up. Corto para que el retraso sea imperceptible
    con la pestaña oculta y barato de mantener en segundo plano. */
@@ -130,10 +131,16 @@ class TimelinePlayer {
     const elapsedMs = this.transitionElapsedMs();
     if (elapsedMs >= this.transitionMs) {
       this.transitionDone = true;
-      this.applyAudioState(this.targetState);
+      this.applyRamp(this.targetState);
       return;
     }
-    this.applyAudioState(this.interpolateAudioState(this.sourceState, this.targetState, elapsedMs / this.transitionMs));
+    this.applyRamp(this.interpolateAudioState(this.sourceState, this.targetState, elapsedMs / this.transitionMs));
+  }
+
+  /* Punto de la rampa o destino del paso: aplica todo menos el volumen, que es
+     del usuario. */
+  applyRamp(snapshot) {
+    this.applyAudioState(snapshot, { preserve: PRESET_PRESERVED_KEYS });
   }
 
   clearTimer() {
@@ -167,7 +174,7 @@ class TimelinePlayer {
     // Transición: capturar el estado vivo ANTES de tocar nada, y el preset al
     // que la rampa converge. Con transición desactivada o en 0 s, corte directo.
     this.sourceState = audioSnapshot(this.state);
-    this.targetState = audioSnapshot(step.snapshot);
+    this.targetState = resolveAudioSnapshot(step.snapshot, this.state);
     this.transitionMs = transitionOverrideMs != null
       ? Math.max(0, Math.min(transitionOverrideMs, durationMs))
       : (this.timelineState.transition.enabled
@@ -381,7 +388,7 @@ class TimelinePlayer {
 
     if (configMs === 0) {
       // Desactivada: aplicar el destino directo y cerrar la rampa.
-      if (!this.transitionDone) this.applyAudioState(this.targetState);
+      if (!this.transitionDone) this.applyRamp(this.targetState);
       this.transitionMs = 0;
       this.transitionDone = true;
       this.pausedTransitionMs = 0;
@@ -396,7 +403,7 @@ class TimelinePlayer {
       // Anclar el inicio para continuar exactamente desde el punto actual.
       this.transitionStartedAt = this.clockNow() - oldProgress * (nextMs / 1000);
       if (this.paused) this.pausedTransitionMs = nextMs;
-      if (this.transitionDone && this.targetState) this.applyAudioState(this.targetState);
+      if (this.transitionDone && this.targetState) this.applyRamp(this.targetState);
     }
     if (this.paused) return;
     this.refreshStatus();

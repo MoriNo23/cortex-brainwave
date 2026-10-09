@@ -8,8 +8,6 @@
     "build": "astro build",
     "preview": "astro preview --host 0.0.0.0 --port 4173",
     "serve": "astro dev --host 0.0.0.0 --port 4173",
-    "serve:legacy": "python3 -m http.server 4173 --bind 127.0.0.1",
-    "test": "node tests/run-cortex-tests.cjs",
     "test:ui": "node tests/ui-stability.cjs",
     "test:timeline": "node tests/timeline-scheduling.cjs",
     "test:presets": "node tests/timeline-custom-presets.cjs",

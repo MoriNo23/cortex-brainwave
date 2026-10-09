@@ -5,20 +5,9 @@ function cortexBaseUrl() {
   return process.env.BASE_URL || `http://127.0.0.1:${process.env.PORT || 4173}`;
 }
 
-/* La app principal es el shell Astro, en la ruta raíz.
-
-   `/cortex.html` sigue sirviendo el monolito legado, cuyo `__CORTEX__` es plano
-   (`state`, `engine`, `timelineState`…). Estas suites ya hablan el API por
-   dominios del shell nuevo (`session`, `timeline`, `strobe`, `settings`,
-   `visualizers`, `ui`, `catalog`), así que apuntarlas al legado las hacía fallar
-   todas con "Cannot read properties of undefined". `LEGACY_APP=1` mantiene la
-   ruta vieja disponible para comparar. */
+/* La app es el shell Astro, en la ruta raíz. */
 function cortexAppUrl() {
-  return process.env.LEGACY_APP ? `${cortexBaseUrl()}/cortex.html` : `${cortexBaseUrl()}/`;
-}
-
-function cortexSpecUrl() {
-  return `${cortexBaseUrl()}/cortex.spec.html`;
+  return `${cortexBaseUrl()}/`;
 }
 
 function ensureArtifactsDir(...parts) {
@@ -84,15 +73,6 @@ async function gotoCortexApp(page, { waitForTestApi = true } = {}) {
   if (waitForTestApi) {
     await page.waitForFunction(() => typeof window.__CORTEX__ === 'object');
   }
-}
-
-async function gotoCortexSpec(page, { readyText = 'app lista', timeout = 15000 } = {}) {
-  await page.goto(cortexSpecUrl(), { waitUntil: 'networkidle' });
-  await page.waitForFunction(
-    expected => document.querySelector('#status')?.textContent.includes(expected),
-    readyText,
-    { timeout }
-  );
 }
 
 async function waitForAudioClock(page, { timeout = 8000 } = {}) {
@@ -217,10 +197,8 @@ module.exports = {
   attachPageErrorCapture,
   cortexAppUrl,
   cortexBaseUrl,
-  cortexSpecUrl,
   ensureArtifactsDir,
   gotoCortexApp,
-  gotoCortexSpec,
   launchBrowserOrReport,
   launchOptionsForEngine,
   parseWav,

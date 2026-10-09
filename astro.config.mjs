@@ -16,4 +16,6 @@ export default defineConfig({
     port: 4173,
   },
   output: 'static',
+  /* Pages sirve bajo /<repo>/; el workflow lo fija con PAGES_BASE. En local es '/'. */
+  base: process.env.PAGES_BASE || '/',
 });

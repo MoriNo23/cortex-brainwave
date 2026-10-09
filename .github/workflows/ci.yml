@@ -29,6 +29,11 @@ jobs:
       - name: Worker del estrobo (sin navegador)
         run: node tests/strobe-worker.cjs
 
+      # Node puro: volumen y portadora frente al timeline y al stop suave,
+      # con el fuente real de src/lib y un motor de audio simulado.
+      - name: Integridad de mix y carrier (sin navegador)
+        run: node tests/mix-integrity.cjs
+
       - name: Subir reporte
         if: always()
         uses: actions/upload-artifact@v7
@@ -64,7 +69,7 @@ jobs:
         run: |
           nohup npm run preview > /tmp/cortex-preview.log 2>&1 &
           for i in $(seq 1 40); do
-            if curl -sf http://127.0.0.1:4173/ > /dev/null && curl -sf http://127.0.0.1:4173/cortex.html > /dev/null; then
+            if curl -sf http://127.0.0.1:4173/ > /dev/null; then
               echo "preview listo"
               exit 0
             fi
@@ -127,7 +132,7 @@ jobs:
         run: |
           nohup npm run preview > /tmp/cortex-preview.log 2>&1 &
           for i in $(seq 1 40); do
-            if curl -sf http://127.0.0.1:4173/ > /dev/null && curl -sf http://127.0.0.1:4173/cortex.html > /dev/null; then
+            if curl -sf http://127.0.0.1:4173/ > /dev/null; then
               echo "preview listo"
               exit 0
             fi
@@ -150,10 +155,6 @@ jobs:
       - name: Estrobo y ventana flotante
         if: always()
         run: node tests/strobe-visuals.cjs
-
-      - name: Suite in-page (spec de OpenSpec)
-        if: always()
-        run: node tests/run-cortex-tests.cjs
 
       - name: Estabilidad de UI
         if: always()
@@ -234,7 +235,7 @@ jobs:
         run: |
           nohup npm run preview > /tmp/cortex-preview.log 2>&1 &
           for i in $(seq 1 40); do
-            if curl -sf http://127.0.0.1:4173/ > /dev/null && curl -sf http://127.0.0.1:4173/cortex.html > /dev/null; then
+            if curl -sf http://127.0.0.1:4173/ > /dev/null; then
               echo "preview listo"
               exit 0
             fi
@@ -305,7 +306,7 @@ jobs:
         run: |
           nohup npm run preview > /tmp/cortex-preview.log 2>&1 &
           for i in $(seq 1 40); do
-            if curl -sf http://127.0.0.1:4173/ > /dev/null && curl -sf http://127.0.0.1:4173/cortex.html > /dev/null; then
+            if curl -sf http://127.0.0.1:4173/ > /dev/null; then
               echo "preview listo"
               exit 0
             fi

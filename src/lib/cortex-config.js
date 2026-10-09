@@ -27,6 +27,11 @@ export const PRESET_DEFAULTS = {
 
 export const AVAILABLE_EMOTES = ['🌙','🌀','🌿','⚡','✨','🧘','🎯','🌊','🎵','🧠','☁️','🌌','😴','🚀'];
 export const AUDIO_KEYS = ['brainwave','carrier','amod','binaural','stereo','fmod','noise','mix'];
+/* Rango válido de la portadora: el mismo del slider (`#sliderCarrier`). */
+export const CARRIER_LIMITS = Object.freeze({ min: 20, max: 1500 });
+/* Claves que un preset o un paso del timeline NO aplican: el volumen de salida
+   es del usuario, no del preset. */
+export const PRESET_PRESERVED_KEYS = Object.freeze(['mix']);
 
 export function createAppState() {
   return {

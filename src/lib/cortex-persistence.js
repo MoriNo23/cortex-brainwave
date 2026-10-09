@@ -2,6 +2,7 @@ import {
   AVAILABLE_EMOTES,
   AUDIO_KEYS,
   BUILTIN_PRESETS,
+  CARRIER_LIMITS,
   STOP_BEHAVIOR_DEFAULTS,
   STROBE_DEFAULTS,
   createTimelineState,
@@ -10,6 +11,26 @@ import { bandFromFreq, clampStrobeHz } from './core-math.js';
 
 export function audioSnapshot(source = {}) {
   return Object.fromEntries(AUDIO_KEYS.map((key) => [key, Number(source[key]) || 0]));
+}
+
+/* Resuelve un snapshot de preset o de paso contra el estado vivo. Una clave
+   ausente o no numérica se conserva del estado vivo (nunca se rellena con 0), y
+   una portadora fuera del rango válido (p. ej. el 0 que guardaba el defecto
+   anterior) tampoco se aplica. `mix` queda igual al vivo: el volumen es del
+   usuario. */
+export function resolveAudioSnapshot(snapshot, live = {}) {
+  const source = snapshot && typeof snapshot === 'object' ? snapshot : {};
+  const resolved = {};
+  AUDIO_KEYS.forEach((key) => {
+    const value = Number(source[key]);
+    resolved[key] = source[key] != null && Number.isFinite(value) ? value : (Number(live[key]) || 0);
+  });
+  if (!(resolved.carrier >= CARRIER_LIMITS.min && resolved.carrier <= CARRIER_LIMITS.max)) {
+    const liveCarrier = Number(live.carrier);
+    resolved.carrier = liveCarrier >= CARRIER_LIMITS.min && liveCarrier <= CARRIER_LIMITS.max ? liveCarrier : 200;
+  }
+  resolved.mix = Number(live.mix) || 0;
+  return resolved;
 }
 
 export function normalizeDurationUnit(value) {

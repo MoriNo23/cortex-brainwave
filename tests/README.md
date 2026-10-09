@@ -18,10 +18,10 @@ Node puro, sin navegador y sin dependencias, invocado por el workflow como
 
 | Chequeo | Qué detecta |
 |---|---|
-| `inline-syntax` | Error de sintaxis en el JavaScript inline de `cortex.html` o `cortex.spec.html`, validado con `node --check` |
-| `self-contained` | `<script src>`, `<link href>` o `fetch`/`XMLHttpRequest` hacia un origen remoto |
-| `dom-references` | Un id pedido con `getElementById`/`$('#id')` que el markup no declara |
-| `scenario-runner-shape` | Una entrada del arreglo `TESTS` sin `group`, `name` o `fn` |
+| `dom-references` | Un id que el script de `src/` pide con `getElementById`/`$('#id')` y que ningún componente, plantilla o cadena de HTML del propio JS declara |
+
+Los chequeos `inline-syntax`, `self-contained` y `scenario-runner-shape` se retiraron con
+`remove-legacy`: solo aplicaban al HTML autónomo.
 
 Imprime una línea por chequeo con `PASS`/`FAIL` y escribe `artifacts/light-verify.json`, que el
 job publica como artifact `light-verify`. Con un solo chequeo roto sale con código 1; sin
@@ -40,12 +40,10 @@ cómo se ejecuta la suite en un entorno con dependencias instaladas.
 ```bash
 npm install --no-save playwright@1.63.0
 npm run dev
-node tests/run-cortex-tests.cjs
 node tests/astro-shell-smoke.cjs
 node tests/real-smoke.cjs
 node tests/visual-smoke.cjs
 node tests/responsive-smoke.cjs
-node tests/mutation-smoke.cjs
 node tests/wav-e2e.cjs
 node tests/snapshots.cjs
 node tests/browser-matrix.cjs
@@ -62,4 +60,3 @@ ENGINE=firefox node tests/timeline-scheduling.cjs
 Levantar un navegador en la máquina de trabajo requiere pedirlo explícitamente; la regla está en
 `AGENTS.md`.
 
-El HTML runner `cortex.spec.html` es la suite de escenarios portátil y no depende de esta carpeta.

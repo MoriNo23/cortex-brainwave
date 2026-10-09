@@ -23,6 +23,7 @@ export function createPlaybackController({
     targetState: null,
     restoreMix: 0,
     timelineStatusText: null,
+    timer: 0,
   };
 
   function setTimelineTransportDisabled(disabled) {
@@ -65,11 +66,13 @@ export function createPlaybackController({
 
   function finishGentleStop() {
     if (gentleStop.frame) cancelAnimationFrame(gentleStop.frame);
+    if (gentleStop.timer) clearTimeout(gentleStop.timer);
     const targetState = gentleStop.targetState ? { ...gentleStop.targetState } : stopTargetSnapshot();
     const restoreMix = gentleStop.restoreMix;
     const timelineStatusText = gentleStop.timelineStatusText;
     gentleStop.active = false;
     gentleStop.frame = 0;
+    gentleStop.timer = 0;
     gentleStop.startedAtMs = 0;
     gentleStop.durationMs = 0;
     gentleStop.sourceState = null;
@@ -89,6 +92,9 @@ export function createPlaybackController({
 
   function runGentleStopFrame() {
     if (!gentleStop.active) return;
+    // Puede llegar desde el respaldo por temporizador: no dejar dos cadenas de frames.
+    if (gentleStop.frame) cancelAnimationFrame(gentleStop.frame);
+    gentleStop.frame = 0;
     const progress = gentleStop.durationMs === 0
       ? 1
       : Math.min(1, Math.max(0, (performance.now() - gentleStop.startedAtMs) / gentleStop.durationMs));
@@ -129,6 +135,9 @@ export function createPlaybackController({
       return true;
     }
     runGentleStopFrame();
+    // Con la pestaña oculta requestAnimationFrame no corre y el stop suave
+    // quedaría a medias con el volumen a mitad de camino. Un temporizador lo remata.
+    if (gentleStop.active) gentleStop.timer = setTimeout(runGentleStopFrame, durationMs + 100);
     return true;
   }
 

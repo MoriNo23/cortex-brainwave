@@ -39,7 +39,6 @@ const {
     hasTimelineDock: Boolean(document.getElementById('timelineDock')),
     hasStatusBar: Boolean(document.querySelector('.status-bar')),
     hasStrobePanel: Boolean(document.getElementById('strobePanel')),
-    hasLegacyLink: document.querySelector('.header-right a')?.getAttribute('href') || '',
     noHorizontalOverflow: document.documentElement.scrollWidth <= innerWidth + 1,
     strobePresentation: document.getElementById('strobePanel')?.dataset.strobePresentation || 'missing',
     strobeActive: Boolean(window.__CORTEX__.session.state.strobe.active),
@@ -89,7 +88,6 @@ const {
   if (!before.hasApp || !before.hasHeader || !before.hasLeftPanel || !before.hasVisualArea || !before.hasRightPanel || !before.hasTimelineDock || !before.hasStatusBar || !before.hasStrobePanel) {
     failures.push(`missing-surfaces: ${JSON.stringify(before)}`);
   }
-  if (before.hasLegacyLink !== '/cortex-legacy.html') failures.push(`legacy-link=${before.hasLegacyLink}`);
   if (!before.noHorizontalOverflow) failures.push('horizontal-overflow');
   if (before.strobeActive) failures.push('strobe-started-active');
   if (before.strobeMode !== 'sync') failures.push(`unexpected-initial-strobe-mode=${before.strobeMode}`);

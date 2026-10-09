@@ -19,7 +19,9 @@ export function createPresetController({
   }
 
   function snapshotForBuiltin(preset) {
-    return { ...audioSnapshot(), brainwave: preset.freq, ...presetDefaults[preset.band] };
+    // Solo las claves que el builtin define: `carrier` y `mix` no son suyas y
+    // rellenarlas con audioSnapshot() las dejaba en 0 (silencio y 0 Hz).
+    return { brainwave: preset.freq, ...presetDefaults[preset.band] };
   }
 
   function getPresetDefinition(id) {

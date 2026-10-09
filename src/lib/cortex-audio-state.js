@@ -1,4 +1,5 @@
-import { AUDIO_KEYS } from './cortex-config.js';
+import { AUDIO_KEYS, PRESET_PRESERVED_KEYS } from './cortex-config.js';
+import { resolveAudioSnapshot } from './cortex-persistence.js';
 
 export function createAudioStateController({
   state,
@@ -15,8 +16,13 @@ export function createAudioStateController({
     return Object.fromEntries(AUDIO_KEYS.map((key) => [key, source[key] + (target[key] - source[key]) * t]));
   }
 
-  function applyAudioState(snapshot, { label = null, toast = false } = {}) {
-    Object.assign(state, audioSnapshot(snapshot));
+  /* `preserve` lista claves del snapshot que no se aplican (el timeline excluye
+     `mix`). Sin ella se aplica todo, que es lo que necesita el stop suave para
+     bajar el volumen a propósito. */
+  function applyAudioState(snapshot, { label = null, toast = false, preserve = [] } = {}) {
+    const next = audioSnapshot(snapshot);
+    preserve.forEach((key) => { delete next[key]; });
+    Object.assign(state, next);
     engine.updateBrainwave(state.brainwave);
     engine.updateCarrier(state.carrier);
     engine.updateModLevels();
@@ -27,8 +33,10 @@ export function createAudioStateController({
     if (toast && label) showToast(label);
   }
 
+  /* Aplicar un preset o un paso nunca cambia el volumen de salida y no deja la
+     portadora en un valor inválido. */
   function applyAudioSnapshot(snapshot, label = 'preset aplicado') {
-    applyAudioState(snapshot, { label, toast: true });
+    applyAudioState(resolveAudioSnapshot(snapshot, state), { label, toast: true, preserve: PRESET_PRESERVED_KEYS });
   }
 
   return {
