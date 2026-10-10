@@ -136,6 +136,7 @@ export function serializeSettings(state) {
     strobe: normalizeStrobeState(state.strobe),
   };
   delete data.playing;
+  delete data.paused;
   delete data.band;
   return data;
 }

@@ -5,6 +5,7 @@ export function createAudioStateStack({
   state,
   audioSnapshot,
   markUiDirty,
+  syncUIFromState,
   updateBrain,
   showToast,
 }) {
@@ -15,6 +16,7 @@ export function createAudioStateStack({
     engine,
     audioSnapshot,
     markUiDirty,
+    syncUIFromState,
     updateBrain,
     showToast,
   });

@@ -8,6 +8,7 @@ export function createTimelineAudioPorts({
     ui: {
       persistUiPreferences,
       syncUIFromState: uiShell.syncUIFromState,
+      clearBrainHighlight: uiShell.clearBrainHighlight,
       updateBrain: uiShell.updateBrain,
       updateSpatialReadout: uiShell.updateSpatialReadout,
       setText: uiShell.setText,

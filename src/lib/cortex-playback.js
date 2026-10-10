@@ -11,6 +11,7 @@ export function createPlaybackController({
   syncUIFromState,
   updateBrain,
   updateSpatialReadout,
+  clearBrainHighlight,
   setTimelineStatus,
   showToast,
 }) {
@@ -52,13 +53,24 @@ export function createPlaybackController({
     const dot = document.getElementById('statusDot');
     const text = document.getElementById('statusText');
     if (!btn || !dot || !text) return;
-    refreshWavButton(mode === 'playing');
+    refreshWavButton(mode === 'playing' || mode === 'paused');
     if (mode === 'playing') {
       btn.disabled = false;
       btn.textContent = '■ Detener';
       btn.classList.remove('primary');
       dot.classList.add('on');
       text.textContent = 'reproduciendo';
+      setTimelineTransportDisabled(false);
+      return;
+    }
+    if (mode === 'paused') {
+      /* Pausa real del transporte (cortex-ui-flow-fixes): el audio y la
+         secuencia quedan congelados; el botón principal ofrece reanudar. */
+      btn.disabled = false;
+      btn.textContent = '▶ Reanudar';
+      btn.classList.remove('primary');
+      dot.classList.remove('on');
+      text.textContent = 'pausado';
       setTimelineTransportDisabled(false);
       return;
     }
@@ -96,10 +108,14 @@ export function createPlaybackController({
     gentleStop.timelineStatusText = null;
     engine.stop();
     state.playing = false;
+    state.paused = false;
     Object.assign(state, targetState, { mix: restoreMix });
     syncUIFromState();
     updateBrain();
     updateSpatialReadout();
+    /* El mapa cerebral vuelve al reposo con el transporte detenido — paridad
+       con el radar; el texto de banda queda como memoria de la sesión. */
+    if (typeof clearBrainHighlight === 'function') clearBrainHighlight();
     setPlaybackUi('stopped');
     if (timelineStatusText) setTimelineStatus(timelineStatusText);
     showToast(`detenido suave → ${stopTargetLabel()}`);
@@ -162,6 +178,7 @@ export function createPlaybackController({
       engine.start();
       state.playing = true;
     }
+    state.paused = false;
     setPlaybackUi('playing');
     engine.updateBrainwave(state.brainwave);
     engine.updateCarrier(state.carrier);
@@ -170,15 +187,49 @@ export function createPlaybackController({
     return true;
   }
 
+  /* Pausa real del transporte (cortex-ui-flow-fixes, D2): un único estado
+     para atajo y botón. Congela el audio suspendiendo el AudioContext — el
+     reloj deja de avanzar, así la reanudación del timeline no derrapa — y
+     pausa el player si la secuencia corre. Reanudar restaura la posición
+     exacta: restante de paso y de rampa congelados por el player. */
+  function pauseTransport() {
+    if (!state.playing || state.paused || gentleStop.active) return false;
+    const timelinePlayer = getTimelinePlayer ? getTimelinePlayer() : null;
+    if (timelinePlayer && timelinePlayer.running) timelinePlayer.pause();
+    state.paused = true;
+    engine.suspend();
+    setPlaybackUi('paused');
+    return true;
+  }
+
+  function resumeTransport() {
+    if (!state.playing || !state.paused) return false;
+    state.paused = false;
+    engine.resumePlayback();
+    const timelinePlayer = getTimelinePlayer ? getTimelinePlayer() : null;
+    if (timelinePlayer && timelinePlayer.paused) timelinePlayer.play();
+    setPlaybackUi('playing');
+    return true;
+  }
+
+  function togglePause() {
+    if (state.paused) return resumeTransport();
+    return pauseTransport();
+  }
+
   function togglePlayback() {
+    if (state.paused) return resumeTransport();
     if (state.playing) return requestGentleStop();
     return startPlayback();
   }
 
   return {
+    pauseTransport,
     requestGentleStop,
+    resumeTransport,
     setPlaybackUi,
     startPlayback,
+    togglePause,
     togglePlayback,
   };
 }

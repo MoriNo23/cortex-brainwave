@@ -15,6 +15,7 @@ export function createAudioUiStack({
 
   const {
     applyBandInfo,
+    clearBrainHighlight,
     getRenderedBand,
     getUiPasses,
     markUiDirty,
@@ -30,6 +31,7 @@ export function createAudioUiStack({
   return {
     uiShell: {
       applyBandInfo,
+      clearBrainHighlight,
       getRenderedBand,
       getUiPasses,
       markUiDirty,

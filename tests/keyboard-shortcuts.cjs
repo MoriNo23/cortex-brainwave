@@ -28,9 +28,11 @@ function check(cond, name, detail) {
   };
 
   let dockToggles = 0;
+  let pauseToggles = 0;
   bindKeyboardShortcuts({
     getButton: (id) => buttons[id] || null,
     toggleDock: () => { dockToggles += 1; },
+    togglePause: () => { pauseToggles += 1; },
   });
 
   const fire = (code, target = null, modifiers = {}) => {
@@ -86,7 +88,7 @@ function check(cond, name, detail) {
     fire('Space', bodyEl);
     check(clicks.btnPlay === 1, 'Space en la página dispara ▶ Iniciar', `clicks=${clicks.btnPlay}`);
     fire('KeyP', bodyEl);
-    check(clicks.btnTimelinePause === 1, 'P dispara Ⅱ Pausar', `clicks=${clicks.btnTimelinePause}`);
+    check(pauseToggles === 1, 'P dispara la pausa del transporte (audio + secuencia)', `toggles=${pauseToggles}`);
     fire('BracketLeft', bodyEl);
     check(clicks.inspectorMoveUp === 1, '[ dispara el paso anterior', `clicks=${clicks.inspectorMoveUp}`);
     fire('BracketRight', bodyEl);

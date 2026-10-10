@@ -49,6 +49,9 @@ jobs:
       - name: Atajos de teclado con guardas de foco (unitario)
         run: node tests/keyboard-shortcuts.cjs
 
+      - name: Pausa del transporte (unitario)
+        run: node tests/transport-pause.cjs
+
       - name: Subir reporte
         if: always()
         uses: actions/upload-artifact@v7

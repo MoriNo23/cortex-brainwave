@@ -241,6 +241,27 @@ export class AudioEngine {
     this.needsRebuild = true;
   }
 
+  /* Pausa real del transporte (cortex-ui-flow-fixes, D2): suspender el
+     AudioContext congela el reloj (`currentTime` deja de avanzar) sin
+     destruir el grafo — reanudar continúa la misma sesión sin reiniciar
+     osciladores. `suspend` devuelve una promesa; se avisa si falla porque
+     un contexto cerrado no se puede suspender. */
+  suspend() {
+    if (!this.ctx || this.ctx.state !== 'running') return Promise.resolve(false);
+    return this.ctx.suspend().then(
+      () => true,
+      (error) => { if (this.state && this.state.debug) console.warn('suspend falló:', error); return false; },
+    );
+  }
+
+  resumePlayback() {
+    if (!this.ctx || this.ctx.state !== 'suspended') return Promise.resolve(false);
+    return this.ctx.resume().then(
+      () => true,
+      (error) => { if (this.state && this.state.debug) console.warn('resume falló:', error); return false; },
+    );
+  }
+
   updateCarrier(freq) {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;

@@ -171,6 +171,31 @@ function makeEngine() {
   await gentleStopScenario('rAF normal', 'normal');
   await gentleStopScenario('pestaña oculta', 'hidden');
 
+  // 8. Aplicar un preset custom escribe sliders y readouts en el MISMO tick
+  //    (cortex-ui-flow-fixes 1.1): el flush síncrono reemplaza la espera al rAF
+  //    para acciones puntuales; guardar captura el estado vivo (1.2).
+  {
+    const ctx = build({ mix: 80, carrier: 200 });
+    ctx.state.brainwave = 7.5;
+    ctx.state.carrier = 432;
+    let flushed = 0;
+    const synced = { brainwave: 0, carrier: 0 };
+    /* syncUIFromState espía los valores que la UI vería en este tick. */
+    const audioFlush = createAudioStateController({
+      state: ctx.state, engine: ctx.engine, audioSnapshot,
+      markUiDirty: noop,
+      syncUIFromState: () => { flushed += 1; synced.brainwave = ctx.state.brainwave; synced.carrier = ctx.state.carrier; },
+      updateBrain: noop, showToast: noop,
+    });
+    audioFlush.applyAudioSnapshot({ brainwave: 7.5, carrier: 432, amod: 0, binaural: 0, stereo: 0, fmod: 0, noise: 0, mix: 0 }, 'custom x');
+    check(flushed === 1, 'preset custom: syncUIFromState corre en el mismo tick del click', `flush=${flushed}`);
+    check(synced.brainwave === 7.5 && synced.carrier === 432, 'preset custom: sliders ven 7.5 Hz / 432 Hz en el tick', `${synced.brainwave}/${synced.carrier}`);
+    check(ctx.engine.carriers.includes(432), 'preset custom: el motor recibe la portadora del preset', JSON.stringify(ctx.engine.carriers));
+    // 1.2: el snapshot capturado del estado vivo restaura esos valores al aplicar
+    const captured = audioSnapshot(ctx.state);
+    check(captured.brainwave === 7.5 && captured.carrier === 432, 'guardar con audio: el snapshot captura brainwave/carrier vivos', JSON.stringify(captured));
+  }
+
   /* Anclaje de las rampas del motor: el requisito exige que cada rampa parte
      del valor actual del parámetro, o una rampa encadenada arranca del último
      objetivo programado y el salto se oye. El único sitio con `.linearRamp`

@@ -11,7 +11,7 @@ export function isInteractiveTarget(target) {
   return target.isContentEditable === true;
 }
 
-export function bindKeyboardShortcuts({ getButton = (id) => document.getElementById(id), toggleDock = null } = {}) {
+export function bindKeyboardShortcuts({ getButton = (id) => document.getElementById(id), toggleDock = null, togglePause = null } = {}) {
   document.addEventListener('keydown', (event) => {
     /* Guardas de foco: con el foco en un control interactivo la tecla
        pertenece a ESE control — escribe, activa, no dispara transporte. */
@@ -25,9 +25,10 @@ export function bindKeyboardShortcuts({ getButton = (id) => document.getElementB
       return;
     }
     if (event.code === 'KeyP') {
-      /* P: pausar/reanudar el timeline (botón visible Ⅱ Pausar). */
+      /* P: pausa/reanuda el transporte completo (audio + secuencia), el
+         mismo contrato que el botón visible Ⅱ Pausar del dock. */
       event.preventDefault();
-      getButton('btnTimelinePause')?.click();
+      if (typeof togglePause === 'function') togglePause();
       return;
     }
     if (event.code === 'BracketLeft') {
@@ -60,6 +61,7 @@ export function createAppEventsController({
   markUiDirty,
   updateBrain,
   toggleDock,
+  togglePause,
   bindStrobeEvents,
   bindSettingsEvents,
   bindCustomPresetEvents,
@@ -127,7 +129,11 @@ export function createAppEventsController({
     });
 
     document.getElementById('btnTimelinePlay').addEventListener('click', () => runtimeState.timelinePlayer.play());
-    document.getElementById('btnTimelinePause').addEventListener('click', () => runtimeState.timelinePlayer.pause());
+    /* Ⅱ Pausar pausa el transporte completo (audio + secuencia), el mismo
+       contrato que el atajo P — no solo el player del timeline. */
+    document.getElementById('btnTimelinePause').addEventListener('click', () => {
+      if (typeof togglePause === 'function') togglePause();
+    });
     document.getElementById('btnTimelineStop').addEventListener('click', () => {
       if (!state.playing) {
         runtimeState.timelinePlayer.stop();
@@ -209,7 +215,7 @@ export function createAppEventsController({
 
     bindRegionInfoEvents();
     document.addEventListener('fullscreenchange', handleStrobeFullscreenChange);
-    bindKeyboardShortcuts({ toggleDock });
+    bindKeyboardShortcuts({ toggleDock, togglePause });
   }
 
   return {

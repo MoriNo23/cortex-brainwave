@@ -36,6 +36,7 @@ export function createRuntimeEventsStack({
     duplicateSelectedStep,
     removeSelectedStep,
     applyPreset,
+    togglePause,
     togglePlayback,
   } = timeline;
   const { bindSettingsEvents } = settings;
@@ -53,6 +54,7 @@ export function createRuntimeEventsStack({
        quedaban en la banda anterior. */
     updateBrain,
     toggleDock,
+    togglePause,
     bindStrobeEvents,
     bindSettingsEvents,
     bindCustomPresetEvents,

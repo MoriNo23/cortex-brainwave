@@ -112,6 +112,14 @@ export function createUiShellController({
     markUiDirty('readouts', 'strobe');
   }
 
+  /* Al detener, el mapa cerebral vuelve al estado inactivo — paridad con el
+     radar (canvas), que ya apaga su campo dinámico con playing=false. El
+     panel de texto conserva la banda como memoria de la última sesión
+     (cortex-ui-flow-fixes, D3). */
+  function clearBrainHighlight() {
+    brainRegions.forEach((el) => el.classList.remove('active', 'teal-active'));
+  }
+
   /* Pulso de regiones: una única custom property por frame en lugar de una
      escritura de estilo inline por región y por tick. */
   function uiPulse(seconds) {
@@ -136,6 +144,7 @@ export function createUiShellController({
 
   return {
     applyBandInfo,
+    clearBrainHighlight,
     getRenderedBand,
     getUiPasses,
     markUiDirty,

@@ -14,6 +14,7 @@ export function createTimelinePlaybackStack({
   const { clampTransitionSeconds, audioSnapshot } = helpers;
   const { showToast } = chrome;
   const { syncUIFromState, updateBrain, updateSpatialReadout } = ui;
+  const { clearBrainHighlight } = ui;
   const { applyAudioState, interpolateAudioState } = audio;
   const { stopTargetSnapshot, stopTargetLabel } = preset;
   const { setTimelineStatus } = support;
@@ -31,6 +32,7 @@ export function createTimelinePlaybackStack({
     syncUIFromState,
     updateBrain,
     updateSpatialReadout,
+    clearBrainHighlight,
     setTimelineStatus,
     showToast,
   });
@@ -39,6 +41,7 @@ export function createTimelinePlaybackStack({
     requestGentleStop,
     setPlaybackUi,
     startPlayback,
+    togglePause,
     togglePlayback,
   } = playbackController;
 
@@ -47,6 +50,7 @@ export function createTimelinePlaybackStack({
       requestGentleStop,
       setPlaybackUi,
       startPlayback,
+      togglePause,
       togglePlayback,
     },
   };

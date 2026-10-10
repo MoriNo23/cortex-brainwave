@@ -25,6 +25,7 @@ export function createAudioStack({
     state,
     audioSnapshot,
     markUiDirty,
+    syncUIFromState: uiShell.syncUIFromState,
     updateBrain,
     showToast,
   });

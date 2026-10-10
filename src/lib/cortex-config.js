@@ -44,6 +44,7 @@ export function createAppState() {
     noise: 0,
     mix: 80,
     playing: false,
+    paused: false,
     band: 'alpha',
     dockExpanded: false,
     stopBehavior: { ...STOP_BEHAVIOR_DEFAULTS },
