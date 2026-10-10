@@ -38,22 +38,6 @@ La solución SHALL distinguir lectura de SOFA, obtención de IR y convolución/r
 - **THEN** se puede aprender de su arquitectura
 - **BUT** no se adopta sin revisar estado de mantenimiento y compatibilidad actual
 
-### Requirement: regresión visual
-La solución SHALL comparar snapshots con una tolerancia documentada y controlar animaciones.
-
-#### Scenario: Canvas reactivo
-- **WHEN** el radar se renderiza en estados deterministas
-- **THEN** el sistema captura el Canvas, compara contra un baseline y produce diff/report
-- **AND** una diferencia intencional supera el umbral configurado
-
-### Requirement: cross-browser
-La matriz SHALL distinguir navegador ejecutado de navegador bloqueado.
-
-#### Scenario: Playwright install
-- **WHEN** se ejecuta `npx playwright install chromium firefox webkit`
-- **THEN** se prueba cada motor disponible
-- **AND** un motor cuyo binario o dependencia no esté disponible queda `BLOCKED` con la causa
-
 ### Requirement: auditoría estructural
 La auditoría SHALL poder buscar estructura en HTML con JavaScript/CSS embebidos.
 

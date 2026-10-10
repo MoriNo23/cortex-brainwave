@@ -1,4 +1,0 @@
-schema: spec-driven
-created: 2026-09-18
-goal: Permitir sesiones de Cortex compuestas por cualquier cantidad de presets,
-  reproducibles y editables sin servidor ni dependencias nuevas.

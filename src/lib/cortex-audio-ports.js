@@ -23,6 +23,7 @@ export function createTimelineAudioPorts({
 export function createRuntimeAudioPorts({
   audioStack,
   startPlayback,
+  setPlaybackUi,
 }) {
   return {
     ...audioStack.audioState,
@@ -30,6 +31,7 @@ export function createRuntimeAudioPorts({
     ...audioStack.uiShell,
     ...audioStack.visualizers,
     startPlayback,
+    setPlaybackUi,
   };
 }
 
@@ -65,13 +67,11 @@ export function createDebugAudioNamespaces(audioStack) {
     strobe: {
       renderStrobeControls: strobe.renderStrobeControls,
       effectiveStrobeHz: strobe.effectiveStrobeHz,
-      toggleStrobeMini: strobe.toggleStrobeMini,
       toggleStrobeFullscreen: strobe.toggleStrobeFullscreen,
       toggleStrobeFloating: strobe.toggleStrobeFloating,
       setStrobeActive: strobe.setStrobeActive,
       setStrobeMode: strobe.setStrobeMode,
       setStrobeCustomHz: strobe.setStrobeCustomHz,
-      setStrobePresentation: strobe.setStrobePresentation,
       getFloatingInfo: strobe.getFloatingInfo,
       getPipCapability: strobe.getPipCapability,
     },

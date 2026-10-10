@@ -44,6 +44,7 @@ export function createTimelinePlaybackStack({
   return {
     playback: {
       requestGentleStop,
+      setPlaybackUi,
       startPlayback,
       togglePlayback,
     },

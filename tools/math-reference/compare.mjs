@@ -1,12 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { noiseFilterDepthValue } from '../../src/lib/cortex-audio-engine.js';
 import {
   STROBE_RAMP_MAX_MS,
   STROBE_RAMP_RATIO,
   bandFromFreq,
   binauralFrequencies,
+  interpolateScalar,
   mixPercentToGain,
   strobeFrequencyFromState,
+  strobeIntensityAt,
   strobeIntensityWindow,
   strobePhaseWindow,
   strobeRampRatio,
@@ -60,6 +63,21 @@ function buildJsReference() {
         ),
       };
     }),
+    depth: fixtures.depthCases.map(([carrier, fmod, sampleRate]) => ({
+      carrier, fmod, sampleRate,
+      depth: noiseFilterDepthValue(carrier, fmod, sampleRate),
+    })),
+    interp: fixtures.interpCases.map((entry) => ({
+      ...entry,
+      value: interpolateScalar(entry.from, entry.to, entry.progress),
+    })),
+    ramp: fixtures.rampCases.map((hz) => ({ hz, ramp: strobeRampRatio(hz) })),
+    bandEdges: fixtures.bandEdgeCases.map((hz) => ({ hz, band: bandFromFreq(hz) })),
+    mixEdges: fixtures.mixEdgeCases.map((mix) => ({ mix, gain: mixPercentToGain(mix) })),
+    intensityAt: fixtures.intensityAtCases.map((entry) => ({
+      ...entry,
+      intensity: strobeIntensityAt(entry.progress, entry.ramp),
+    })),
   };
 }
 
@@ -140,6 +158,48 @@ function compareAgainstPython(jsReference, pythonReference) {
         });
       }
     });
+  });
+
+  (jsReference.depth || []).forEach((entry, index) => {
+    const ref = pythonReference.depth?.[index];
+    if (!ref || !near(entry.depth, ref.depth, tolerances.depth)) {
+      failures.push({ metric: 'noise-filter-depth', index, expected: ref, actual: entry });
+    }
+  });
+
+  (jsReference.interp || []).forEach((entry, index) => {
+    const ref = pythonReference.interp?.[index];
+    if (!ref || !near(entry.value, ref.value, tolerances.interp)) {
+      failures.push({ metric: 'interpolate-scalar', index, expected: ref, actual: entry });
+    }
+  });
+
+  (jsReference.ramp || []).forEach((entry, index) => {
+    const ref = pythonReference.ramp?.[index];
+    if (!ref || !near(entry.ramp, ref.ramp, tolerances.rampRatio)) {
+      failures.push({ metric: 'strobe-ramp', index, expected: ref, actual: entry });
+    }
+  });
+
+  (jsReference.bandEdges || []).forEach((entry, index) => {
+    const ref = pythonReference.bandEdges?.[index];
+    if (!ref || entry.band !== ref.band) {
+      failures.push({ metric: 'band-edge', index, expected: ref, actual: entry });
+    }
+  });
+
+  (jsReference.mixEdges || []).forEach((entry, index) => {
+    const ref = pythonReference.mixEdges?.[index];
+    if (!ref || !near(entry.gain, ref.gain, tolerances.mixGain)) {
+      failures.push({ metric: 'mix-edge', index, expected: ref, actual: entry });
+    }
+  });
+
+  (jsReference.intensityAt || []).forEach((entry, index) => {
+    const ref = pythonReference.intensityAt?.[index];
+    if (!ref || !near(entry.intensity, ref.intensity, tolerances.intensity)) {
+      failures.push({ metric: 'strobe-intensity-at', index, expected: ref, actual: entry });
+    }
   });
 
   return failures;

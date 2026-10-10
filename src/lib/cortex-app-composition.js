@@ -75,6 +75,7 @@ export function createCortexApp() {
       buildGlossary: chrome.buildGlossary,
       bindRegionInfoEvents: chrome.bindRegionInfoEvents,
       startPlayback: timelineStack.playback.startPlayback,
+      setPlaybackUi: timelineStack.playback.setPlaybackUi,
     }),
   });
 

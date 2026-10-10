@@ -33,7 +33,7 @@ export function createVisualizers({ state }) {
     if (!state.playing) {
       waveElapsedMs = 0;
       waveLastTs = null;
-      waveCtx.strokeStyle = 'rgba(58,54,46,0.4)';
+      waveCtx.strokeStyle = 'rgba(28,27,24,0.35)';
       waveCtx.lineWidth = 1;
       waveCtx.beginPath();
       waveCtx.moveTo(0, h / 2);
@@ -50,7 +50,7 @@ export function createVisualizers({ state }) {
     const phasePerMs = (0.008 * (1 + freq * 0.05)) / WAVE_REFERENCE_FRAME_MS;
     const wavePhase = waveElapsedMs * phasePerMs;
 
-    waveCtx.strokeStyle = '#E8A855';
+    waveCtx.strokeStyle = '#b3492f';
     waveCtx.lineWidth = 1.5;
     waveCtx.globalAlpha = 0.7;
     waveCtx.beginPath();
@@ -83,7 +83,7 @@ export function createVisualizers({ state }) {
     const headRx = R * 0.74;
     const headRy = R * 0.92;
 
-    ctx.strokeStyle = 'rgba(58,54,46,0.45)';
+    ctx.strokeStyle = 'rgba(28,27,24,0.30)';
     ctx.lineWidth = 1;
     for (let i = 1; i <= 3; i += 1) {
       ctx.beginPath();
@@ -98,13 +98,13 @@ export function createVisualizers({ state }) {
     ctx.lineTo(cx + headRx, cy);
     ctx.stroke();
 
-    ctx.strokeStyle = '#3A362E';
+    ctx.strokeStyle = '#4a4842';
     ctx.lineWidth = 1.4;
     ctx.beginPath();
     ctx.ellipse(cx, cy, headRx, headRy, 0, 0, Math.PI * 2);
     ctx.stroke();
 
-    ctx.fillStyle = '#3A362E';
+    ctx.fillStyle = '#4a4842';
     ctx.beginPath();
     ctx.moveTo(cx, cy - headRy - 10);
     ctx.lineTo(cx - 7, cy - headRy + 3);
@@ -119,7 +119,7 @@ export function createVisualizers({ state }) {
     ctx.ellipse(cx + headRx + 2, cy, 4, 9, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = '#6B6358';
+    ctx.fillStyle = '#85806f';
     ctx.font = '10px "IBM Plex Mono", monospace';
     ctx.textAlign = 'center';
     ctx.fillText('FRENTE', cx, cy - headRy - 16);
@@ -142,20 +142,20 @@ export function createVisualizers({ state }) {
     if (state.playing) {
       if (stereoAmt > 0.03) {
         const ry = headRy * (0.22 + 0.45 * stereoAmt);
-        ctx.fillStyle = `rgba(232,168,85,${0.05 + 0.12 * stereoAmt})`;
+        ctx.fillStyle = `rgba(179,73,47,${0.06 + 0.14 * stereoAmt})`;
         ctx.beginPath();
         ctx.ellipse(cx, cy, headRx, ry, 0, 0, Math.PI * 2);
         ctx.fill();
       }
       if (fmodAmt > 0.03) {
         const rx = headRx * (0.22 + 0.45 * fmodAmt);
-        ctx.fillStyle = `rgba(74,155,142,${0.05 + 0.12 * fmodAmt})`;
+        ctx.fillStyle = `rgba(47,111,98,${0.06 + 0.14 * fmodAmt})`;
         ctx.beginPath();
         ctx.ellipse(cx, cy, rx, headRy, 0, 0, Math.PI * 2);
         ctx.fill();
       }
       if (binAmt > 0.03) {
-        ctx.fillStyle = `rgba(232,168,85,${0.07 + 0.12 * binAmt})`;
+        ctx.fillStyle = `rgba(179,73,47,${0.08 + 0.14 * binAmt})`;
         const lx = headRx * (0.45 + 0.25 * binAmt);
         const ly = headRy * (0.35 + 0.2 * binAmt);
         ctx.beginPath();
@@ -169,7 +169,7 @@ export function createVisualizers({ state }) {
         for (let i = 0; i < 14; i += 1) {
           const a = (i / 14) * Math.PI * 2 + t * 0.6;
           const rr = 0.3 + 0.55 * ((i * 0.37) % 1);
-          ctx.fillStyle = `rgba(160,150,135,${0.03 + noiseAmt * 0.05})`;
+          ctx.fillStyle = `rgba(133,128,111,${0.04 + noiseAmt * 0.06})`;
           ctx.beginPath();
           ctx.arc(
             cx + Math.cos(a) * headRx * rr,
@@ -183,7 +183,7 @@ export function createVisualizers({ state }) {
       }
       if (amodAmt > 0.03) {
         const pulse = 0.55 + 0.4 * (0.5 + 0.5 * Math.sin(phase * 2));
-        ctx.strokeStyle = `rgba(232,168,85,${0.12 + 0.22 * amodAmt})`;
+        ctx.strokeStyle = `rgba(179,73,47,${0.14 + 0.26 * amodAmt})`;
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.ellipse(cx, cy, headRx * pulse, headRy * pulse, 0, 0, Math.PI * 2);
@@ -201,19 +201,19 @@ export function createVisualizers({ state }) {
     const sy = cy + srcY * headRy;
 
     const grd = ctx.createRadialGradient(sx, sy, 0, sx, sy, 18);
-    grd.addColorStop(0, state.playing ? 'rgba(232,168,85,0.85)' : 'rgba(107,99,88,0.35)');
-    grd.addColorStop(1, 'rgba(232,168,85,0)');
+    grd.addColorStop(0, state.playing ? 'rgba(179,73,47,0.85)' : 'rgba(133,128,111,0.40)');
+    grd.addColorStop(1, 'rgba(179,73,47,0)');
     ctx.fillStyle = grd;
     ctx.beginPath();
     ctx.arc(sx, sy, 18, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = state.playing ? '#E8A855' : '#6B6358';
+    ctx.fillStyle = state.playing ? '#b3492f' : '#85806f';
     ctx.beginPath();
     ctx.arc(sx, sy, 4, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = 'rgba(240,235,224,0.25)';
+    ctx.fillStyle = 'rgba(28,27,24,0.30)';
     ctx.beginPath();
     ctx.arc(cx, cy, 1.5, 0, Math.PI * 2);
     ctx.fill();

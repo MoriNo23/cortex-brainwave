@@ -6,23 +6,7 @@
   "scripts": {
     "dev": "astro dev --host 0.0.0.0 --port 4173",
     "build": "astro build",
-    "preview": "astro preview --host 0.0.0.0 --port 4173",
-    "serve": "astro dev --host 0.0.0.0 --port 4173",
-    "test:ui": "node tests/ui-stability.cjs",
-    "test:timeline": "node tests/timeline-scheduling.cjs",
-    "test:presets": "node tests/timeline-custom-presets.cjs",
-    "test:noise": "node tests/noise-carrier.cjs",
-    "test:wav": "node tests/wav-e2e.cjs",
-    "test:visual": "node tests/visual-smoke.cjs",
-    "test:strobe": "node tests/strobe-visuals.cjs",
-    "test:strobe-worker": "node tests/strobe-worker.cjs",
-    "test:responsive": "node tests/responsive-smoke.cjs",
-    "test:snapshots": "node tests/snapshots.cjs",
-    "test:matrix": "node tests/browser-matrix.cjs"
-  },
-  "devDependencies": {
-    "playwright": "^1.49.0",
-    "pngjs": "^7.0.0"
+    "preview": "astro preview --host 0.0.0.0 --port 4173"
   },
   "dependencies": {
     "astro": "^5.18.2"

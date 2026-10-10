@@ -1,3 +1,57 @@
+/* Guardas de foco de los atajos de teclado (tarea 5.7 de cortex-fresh-start).
+   A nivel de módulo y exportadas para que el unitario (tests/keyboard-shortcuts.cjs)
+   las ejercite con DOM simulado sin montar la app: la garantía que se verifica
+   es la guarda — con el foco en un input la tecla escribe y no dispara
+   transporte. */
+const INTERACTIVE_TAGS = new Set(['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'A']);
+
+export function isInteractiveTarget(target) {
+  if (!target || target.nodeType !== 1) return false;
+  if (INTERACTIVE_TAGS.has(target.tagName)) return true;
+  return target.isContentEditable === true;
+}
+
+export function bindKeyboardShortcuts({ getButton = (id) => document.getElementById(id), toggleDock = null } = {}) {
+  document.addEventListener('keydown', (event) => {
+    /* Guardas de foco: con el foco en un control interactivo la tecla
+       pertenece a ESE control — escribe, activa, no dispara transporte. */
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    if (isInteractiveTarget(event.target)) return;
+
+    if (event.code === 'Space') {
+      /* Espacio: iniciar/detener, lo mismo que el botón visible ▶ Iniciar. */
+      event.preventDefault();
+      getButton('btnPlay')?.click();
+      return;
+    }
+    if (event.code === 'KeyP') {
+      /* P: pausar/reanudar el timeline (botón visible Ⅱ Pausar). */
+      event.preventDefault();
+      getButton('btnTimelinePause')?.click();
+      return;
+    }
+    if (event.code === 'BracketLeft') {
+      /* [: paso anterior del timeline (botón visible ◀ del inspector). */
+      event.preventDefault();
+      getButton('inspectorMoveUp')?.click();
+      return;
+    }
+    if (event.code === 'BracketRight') {
+      /* ]: paso siguiente del timeline (botón visible ▶ del inspector). */
+      event.preventDefault();
+      getButton('inspectorMoveDown')?.click();
+      return;
+    }
+    if (event.code === 'KeyT') {
+      /* T: plegar/desplegar el timeline (equivalente al botón visible
+         ⌁ Timeline del panel de sonido). */
+      event.preventDefault();
+      if (typeof toggleDock === 'function') toggleDock();
+      return;
+    }
+  });
+}
+
 export function createAppEventsController({
   state,
   timelineState,
@@ -109,28 +163,6 @@ export function createAppEventsController({
     });
   }
 
-  const INTERACTIVE_TAGS = new Set(['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'A']);
-
-  function isInteractiveTarget(target) {
-    if (!target || target.nodeType !== 1) return false;
-    if (INTERACTIVE_TAGS.has(target.tagName)) return true;
-    return target.isContentEditable === true;
-  }
-
-  function bindKeyboardShortcuts() {
-    document.addEventListener('keydown', (event) => {
-      if (event.code !== 'Space') return;
-      if (event.ctrlKey || event.metaKey || event.altKey) return;
-      /* Con el foco en un control, Espacio tiene que activar ESE control.
-         Antes se hacía preventDefault sobre todo lo que no fuera INPUT y se
-         lanzaba siempre el transporte de audio: ningún botón (play/stop del
-         estrobo, guardar, timeline) se podía activar por teclado. */
-      if (isInteractiveTarget(event.target)) return;
-      event.preventDefault();
-      document.getElementById('btnPlay')?.click();
-    });
-  }
-
   function bindEvents() {
     const brainwaveSlider = document.getElementById('sliderBrainwave');
     brainwaveSlider.addEventListener('input', () => {
@@ -162,19 +194,22 @@ export function createAppEventsController({
     bindPresetCards();
 
     document.getElementById('btnPlay').addEventListener('click', togglePlayback);
-    document.getElementById('btnWav').addEventListener('click', exportWav);
+    document.getElementById('btnWav').addEventListener('click', () => {
+      if (state.playing) exportWav();
+    });
 
     document.getElementById('toggleMods').addEventListener('click', () => {
       const body = document.getElementById('modsBody');
       const toggle = document.getElementById('toggleMods');
-      const hidden = body.style.display === 'none';
-      body.style.display = hidden ? 'block' : 'none';
+      const hidden = body.dataset.folded === 'true';
+      body.dataset.folded = hidden ? 'false' : 'true';
       toggle.textContent = hidden ? '▼' : '▶';
+      toggle.setAttribute('aria-expanded', hidden ? 'true' : 'false');
     });
 
     bindRegionInfoEvents();
     document.addEventListener('fullscreenchange', handleStrobeFullscreenChange);
-    bindKeyboardShortcuts();
+    bindKeyboardShortcuts({ toggleDock });
   }
 
   return {

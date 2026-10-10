@@ -11,7 +11,7 @@ The publication workflow SHALL deploy the app to GitHub Pages only after the CI 
 
 #### Scenario: CI verde en main
 - **WHEN** the CI workflow completes successfully on `main`
-- **THEN** the publication workflow builds the Astro shell and deploys `dist/`
+- **THEN** the publication workflow builds the Astro app and deploys the result
 - **AND** the site serves that version
 
 #### Scenario: CI rojo en main
@@ -25,17 +25,16 @@ The publication workflow SHALL deploy the app to GitHub Pages only after the CI 
 - **AND** the deployment is recorded as manual in the run history
 
 ### Requirement: Una sola fuente de verdad
-The publication SHALL build the Astro shell at deploy time and publish the result of that build. The repository MUST NOT contain a duplicate built `index.html`, and the built site MUST NOT require a server, external libraries, or services beyond the app's documented dependencies. The build happens only in the pipeline; the repository keeps `src/` as its single source of truth.
+The publication SHALL build the site from the repository sources at deploy time. The repository MUST NOT contain a built copy of the site, and the build output MUST live only in the deployment artifact.
 
 #### Scenario: Build en el pipeline
 - **WHEN** the publication workflow prepares the site
-- **THEN** it runs `npx astro build` with `PAGES_BASE=/cortex-brainwave`
-- **AND** it uploads `dist/` as the deployment artifact
-- **AND** `dist/` exists only in the artifact, not in the repository
+- **THEN** it runs the Astro build with the base path of the Pages project
+- **AND** the output exists only in the deployment artifact, not in the repository
 
 #### Scenario: La app publicada carga bajo el subpath
-- **WHEN** a visitor opens the published site under `/cortex-brainwave/`
-- **THEN** assets resolve correctly because `base` was set at build time
+- **WHEN** a visitor opens the published site under `/<repository>/`
+- **THEN** the page, its scripts and its styles load without 404 errors
 - **AND** audio still requires a user gesture, as in any browser
 
 ### Requirement: El despliegue no tapa al anterior ni escala permisos

@@ -14,6 +14,62 @@
   "strobeEnvelopeCases": [
     { "mode": "sync", "brainwave": 0.5, "customHz": 10, "timestampsMs": [0, 4, 8, 16, 20, 900, 1000, 1004, 1008, 1016, 1020] },
     { "mode": "sync", "brainwave": 10, "customHz": 10, "timestampsMs": [0, 6, 12, 30, 50, 56, 62, 80] },
-    { "mode": "custom", "brainwave": 10, "customHz": 40, "timestampsMs": [0, 1.5, 3, 5, 12, 12.5, 13, 15, 24] }
+    { "mode": "custom", "brainwave": 10, "customHz": 40, "timestampsMs": [0, 1.5, 3, 5, 12, 12.5, 13, 15, 24] },
+    { "mode": "custom", "brainwave": 10, "customHz": 10, "timestampsMs": [-1000, -500, -50, -25, 0, 25] }
+  ],
+  "depthCases": [
+    [200, 50, 44100],
+    [200, 0, 44100],
+    [400, 100, 44100],
+    [200, 100, 44100],
+    [200, 150, 44100],
+    [20, 100, 44100],
+    [-5, 50, 44100],
+    [20000, 100, 44100],
+    [44100, 100, 44100],
+    [1000, 100, 48000],
+    [200, 50, 22050],
+    [200, -20, 44100]
+  ],
+  "interpCases": [
+    { "from": 0, "to": 10, "progress": 0.5 },
+    { "from": 2, "to": 6, "progress": 0 },
+    { "from": 2, "to": 6, "progress": 1 },
+    { "from": 2, "to": 6, "progress": 0.25 },
+    { "from": 10, "to": 2, "progress": -1 },
+    { "from": 10, "to": 2, "progress": 2 },
+    { "from": null, "to": 10, "progress": 0.5 },
+    { "from": 10, "to": null, "progress": 0.5 },
+    { "from": 10, "to": 2, "progress": null }
+  ],
+  "rampCases": [0.5, 1, 2, 3, 4, 6.5, 7.5, 10, 13, 18, 20, 30, 40],
+  "bandEdgeCases": [3.9, 4, 7.9, 8, 12.9, 13, 29.9, 30],
+  "mixEdgeCases": [-100, -1, 0, 0.5, 100, 101, 1000000000, null],
+  "intensityAtCases": [
+    { "progress": 0, "ramp": 0 },
+    { "progress": 0.25, "ramp": 0 },
+    { "progress": 0.5, "ramp": 0 },
+    { "progress": 0.75, "ramp": 0 },
+    { "progress": 1, "ramp": 0 },
+    { "progress": 0, "ramp": 0.008 },
+    { "progress": 0.004, "ramp": 0.008 },
+    { "progress": 0.25, "ramp": 0.008 },
+    { "progress": 0.5, "ramp": 0.008 },
+    { "progress": 0.504, "ramp": 0.008 },
+    { "progress": 0.51, "ramp": 0.008 },
+    { "progress": 0.75, "ramp": 0.008 },
+    { "progress": 0, "ramp": 0.12 },
+    { "progress": 0.06, "ramp": 0.12 },
+    { "progress": 0.25, "ramp": 0.12 },
+    { "progress": 0.5, "ramp": 0.12 },
+    { "progress": 0.56, "ramp": 0.12 },
+    { "progress": 0.62, "ramp": 0.12 },
+    { "progress": 0.75, "ramp": 0.12 },
+    { "progress": 1, "ramp": 0.12 },
+    { "progress": 0.5, "ramp": 0.25 },
+    { "progress": 0.1, "ramp": 0.5 },
+    { "progress": 0.25, "ramp": -1 },
+    { "progress": -1, "ramp": 0.12 },
+    { "progress": 2, "ramp": 0.12 }
   ]
 }

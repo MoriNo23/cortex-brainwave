@@ -25,10 +25,8 @@ export function createStrobeStack({
     setStrobeActive,
     setStrobeCustomHz,
     setStrobeMode,
-    setStrobePresentation,
     toggleStrobeFloating,
     toggleStrobeFullscreen,
-    toggleStrobeMini,
   } = strobeController;
 
   return {
@@ -44,10 +42,8 @@ export function createStrobeStack({
       setStrobeActive,
       setStrobeCustomHz,
       setStrobeMode,
-      setStrobePresentation,
       toggleStrobeFloating,
       toggleStrobeFullscreen,
-      toggleStrobeMini,
     },
   };
 }

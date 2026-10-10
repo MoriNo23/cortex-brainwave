@@ -26,7 +26,7 @@
   </div>
 
   <div class="section">
-    <div class="section-title">Núcleo</div>
+    <div class="section-title">Núcleo <span class="hint">moldeo del sonido</span></div>
     <div class="ctrl">
       <div class="ctrl-head">
         <div class="ctrl-label">Brainwave <small>frecuencia objetivo</small></div>
@@ -46,9 +46,9 @@
   <div class="section">
     <div class="section-title">
       Moduladores
-      <span class="hint" style="cursor:pointer;color:var(--amber-dim)" id="toggleMods">▼</span>
+      <span class="hint toggle-hint" id="toggleMods" role="button" aria-controls="modsBody" aria-expanded="true">▼</span>
     </div>
-    <div id="modsBody">
+    <div id="modsBody" data-folded="false">
       <div class="mod-grid">
         <div class="mod-item">
           <div class="mod-head"><span class="mod-name">a-mod</span><span class="mod-val" id="valAmod">0%</span></div>
@@ -68,49 +68,13 @@
         </div>
       </div>
 
-      <div class="two-col" style="margin-top:14px">
-        <div class="ctrl" style="margin-bottom:0">
-          <div class="ctrl-head">
-            <div class="ctrl-label">Noise</div>
-            <div class="ctrl-val" id="valNoise">0%</div>
-          </div>
-          <input type="range" class="teal" id="sliderNoise" min="0" max="100" value="0">
+      <div class="ctrl ctrl-noise">
+        <div class="ctrl-head">
+          <div class="ctrl-label">Noise <small>portadora de ruido</small></div>
+          <div class="ctrl-val" id="valNoise">0%</div>
         </div>
-        <div class="ctrl" style="margin-bottom:0">
-          <div class="ctrl-head">
-            <div class="ctrl-label">Mix</div>
-            <div class="ctrl-val" id="valMix">80%</div>
-          </div>
-          <input type="range" class="teal" id="sliderMix" min="0" max="100" value="80">
-        </div>
+        <input type="range" class="teal" id="sliderNoise" min="0" max="100" value="0">
       </div>
     </div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">Detener suave</div>
-    <div class="stop-settings">
-      <div class="custom-form-row">
-        <label for="stopTargetBand">Caer en</label>
-        <select id="stopTargetBand" aria-label="Banda objetivo al detener">
-          <option value="delta">Delta · 2 Hz</option>
-          <option value="theta">Theta · 6 Hz</option>
-          <option value="alpha">Alpha · 10 Hz</option>
-          <option value="beta">Beta · 20 Hz</option>
-          <option value="gamma">Gamma · 40 Hz</option>
-        </select>
-      </div>
-      <div class="custom-form-row">
-        <label for="stopFadeSeconds">Fade de salida</label>
-        <input id="stopFadeSeconds" type="number" min="0" max="60" step="0.1" value="2" aria-label="Duración del fade al detener">
-      </div>
-      <div class="stop-settings-hint" id="stopSettingsHint">Al detener el timeline o la escucha individual, la app cae primero a la banda elegida y baja el mix gradualmente antes de cortar el audio.</div>
-    </div>
-  </div>
-
-  <div class="save-row">
-    <button class="btn" id="btnSaveLocal">Guardar</button>
-    <button class="btn" id="btnLoadLocal">Cargar</button>
-    <button class="btn" id="btnWav">.wav</button>
   </div>
 </aside>

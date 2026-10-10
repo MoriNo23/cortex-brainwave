@@ -188,9 +188,9 @@ async function fuenteMinificada() {
   } catch (error) {
     return { disponible: false, motivo: 'esbuild no instalado (sin npm install)' };
   }
-  const salida = path.join(os.tmpdir(), `cortex-strobe-pip-${process.pid}.mjs`);
+  const salida = path.join(os.tmpdir(), `cortex-strobe-window-${process.pid}.mjs`);
   esbuild.buildSync({
-    entryPoints: [path.join(RAIZ, 'src', 'lib', 'cortex-strobe-pip.js')],
+    entryPoints: [path.join(RAIZ, 'src', 'lib', 'cortex-strobe-window.js')],
     bundle: true,
     minify: true,
     format: 'esm',
@@ -204,7 +204,7 @@ async function fuenteMinificada() {
 }
 
 async function main() {
-  const { buildStrobeWorkerSource } = await import('../src/lib/cortex-strobe-pip.js');
+  const { buildStrobeWorkerSource } = await import('../src/lib/cortex-strobe-window.js');
   const math = await import('../src/lib/core-math.js');
   const paint = await import('../src/lib/cortex-strobe-paint.js');
   const fixtures = JSON.parse(fs.readFileSync(FIXTURES, 'utf8'));

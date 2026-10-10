@@ -1,5 +1,42 @@
 <aside class="panel panel-right">
   <div class="section">
+    <div class="section-title">Salida <span class="hint">volumen y cierre</span></div>
+    <div class="ctrl ctrl-output">
+      <div class="ctrl-head">
+        <div class="ctrl-label">Volumen <small>mezcla master</small></div>
+        <div class="ctrl-val" id="valMix">80%</div>
+      </div>
+      <input type="range" class="teal" id="sliderMix" min="0" max="100" value="80">
+    </div>
+    <div class="save-row">
+      <button class="btn" id="btnWav" title="Exportar 60 s a .wav">↓ .wav</button>
+      <button class="btn" id="btnSaveLocal" title="Guardar ajustes en el navegador">Guardar</button>
+      <button class="btn" id="btnLoadLocal" title="Cargar ajustes guardados">Cargar</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Detener suave</div>
+    <div class="stop-settings">
+      <div class="custom-form-row">
+        <label for="stopTargetBand">Caer en</label>
+        <select id="stopTargetBand" aria-label="Banda objetivo al detener">
+          <option value="delta">Delta · 2 Hz</option>
+          <option value="theta">Theta · 6 Hz</option>
+          <option value="alpha">Alpha · 10 Hz</option>
+          <option value="beta">Beta · 20 Hz</option>
+          <option value="gamma">Gamma · 40 Hz</option>
+        </select>
+      </div>
+      <div class="custom-form-row">
+        <label for="stopFadeSeconds">Fade de salida</label>
+        <input id="stopFadeSeconds" type="number" min="0" max="60" step="0.1" value="2" aria-label="Duración del fade al detener">
+      </div>
+      <div class="stop-settings-hint" id="stopSettingsHint">Al detener el timeline o la escucha individual, la app cae primero a la banda elegida y baja el volumen gradualmente antes de cortar el audio.</div>
+    </div>
+  </div>
+
+  <div class="section">
     <div class="section-title">Estado actual</div>
     <div class="band-info" id="bandInfo">
       <div class="band-name" id="bandName">Alpha</div>
@@ -31,7 +68,6 @@
       <div class="strobe-controls">
         <button class="btn primary" id="btnStrobePlay" type="button" aria-pressed="false">▶ Play</button>
         <button class="btn" id="btnStrobeStop" type="button" aria-pressed="true">■ Stop</button>
-        <button class="btn" id="btnStrobeMini" type="button">◫ Mini player</button>
         <button class="btn" id="btnStrobeFloat" type="button">⧉ Ventana flotante</button>
         <button class="btn" id="btnStrobeFullscreen" type="button">⛶ Pantalla completa</button>
       </div>
@@ -39,7 +75,7 @@
         <label class="loop-label"><input type="radio" name="strobeFrequencyMode" id="strobeModeSync" checked> Sync Brainwave</label>
         <label class="loop-label"><input type="radio" name="strobeFrequencyMode" id="strobeModeCustom"> Frecuencia propia</label>
       </div>
-      <div class="ctrl" style="margin-bottom:0">
+      <div class="ctrl ctrl-strobe-hz">
         <div class="ctrl-head">
           <div class="ctrl-label">Flash Hz <small>modo independiente</small></div>
           <div class="ctrl-val" id="valStrobeHz">10.0 Hz</div>

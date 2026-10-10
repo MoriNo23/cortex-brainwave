@@ -47,6 +47,7 @@ export function createRuntimeStackBindings({
   buildGlossary,
   bindRegionInfoEvents,
   startPlayback,
+  setPlaybackUi,
 }) {
   return {
     chrome: {
@@ -57,6 +58,7 @@ export function createRuntimeStackBindings({
     audio: createRuntimeAudioPorts({
       audioStack,
       startPlayback,
+      setPlaybackUi,
     }),
     timeline: createRuntimeTimelinePorts(timelineStack),
   };

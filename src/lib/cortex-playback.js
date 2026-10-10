@@ -33,11 +33,26 @@ export function createPlaybackController({
     });
   }
 
+  /* La exportación .wav renderiza lo que suena: sin reproducción no hay señal.
+     El botón se deshabilita y expone su razón sin que haya que probarlo
+     (tarea 5.6 de cortex-fresh-start). */
+  function refreshWavButton(ready) {
+    const btn = document.getElementById('btnWav');
+    if (!btn) return;
+    btn.disabled = !ready;
+    const reason = ready
+      ? 'Exportar 60 s de lo que suena a .wav'
+      : 'Necesita audio reproduciéndose: exporta lo que suena';
+    btn.title = reason;
+    btn.setAttribute('aria-label', reason);
+  }
+
   function setPlaybackUi(mode) {
     const btn = document.getElementById('btnPlay');
     const dot = document.getElementById('statusDot');
     const text = document.getElementById('statusText');
     if (!btn || !dot || !text) return;
+    refreshWavButton(mode === 'playing');
     if (mode === 'playing') {
       btn.disabled = false;
       btn.textContent = '■ Detener';

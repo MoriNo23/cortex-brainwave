@@ -1,5 +1,5 @@
 export const STOP_BEHAVIOR_DEFAULTS = Object.freeze({ targetBand: 'alpha', fadeSeconds: 2 });
-export const STROBE_DEFAULTS = Object.freeze({ mode: 'sync', customHz: 10, presentation: 'integrated', active: false });
+export const STROBE_DEFAULTS = Object.freeze({ mode: 'sync', customHz: 10, active: false });
 
 export const BANDS = {
   delta:  { name:'Delta',   range:'0.5 – 4 Hz',  desc:'Sueño profundo sin sueños. Restauración física, sanación, inconsciencia. El cerebro está en su estado más lento.', regions:['deep'] },

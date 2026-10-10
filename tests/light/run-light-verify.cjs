@@ -14,6 +14,8 @@ const REPORTE = path.join(RAIZ, 'artifacts', 'light-verify.json');
 const CHEQUOS = [
   { id: 'dom-references', ruta: 'checks/dom-references.cjs' },
 ];
+/* `dist-references` no se registra aquí: necesita dist/, que solo existe
+   tras el build. El job build-y-math lo invoca por ruta una vez construido. */
 
 async function cargar(fn) {
   return pathToFileURL(path.join(__dirname, fn)).href;
@@ -54,8 +56,7 @@ async function main() {
     (fallos ? 'FAIL' : 'PASS') + '  ' + String(fallos) + ' de ' + String(chequeos.length) +
     ' chequeos fallaron — reporte en artifacts/light-verify.json'
   );
-  console.log('Este job solo cubre los chequeos estáticos. El verde de la suite con navegador');
-  console.log('lo dan los jobs suite, motores y matriz de la misma corrida.');
+  console.log('Este job cubre los chequeos estáticos y los unitarios puros de la corrida.');
   process.exit(fallos ? 1 : 0);
 }
 

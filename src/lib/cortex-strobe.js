@@ -1,5 +1,4 @@
 import {
-  normalizeStrobePresentation,
   normalizeStrobeState,
 } from './cortex-persistence.js';
 import {
@@ -8,7 +7,7 @@ import {
   strobeIntensityWindow,
 } from './core-math.js';
 import { STROBE_PALETTE, paintStrobeSurface } from './cortex-strobe-paint.js';
-import { createStrobePipController } from './cortex-strobe-pip.js';
+import { createStrobeWindowController } from './cortex-strobe-window.js';
 
 export function createStrobeController({
   state,
@@ -16,13 +15,13 @@ export function createStrobeController({
   showToast,
   markUiDirty,
 }) {
-  let pip = null;
+  let windowController = null;
   let surfaceObserver = null;
 
   /* El panel puede estar en el documento principal o dentro de la ventana
-     flotante (PiP): toda lectura/escritura de DOM pasa por aquí. */
+     flotante: toda lectura/escritura de DOM pasa por aquí. */
   function surfaceDocument() {
-    return pip ? pip.getSurfaceDocument() : document;
+    return windowController ? windowController.getSurfaceDocument() : document;
   }
 
   function getCanvas(doc = surfaceDocument()) {
@@ -38,7 +37,7 @@ export function createStrobeController({
   }
 
   function isFloating() {
-    return Boolean(pip && pip.isFloating());
+    return Boolean(windowController && windowController.isFloating());
   }
 
   function setText(target, value) {
@@ -52,7 +51,7 @@ export function createStrobeController({
   function presentationName(isFullscreen) {
     if (isFloating()) return 'Ventana flotante';
     if (isFullscreen) return 'Pantalla completa';
-    return state.strobe.presentation === 'mini' ? 'Mini player' : 'Integrado';
+    return 'Integrado';
   }
 
   function renderStrobeControls() {
@@ -65,7 +64,6 @@ export function createStrobeController({
     const sync = doc.getElementById('strobeModeSync');
     const custom = doc.getElementById('strobeModeCustom');
     const slider = doc.getElementById('sliderStrobeHz');
-    const miniBtn = doc.getElementById('btnStrobeMini');
     const floatBtn = doc.getElementById('btnStrobeFloat');
     const fullscreenBtn = doc.getElementById('btnStrobeFullscreen');
     const playBtn = doc.getElementById('btnStrobePlay');
@@ -84,18 +82,16 @@ export function createStrobeController({
       slider.disabled = state.strobe.mode !== 'custom';
       if (Number(slider.value) !== state.strobe.customHz) slider.value = state.strobe.customHz;
     }
-    setText(miniBtn, state.strobe.presentation === 'mini' ? '↘ Integrado' : '◫ Mini player');
     setText(floatBtn, floating ? '✕ Cerrar ventana' : '⧉ Ventana flotante');
     setText(fullscreenBtn, isFullscreen ? '🡼 Salir full' : '⛶ Pantalla completa');
     setText(playBtn, state.strobe.active ? '▶ En marcha' : '▶ Play');
     if (playBtn) playBtn.setAttribute('aria-pressed', state.strobe.active ? 'true' : 'false');
     if (stopBtn) stopBtn.setAttribute('aria-pressed', state.strobe.active ? 'false' : 'true');
     if (panel) {
-      panel.dataset.strobePresentation = isFullscreen ? 'fullscreen' : state.strobe.presentation;
+      panel.dataset.strobePresentation = isFullscreen ? 'fullscreen' : 'integrated';
       panel.dataset.strobeRunning = state.strobe.active ? 'on' : 'off';
       panel.dataset.strobeFloating = floating ? 'open' : 'closed';
     }
-    if (miniBtn) miniBtn.disabled = floating;
     if (fullscreenBtn) fullscreenBtn.disabled = floating;
     setText(modeLabel, state.strobe.mode === 'sync' ? 'Sync Brainwave' : 'Frecuencia propia');
     setText(hzLabel, `${effectiveStrobeHz().toFixed(1)} Hz`);
@@ -105,9 +101,6 @@ export function createStrobeController({
 
   /* ── SUPERFICIE ── */
 
-  /* El backing store sigue al tamaño real del lienzo (con DPR acotado a 2).
-     Antes se escribía `style.width/height` en px, lo que congelaba el canvas al
-     primer rect medido y rompía el `width:100%` del CSS. */
   function resizeStrobeCanvas() {
     const canvas = getCanvas();
     if (!canvas) return;
@@ -123,11 +116,11 @@ export function createStrobeController({
   }
 
   function surfaceWindow() {
-    return pip && pip.getSurfaceDocument().defaultView ? pip.getSurfaceDocument().defaultView : window;
+    return windowController && windowController.getSurfaceDocument().defaultView
+      ? windowController.getSurfaceDocument().defaultView
+      : window;
   }
 
-  /* El contenedor puede cambiar de tamaño sin `resize` de ventana (dock,
-     fullscreen, ventana flotante): el observador cubre esos casos. */
   function observeSurface() {
     const canvas = getCanvas();
     if (!canvas || typeof ResizeObserver !== 'function') return;
@@ -187,19 +180,8 @@ export function createStrobeController({
 
   function setStrobeActive(nextActive) {
     state.strobe.active = Boolean(nextActive);
-    if (pip) pip.syncParams();
+    if (windowController) windowController.syncParams();
     renderStrobeControls();
-  }
-
-  function setStrobePresentation(nextPresentation) {
-    state.strobe.presentation = normalizeStrobePresentation(nextPresentation);
-    renderStrobeControls();
-    resizeStrobeCanvas();
-    persistUiPreferences();
-  }
-
-  function toggleStrobeMini() {
-    setStrobePresentation(state.strobe.presentation === 'mini' ? 'integrated' : 'mini');
   }
 
   async function toggleStrobeFullscreen() {
@@ -215,9 +197,6 @@ export function createStrobeController({
       try {
         await panel.requestFullscreen();
       } catch (error) {
-        /* `requestFullscreen` rechaza sin activación de usuario o con la
-           política de permisos en contra: sin captura queda un rechazo sin
-           manejar en consola. */
         showToast(`pantalla completa no disponible (${error.message})`);
       }
     }
@@ -226,9 +205,9 @@ export function createStrobeController({
   }
 
   async function toggleStrobeFloating() {
-    if (!pip) return;
-    if (pip.isFloating()) {
-      pip.closeFloating();
+    if (!windowController) return;
+    if (windowController.isFloating()) {
+      windowController.closeFloating();
       showToast('ventana flotante cerrada');
       return;
     }
@@ -236,29 +215,28 @@ export function createStrobeController({
       showToast('sal de pantalla completa para abrir la ventana flotante');
       return;
     }
-    const result = await pip.openFloating();
+    const result = await windowController.openFloating();
     if (result.opened) {
       showToast(result.mode === 'document'
         ? 'estrobo en ventana flotante — sigue visible al cambiar de pestaña'
         : 'estrobo en PiP de vídeo — sigue visible al cambiar de pestaña');
       return;
     }
-    /* Sin PiP disponible el mini player integrado es el mejor plan B: al menos
-       la superficie queda desacoplada del scroll. */
-    setStrobePresentation('mini');
-    showToast(`ventana flotante no disponible (${result.reason}) — mini player activado`);
+    /* Sin PiP disponible no hay sustituto: la vista integrada es la única
+       superficie y se dice con honestidad. Nada de mini player fingido. */
+    showToast(`ventana flotante no disponible (${result.reason}) — queda la vista integrada`);
   }
 
   function setStrobeMode(mode, { persist = true } = {}) {
     state.strobe.mode = mode === 'custom' ? 'custom' : 'sync';
-    if (pip) pip.syncParams();
+    if (windowController) windowController.syncParams();
     renderStrobeControls();
     if (persist) persistUiPreferences();
   }
 
   function setStrobeCustomHz(value, { persist = false, deferRender = false } = {}) {
     state.strobe.customHz = clampStrobeHz(value);
-    if (pip) pip.syncParams();
+    if (windowController) windowController.syncParams();
     if (deferRender) {
       markUiDirty('strobe');
       return;
@@ -273,7 +251,7 @@ export function createStrobeController({
   }
 
   function bindStrobeEvents() {
-    pip = createStrobePipController({
+    windowController = createStrobeWindowController({
       getPanel: () => document.getElementById('strobePanel'),
       getPlaceholder: () => document.getElementById('strobePipPlaceholder'),
       paintFrame,
@@ -291,12 +269,11 @@ export function createStrobeController({
       setStrobeActive(false);
       showToast('estroboscopio detenido');
     });
-    document.getElementById('btnStrobeMini')?.addEventListener('click', toggleStrobeMini);
     document.getElementById('btnStrobeFloat')?.addEventListener('click', toggleStrobeFloating);
     document.getElementById('btnStrobeFullscreen')?.addEventListener('click', toggleStrobeFullscreen);
     document.getElementById('strobePipClose')?.addEventListener('click', () => {
-      if (!pip) return;
-      pip.closeFloating();
+      if (!windowController) return;
+      windowController.closeFloating();
       showToast('ventana flotante cerrada');
     });
     document.getElementById('strobeModeSync')?.addEventListener('change', (event) => {
@@ -322,8 +299,8 @@ export function createStrobeController({
     bindStrobeEvents,
     drawStrobeFrame,
     effectiveStrobeHz,
-    getFloatingInfo: () => (pip ? pip.getFloatingInfo() : { open: false, capability: 'unbound' }),
-    getPipCapability: () => (pip ? pip.capability.mode : 'unbound'),
+    getFloatingInfo: () => (windowController ? windowController.getFloatingInfo() : { open: false, capability: 'unbound' }),
+    getPipCapability: () => (windowController ? windowController.capability.mode : 'unbound'),
     handleFullscreenChange,
     paintFrame,
     renderStrobeControls,
@@ -331,9 +308,7 @@ export function createStrobeController({
     setStrobeActive,
     setStrobeCustomHz,
     setStrobeMode,
-    setStrobePresentation,
     toggleStrobeFloating,
     toggleStrobeFullscreen,
-    toggleStrobeMini,
   };
 }

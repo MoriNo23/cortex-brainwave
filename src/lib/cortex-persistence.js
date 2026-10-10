@@ -67,15 +67,10 @@ export function normalizeStrobeMode(value) {
   return value === 'custom' ? 'custom' : 'sync';
 }
 
-export function normalizeStrobePresentation(value) {
-  return value === 'mini' ? 'mini' : 'integrated';
-}
-
 export function normalizeStrobeState(value = {}) {
   return {
     mode: normalizeStrobeMode(value.mode),
     customHz: clampStrobeHz(value.customHz ?? STROBE_DEFAULTS.customHz),
-    presentation: normalizeStrobePresentation(value.presentation),
     active: false,
   };
 }

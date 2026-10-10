@@ -11,6 +11,15 @@ ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = ROOT / "tools" / "math-reference" / "fixtures.json"
 
 
+def js_number(value) -> float:
+    """Semántica de Number(x) || 0 del JS: null/NaN/no-finito → 0."""
+    try:
+        f = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+    return f if np.isfinite(f) else 0.0
+
+
 def clamp(value: float, lower: float, upper: float) -> float:
     return max(lower, min(upper, float(value)))
 
@@ -34,7 +43,8 @@ def binaural_pair(carrier: float, brainwave: float) -> dict[str, float]:
 
 
 def mix_gain(mix_percent: float) -> float:
-    return clamp(mix_percent, 0, 100) / 100.0 * 0.5
+    value = js_number(mix_percent)
+    return clamp(value, 0, 100) / 100.0 * 0.5
 
 
 def strobe_hz(mode: str, brainwave: float, custom_hz: float) -> float:
@@ -60,6 +70,41 @@ def strobe_samples(mode: str, brainwave: float, custom_hz: float, timestamps_ms:
 
 STROBE_RAMP_RATIO = 0.12
 STROBE_RAMP_MAX_MS = 16.0
+
+
+def noise_filter_depth(carrier: float, fmod: float, sample_rate: float) -> float:
+    """Profundidad de FM del filtro de ruido (cortex-audio-engine.js).
+
+    Mismos clamps que el JS: el centro se ancla a [20, sampleRate*0.45] y la
+    profundidad no puede acercarse a 0 Hz ni a Nyquist (margen 0.9).
+    """
+    c = float(carrier)
+    f = float(fmod)
+    rate = float(sample_rate)
+    max_frequency = rate * 0.45
+    center = clamp(c, 20.0, max_frequency) if np.isfinite(c) else 20.0
+    raw_depth = center * (f / 150.0)
+    safe_depth = max(0.0, min(center - 20.0, max_frequency - center) * 0.9)
+    return float(min(raw_depth, safe_depth))
+
+
+def interpolate_scalar(from_value: float, to_value: float, progress: float) -> float:
+    """Interpolación escalar lineal con clamps (core-math.js interpolateScalar).
+
+    La semántica JS de entradas inválidas se replica: Number(x) || 0 — null,
+    NaN y no-numéricos colapsan a 0; el progreso se clava a [0, 1].
+    """
+    def numeric(value) -> float:
+        try:
+            f = float(value)
+        except (TypeError, ValueError):
+            return 0.0
+        return f if np.isfinite(f) else 0.0
+
+    a = numeric(from_value)
+    b = numeric(to_value)
+    t = clamp(numeric(progress), 0.0, 1.0)
+    return float(a + (b - a) * t)
 
 
 def strobe_ramp_ratio(hz: float) -> float:
@@ -135,6 +180,30 @@ def build_reference() -> dict:
                 **strobe_envelope(case["mode"], case["brainwave"], case["customHz"], case["timestampsMs"]),
             }
             for case in fixtures["strobeEnvelopeCases"]
+        ],
+        "depth": [
+            {"carrier": c, "fmod": f, "sampleRate": rate, "depth": noise_filter_depth(c, f, rate)}
+            for (c, f, rate) in fixtures["depthCases"]
+        ],
+        "interp": [
+            {**case, "value": interpolate_scalar(case["from"], case["to"], case["progress"])}
+            for case in fixtures["interpCases"]
+        ],
+        "ramp": [
+            {"hz": hz, "ramp": strobe_ramp_ratio(hz)}
+            for hz in fixtures["rampCases"]
+        ],
+        "bandEdges": [
+            {"hz": hz, "band": band_from_freq(hz)}
+            for hz in fixtures["bandEdgeCases"]
+        ],
+        "mixEdges": [
+            {"mix": mix, "gain": mix_gain(mix)}
+            for mix in fixtures["mixEdgeCases"]
+        ],
+        "intensityAt": [
+            {**case, "intensity": strobe_intensity(js_number(case["progress"]), js_number(case["ramp"]))}
+            for case in fixtures["intensityAtCases"]
         ],
     }
 

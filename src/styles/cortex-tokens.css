@@ -1,0 +1,55 @@
+/* ── TOKENS · blanco clínico ──
+   Dirección visual decidida por el usuario (tarea 5.1, D6): instrumento
+   médico impreso. Fondo claro tipo papel, tinta oscura, líneas hairline,
+   acentos sobrios. Sin gradientes, sin cuadrícula, sin vidrio. */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  /* Papel y tinta */
+  --bg: #f6f5f1;            /* papel cálido */
+  --bg-2: #eeede7;          /* papel sombreado: bandejas, dock */
+  --panel: #fbfaf7;         /* tarjeta sobre el papel */
+  --panel-strong: #ffffff;
+  --line: #d9d7cf;          /* hairline */
+  --line-2: #b9b6ac;        /* hairline marcado (bordes interactivos) */
+  --text: #1c1b18;          /* tinta */
+  --text-dim: #4a4842;
+  --text-mute: #85806f;
+  /* Acento clínico: un solo rojo-ladrillo para acciones, verde para estado */
+  --amber: #b3492f;         /* acento principal (hereda el nombre del token) */
+  --amber-dim: #8f3a25;
+  --teal: #2f6f62;
+  --teal-dim: #265a4f;
+  --red: #b32323;
+  --shadow: 0 1px 3px rgba(28, 27, 24, 0.10);
+  /* Acento por banda: los clips del dock del timeline los usan para
+     comunicar de qué onda se trata sin leer el nombre. Sobre papel claro
+     se usan tintas saturadas oscuras, legibles sin fondo oscuro. */
+  --band-delta: #3454a5;
+  --band-theta: #6f4fa8;
+  --band-alpha: #a56a1f;
+  --band-beta: #3e7a3a;
+  --band-gamma: #2f6f8f;
+  /* Tipografía de instrumento: los números siempre en monoespaciada. */
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-serif: 'IBM Plex Serif', serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* Utilidades de pliegue: el estado de plegado se expresa con data-, nunca
+   con style inline (tarea 5.3). */
+.toggle-hint { cursor: pointer; color: var(--amber-dim); user-select: none; }
+[data-folded="true"] { display: none; }

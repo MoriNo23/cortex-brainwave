@@ -2,18 +2,18 @@
 
 ## Purpose
 
-Define las validaciones finales del producto: la exportación WAV verificable, la coherencia de canales, los snapshots visuales deterministas, la matriz de navegadores con estados honestos, y la validación subjetiva y de hardware que es manual por naturaleza y se registra como observación, nunca como evidencia médica.
+Define las validaciones finales del producto: la exportación WAV verificable como lógica pura en Node, la coherencia de canales sobre el buffer exportado, y la validación subjetiva y de hardware que es manual por naturaleza y se registra como observación, nunca como evidencia médica. Los snapshots visuales y la matriz de navegadores se retiraron con el e2e: son territorio humano con protocolo.
 
 ## Requirements
 
 ### Requirement: exportación WAV verificable
-La suite SHALL validar el archivo WAV descargado por la aplicación.
+La suite de unitarios SHALL validar la exportación WAV como lógica pura: el buffer generado por el módulo de exportación, decodificado en Node sin navegador.
 
 #### Scenario: exportación válida
-- **WHEN** el usuario activa `.wav` con una configuración válida
-- **THEN** se descarga un archivo RIFF/WAVE legible
+- **WHEN** se invoca la exportación `.wav` con una configuración válida
+- **THEN** el buffer producido es un RIFF/WAVE legible
 - **AND** el header declara canales, sample rate y bits consistentes
-- **AND** la duración declarada coincide con la duración solicitada dentro de una tolerancia documentada
+- **AND** la duración declarada coincide con la solicitada dentro de una tolerancia documentada
 
 #### Scenario: señal no vacía
 - **WHEN** se decodifican las muestras del WAV exportado
@@ -22,38 +22,16 @@ La suite SHALL validar el archivo WAV descargado por la aplicación.
 - **AND** el clipping se reporta si supera el umbral definido
 
 ### Requirement: coherencia de canales
-La suite SHALL comprobar que la configuración de salida conserva la separación esperada.
+La suite de unitarios SHALL comprobar sobre el buffer exportado que la configuración de salida conserva la separación esperada.
 
 #### Scenario: binaural
 - **WHEN** binaural está activo
-- **THEN** los canales izquierdo y derecho no son idénticos durante toda la sesión
-- **AND** la diferencia de frecuencia declarada se puede observar en el análisis o se reporta como limitación del método
+- **THEN** los canales izquierdo y derecho del buffer exportado no son idénticos
+- **AND** la diferencia de frecuencia declarada se puede observar en el análisis de muestras o se reporta como limitación del método
 
 #### Scenario: mono o sin modulación
 - **WHEN** no existe una modulación que requiera separación
 - **THEN** la suite no exige artificialmente una diferencia entre canales
-
-### Requirement: snapshots visuales
-La validación SHALL poder comparar representaciones visuales deterministas.
-
-#### Scenario: radar cambia por control
-- **WHEN** se renderiza el mismo frame con `stereo=0` y `stereo=80`
-- **THEN** los snapshots o una métrica de diferencia de imagen muestran un cambio
-
-#### Scenario: regiones cerebrales
-- **WHEN** se renderizan Delta, Alpha y Beta
-- **THEN** las regiones activas y el layout esperado aparecen en el snapshot
-
-### Requirement: matriz de navegadores
-La suite SHALL reportar el resultado por motor, sin mezclar disponibilidad con fallo.
-
-#### Scenario: motor disponible
-- **WHEN** Chromium, Firefox o WebKit está instalado
-- **THEN** se ejecutan smoke, WAV y snapshot en ese motor
-
-#### Scenario: motor no disponible
-- **WHEN** un motor no está instalado o sus dependencias faltan
-- **THEN** se marca `BLOCKED` con la dependencia exacta, no `PASS`
 
 ### Requirement: validación subjetiva y hardware
 La validación auditiva SHALL ser manual y explícita.

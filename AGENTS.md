@@ -19,74 +19,66 @@ tarda unos minutos más en aparecer, a cambio de que la máquina no se use para 
 
 ## Los jobs de CI
 
-`.github/workflows/ci.yml` corre en cada push y en cada pull request:
+`.github/workflows/ci.yml` corre en cada push y en cada pull request **dos jobs, ninguno
+con navegador**:
 
 | Job | Qué corre |
 |---|---|
-| `ligero` | Los cuatro chequeos estáticos y el Worker del estrobo, por ruta, sin instalar navegador |
-| `suite` | La suite completa en Chromium |
-| `motores` | Timeline y UI en Chromium, Firefox y WebKit |
-| `matriz` | `browser-matrix.cjs` con ciclo de vida de audio y exportación WAV |
+| `ligero` | El chequeo estático `dom-references` + los unitarios puros con Node a pelo: `strobe-worker`, `mix-integrity`, `timeline-logic`, `wav-export`, `noise-carrier`, `strobe-window`, `keyboard-shortcuts` |
+| `build-y-math` | `astro build`, chequeo estático del build (`dist-references`), `strobe-worker` sobre el fuente minificado con esbuild, y la referencia matemática Python↔JS (`reference.py` + `compare.mjs`, `failures: []`) |
 
-El job `ligero` es la señal rápida: análisis estático de archivos, sin ejecutar la app. Cubre:
+`ligero` no instala dependencias: corre con `node` sobre los fuentes reales. Su reporte se
+descarga del artifact `light-verify`; los de build y matemática, del artifact `build-y-math`.
 
-| Chequeo | Qué detecta |
-|---|---|
-| `dom-references` | Un id que el script de `src/` pide con `getElementById`/`$('#id')` y que ningún componente, plantilla o cadena de HTML del propio JS declara |
+### El modelo de unitarios
 
-El mismo job corre además `tests/strobe-worker.cjs`: Node puro, sin navegador y sin
-`npm install`. Ejecuta el fuente real del Worker de la ventana flotante en un
-contexto `vm` con un `self` y un lienzo simulados, y comprueba que su intensidad y
-su pintado (operaciones, estilos y geometría) coinciden con los del hilo
-principal. Es la única forma de cubrir ese Worker sin un navegador que no lo
-puede abrir en headless. El job `suite` lo repite con dependencias instaladas, y
-ahí el chequeo añade la variante **minificada** con esbuild: el bundler renombra
-referencias internas y por ahí se cuela un `ReferenceError` que el fuente sin
-minificar no muestra.
-
-Un verde de `ligero` **no** es el verde de la suite con navegador: son jobs distintos de la
-misma corrida. El reporte de `ligero` se descarga del artifact `light-verify`.
+La suite es de **unitarios puros en Node**: importan los fuentes reales de `src/lib` y
+simulan lo que el navegador proveería — motor de audio (`makeEngine` con nodos falsos),
+reloj (`ctx.currentTime` controlado), DOM (`document`/`window` con elementos mínimos) y
+`OfflineAudioContext` para el export WAV. Nunca declaran que validaron audio o navegador
+reales: verifican lógica. El patrón de referencia es `tests/mix-integrity.cjs` y
+`tests/strobe-worker.cjs` (el fuente del Worker en `vm` con `self` y lienzo simulados,
+además sobre el bundle minificado, porque esbuild renombra referencias y ahí se cuelan
+`ReferenceError` que el fuente sin minificar no muestra).
 
 ## Navegador local: solo bajo petición explícita
 
 No se levanta un motor por iniciativa propia. Si el usuario **pide explícitamente** una prueba
-de navegador (visual, matriz de motores, capturas), se hace **una sola corrida**, acotada a lo
-pedido, y se informa de su coste en CPU y memoria.
+de navegador (visual, confort, capturas), se hace **una sola corrida**, acotada a lo pedido, y se
+informa de su coste en CPU y memoria.
 
 Antes de proponer un navegador hay que decir **qué pregunta** quedaría sin responder sin él. Si
 la respuesta es «ninguna», no se propone. No se abre un navegador para reconfirmar lo que CI ya
-reporta, ni aunque el comando exista en `package.json`.
+reporta.
 
-## Límites conocidos
+## Lo que CI no cubre (verificación humana)
 
-- **`dom-references` cubre dos patrones**, `getElementById('x')` y `$('#x')`. No interpreta
-  selectores CSS completos, a propósito: los falsos positivos erosionan la señal.
-- **Firefox en CI no puede correr los escenarios de timeline.** Un runner headless no tiene
-  dispositivo de audio y su `AudioContext` queda suspendido; los tests lo omiten con un
-  mensaje explícito en vez de dar un verde vacío. Detalle en `cortex-stability-report.md`.
-- **Ningún runner headless oculta una pestaña.** Chromium arranca con `--headless` (modo
-  antiguo), sin gestor de ventanas: `bringToFront` no deja a la pestaña anterior en
-  `document.hidden`. El escenario de «flash congelado con la pestaña oculta» en
-  `strobe-visuals.cjs` se reporta en `skipped`, no en `failures`, porque el entorno no puede
-  montarlo; verificarlo requiere un navegador real.
-- **Ningún test automatizado reproduce el estrangulamiento real de temporizadores.** La suite
-  simula el retraso de los timers de la página.
-- **La escucha humana sigue siendo necesaria.** Protocolo en
-  `cortex-listening-protocol.md`, con auriculares y volumen bajo. Ningún job de CI la cubre.
-- **Ningún runner headless abre una ventana flotante de verdad.** Document
-  Picture-in-Picture necesita un gestor de ventanas. `strobe-visuals.cjs` verifica
-  la decisión (o se abre y el panel se muda, o se degrada a mini player con aviso
-  y sin errores), no la ventana en sí. Abrirla y mirarla es verificación humana.
-- **La ruta de vídeo del PiP (Firefox/Safari) no se cubre en CI.** Se
-  autoverifica en runtime: si el `<video>` no entrega fotogramas en 900 ms, se
-  cierra y se degrada a mini player con aviso.
+Cada punto tiene su protocolo; ningún queda «cubierto» por un test:
 
-## Los scripts `test:*` de `package.json`
+- **La escucha.** Protocolo en `cortex-listening-protocol.md`: auriculares, volumen bajo,
+  detener ante molestias. Ningún job reproduce percepción.
+- **El confort visual del layout.** Sin scroll de página en 1366×768, 1920×1080 y 2560×1080,
+  con transporte, timeline y barra de estado visibles. Y la sanidad por debajo de 900 px:
+  iniciar/detener, volumen y timeline alcanzables a 800 px.
+- **La ventana flotante del estrobo en un escritorio real.** Document Picture-in-Picture
+  (Chromium) y PiP de vídeo (Firefox) son ventanas del SO; ningún entorno headless puede
+  abrir una de verdad. CI verifica la **decisión** (`strobe-window.cjs`: apertura, cambio de
+  frecuencia, cierre, cero superficies huérfanas), no la ventana.
+- **La interacción real y los estados visibles** (hover, foco con teclado físico, atajos
+  escribiendo en un input de verdad).
+- **La ruta de vídeo del PiP en Firefox**: se autoverifica en runtime — si el `<video>` no
+  entrega fotogramas en 900 ms, se cierra y se avisa.
 
-`package.json` sigue declarando `npm test` y los `test:*` de Playwright. Ya no son el camino de
-verificación y no se invocan por omisión: documentan cómo se ejecuta la suite en un entorno con
-dependencias instaladas. No se borran, pero tampoco se ofrecen como opción para verificar un
-cambio.
+## Higiene del repo
+
+- **La raíz solo contiene lo vivo**: la app, su config, `README.md`, `AGENTS.md`, el protocolo
+  de escucha y `requirements-math.txt`. Sin informes legado, registros de conversación ni
+  carpetas de experimentos.
+- **El legado no se aparca**: se respalda **fuera** del working tree
+  (`/home/extra/repositorios/cortex-brainwave-legacy-backup/`, con `MANIFEST.md`) y se
+  elimina del repo. La recuperación puntual va por git history o ese respaldo, nunca por
+  carpetas `docs/`-parking dentro del árbol.
+- **Una sola rama de largo plazo**: `main`. Las ramas de trabajo se borran al llegar a `main`.
 
 ## Auditorías estáticas opcionales
 

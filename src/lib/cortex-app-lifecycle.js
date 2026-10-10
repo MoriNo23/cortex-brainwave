@@ -11,6 +11,7 @@ export function createAppLifecycleController({
   interpolateAudioState,
   showToast,
   startPlayback,
+  setPlaybackUi,
   buildGlossary,
   bindEvents,
   bindDockGestures,
@@ -78,6 +79,9 @@ export function createAppLifecycleController({
     });
     buildGlossary();
     bindEvents();
+    /* Estado inicial visible del transporte: también deja el botón .wav
+       deshabilitado con su razón antes de la primera interacción. */
+    if (setPlaybackUi) setPlaybackUi('stopped');
     bindDockGestures();
     renderCustomPresets();
     applyDockState();
