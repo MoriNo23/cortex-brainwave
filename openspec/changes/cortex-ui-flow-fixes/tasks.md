@@ -18,5 +18,6 @@
 ## 4. Docs de la sesión externa y verificación
 
 - [x] 4.1 Actualizar `tests/manual/cortex-ui-prd.md`: los hallazgos de entorno quedan como «bloqueado con causa esperada» (PiP `about:blank` inherente a la API, foco `:focus-visible` sintético por CDP, action budget del harness) y B4/B1 se reescriben con el contrato de pausa nuevo (P pausa audio+secuencia, footer «pausado»). Verificar: el PRD no pide a la próxima corrida nada que el entorno no pueda dar.
-- [ ] 4.2 Push a `main` y leer la corrida de CI completa: ambos jobs en verde, artifacts revisados (light-verify con 0 fallos, math `failures: []`), y la build desplegada. Verificar: el veredicto es la corrida.
+- [x] 4.2 Push a `main` y leer la corrida de CI completa: ambos jobs en verde, artifacts revisados (light-verify con 0 fallos, math `failures: []`), y la build desplegada. Verificar: el veredicto es la corrida.
+  - Commit `76bb6e8`, corrida 38076442658: `ligero` ✓ (15 s, incluye `transport-pause.cjs`) y `build-y-math` ✓ (33 s). Artifacts: light-verify 1 chequeo/0 fallos; math `failures: 0`. Deploy en Vercel automático.
 - [ ] 4.3 Re-ejecutar la sesión externa de UI con el PRD actualizado y registrar los resultados por título: los de app (pausa, presets, Space, brackets, mapa) en verde; los de entorno como blocked con su causa. Verificar: cada título con veredicto explícito; sin presentar la sesión como cobertura permanente.
