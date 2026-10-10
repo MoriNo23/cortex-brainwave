@@ -55,5 +55,6 @@
 
 ## 7. Verificación
 
-- [ ] 7.1 Push a `main` y leer la corrida de CI completa: los 2 jobs en verde, artifacts `light-verify` y de build/math revisados (reporte de estáticos, comparación JS↔Python con `failures: []`). Verificar: nada más — el veredicto es la corrida.
+- [x] 7.1 Push a `main` y leer la corrida de CI completa: los 2 jobs en verde, artifacts `light-verify` y de build/math revisados (reporte de estáticos, comparación JS↔Python con `failures: []`). Verificar: nada más — el veredicto es la corrida.
+  - Commit `6f8476e`, corrida 38028411314: `ligero` ✓ (dom-references 75/107/0 + 7 unitarios) y `build-y-math` ✓ (build, dist-references, Worker minificado, math). Artifacts descargados: `light-verify.json` (1 chequeo, 0 fallos) y `math-reference-compare.json` (`failures: 0`, tolerancias depth 1e-9 / interp 1e-12 activas).
 - [ ] 7.2 Verificación humana (bajo petición del usuario, una sola sesión): protocolo de escucha con auriculares a volumen bajo; comfort del nuevo layout en 1366×768 y 1920×1080; ventana flotante del estrobo visible con la pestaña cambiada y el navegador minimizado (cierra la 4.2 de `fix-timeline-mix-reset`); identidad visual y atajos. Verificar: cada punto registrado con observación, sin presentar la escucha como evidencia médica.
