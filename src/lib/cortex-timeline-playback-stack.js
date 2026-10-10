@@ -37,6 +37,7 @@ export function createTimelinePlaybackStack({
 
   const {
     requestGentleStop,
+    setPlaybackUi,
     startPlayback,
     togglePlayback,
   } = playbackController;
